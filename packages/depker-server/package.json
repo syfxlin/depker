@@ -1,0 +1,45 @@
+{
+  "name": "@syfxlin/depker-server",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "Otstar Lin <syfxlin@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --watch",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "dockerode": "^3.3.1",
+    "fastify": "^3.24.1",
+    "fastify-jwt": "^4.1.0",
+    "fastify-plugin": "^3.0.0",
+    "fs-extra": "^10.0.0",
+    "highland": "^2.13.5",
+    "rimraf": "^3.0.2",
+    "stromjs": "^0.5.2",
+    "tar-fs": "^2.1.1",
+    "yaml": "^1.10.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/dockerode": "^3.3.0",
+    "@types/fs-extra": "^9.0.13",
+    "@types/highland": "^2.12.14",
+    "@types/jest": "^27.0.3",
+    "@types/lokijs": "^1.5.7",
+    "@types/node": "^16.11.12",
+    "@types/rimraf": "^3.0.2",
+    "@types/tar-fs": "^2.0.1",
+    "@types/yaml": "^1.9.7",
+    "fastify-auth": "^1.1.0",
+    "jest": "^27.4.3",
+    "lokijs": "^1.5.12",
+    "nodemon": "^2.0.15",
+    "ts-jest": "^27.1.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.2"
+  }
+}
