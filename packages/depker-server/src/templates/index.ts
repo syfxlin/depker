@@ -3,6 +3,7 @@ import { join } from "path";
 import { dir } from "../config/dir";
 import DepkerTemplate from "./template";
 import Ctx from "../docker/ctx";
+import NginxTemplate from "./nginx";
 
 export const templates = async (ctx: Ctx) => {
   const json = fs.readJsonSync(join(dir.extensions, "package.json"));
@@ -13,7 +14,6 @@ export const templates = async (ctx: Ctx) => {
       return import(path);
     })
   );
-  return [...templates].map(
-    (template) => new template(ctx)
-  ) as DepkerTemplate[];
+  // prettier-ignore
+  return [NginxTemplate, ...templates].map((template) => new template(ctx)) as DepkerTemplate[];
 };

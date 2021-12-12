@@ -64,6 +64,10 @@ export default class Ctx {
     this.$logger = fastify.log;
   }
 
+  public end() {
+    this.stream.end();
+  }
+
   public get tag() {
     return `depker-${this.config.name}:latest`;
   }

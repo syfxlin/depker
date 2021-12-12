@@ -16,6 +16,7 @@ importers:
       error-cause: ^1.0.2
       fs-extra: ^10.0.0
       got: ^11.8.3
+      highland: ^2.13.5
       jest: ^27.4.3
       minimatch: ^3.0.4
       tar-fs: ^2.1.1
@@ -27,6 +28,7 @@ importers:
       error-cause: 1.0.2
       fs-extra: 10.0.0
       got: 11.8.3
+      highland: 2.13.5
       minimatch: 3.0.4
       tar-fs: 2.1.1
       yaml: 1.10.2
@@ -66,7 +68,6 @@ importers:
       lokijs: ^1.5.12
       nodemon: ^2.0.15
       rimraf: ^3.0.2
-      stromjs: ^0.5.2
       tar-fs: ^2.1.1
       ts-jest: ^27.1.0
       ts-node: ^10.4.0
@@ -81,7 +82,6 @@ importers:
       fs-extra: 10.0.0
       highland: 2.13.5
       rimraf: 3.0.2
-      stromjs: 0.5.2
       tar-fs: 2.1.1
       yaml: 1.10.2
     devDependencies:
@@ -4003,10 +4003,6 @@ packages:
     resolution: {integrity: sha1-PFMZQukIwml8DsNEhYwobHygpgo=}
     engines: {node: '>=0.10.0'}
     dev: true
-
-  /stromjs/0.5.2:
-    resolution: {integrity: sha512-bDPg02UAxOHFbuowRNKilyJQGwGmxchnrOE55Igt3v4I59kXKDyUPAR0er1lgsQbWQ46Ja25mWEHBstDAc4phA==}
-    dev: false
 
   /supports-color/5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}

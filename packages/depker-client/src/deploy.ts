@@ -3,8 +3,9 @@ import { basename, join, relative } from "path";
 import ClientError from "./error/ClientError";
 import { readYml, writeYml } from "./utils/yml";
 import { pack } from "tar-fs";
-import { match } from "minimatch";
 import got from "got";
+import highland from "highland";
+import multimatch from "./utils/multimatch";
 
 export type DeployProps = {
   endpoint: string;
@@ -39,19 +40,21 @@ export const deploy = ({ endpoint, token, folder }: DeployProps) => {
         .filter((l) => l)
     : [];
 
-  const stream = pack(folder, {
+  const tar = pack(folder, {
     ignore: (name) => {
       const relativePath = relative(folder, name);
-      return !!ignores.find((ignore) => match([relativePath], ignore));
+      return multimatch(relativePath, ignores);
     },
   });
 
-  return stream.pipe(
-    got.stream.post(`${endpoint}/deploy`, {
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/octet-stream",
-      },
-    })
+  return highland(
+    tar.pipe(
+      got.stream.post(`${endpoint}/deploy`, {
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/octet-stream",
+        },
+      })
+    )
   );
 };
