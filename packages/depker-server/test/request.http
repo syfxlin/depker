@@ -1,0 +1,88 @@
+###
+# @name login
+POST http://localhost:3000/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "token": "token"
+}
+
+> {% client.global.set("token", response.body.data.token) %}
+
+###
+# @name login by token
+POST http://localhost:3000/token
+Content-Type: application/json
+Accept: application/json
+
+{
+  "token": "64375426-5530-426d-b7e9-ed49c42ce853"
+}
+
+> {% client.global.set("token", response.body.data.token) %}
+
+###
+# @name get tokens
+GET http://localhost:3000/tokens
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{ token }}
+
+###
+# @name add token
+POST http://localhost:3000/tokens
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{ token }}
+
+{
+  "name": "test"
+}
+
+###
+# @name remove token
+DELETE http://localhost:3000/tokens
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{ token }}
+
+{
+  "name": "test"
+}
+
+###
+# @name list secrets
+GET http://localhost:3000/secrets
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{ token }}
+
+###
+# @name list secrets env
+# export $(curl http://localhost:3000/secrets/env -H "Authorization: Bearer ${token}" --silent)
+GET http://localhost:3000/secrets/env
+Authorization: Bearer {{ token }}
+
+###
+# @name add secret
+POST http://localhost:3000/secrets
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{ token }}
+
+{
+  "name": "test",
+  "value": "123456"
+}
+
+###
+# @name remove secret
+DELETE http://localhost:3000/secrets
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{ token }}
+
+{
+  "name": "test"
+}
