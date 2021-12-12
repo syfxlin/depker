@@ -25,6 +25,33 @@ const rm = (folder: string) => {
   return new Promise((resolve) => rimraf(folder, resolve));
 };
 
+const $deploy = async (ctx: Ctx) => {
+  // find template
+  const templates = await getTemplates(ctx);
+  let template: DepkerTemplate | undefined;
+  if (ctx.config.template) {
+    ctx.$logger.debug(
+      `Looking up template from config: ${ctx.config.template}`
+    );
+    template = templates.find((t) => t.name === ctx.config.template);
+  } else {
+    template = templates.find((t) => t.check());
+  }
+
+  // template not found
+  if (!template) {
+    ctx.$logger.debug(`Build failed! Couldn't find template!`);
+    ctx.logger.error(`Build failed! Couldn't find template!`);
+    return;
+  }
+
+  ctx.$logger.debug(`Using template: ${template.name}`);
+  ctx.logger.info(`Using template: ${template.name}`);
+
+  // execute template
+  await template.execute();
+};
+
 export const deploy: FastifyFn = (fastify) => {
   // deploy
   fastify.post(
@@ -48,6 +75,13 @@ export const deploy: FastifyFn = (fastify) => {
         stream,
       });
 
+      // deploy
+      $deploy(ctx)
+        .catch((error) => {
+          ctx.logger.error(`Deploy error!`, error);
+        })
+        .finally(() => ctx.end());
+
       // prepare
       // @ts-ignore
       const response = new Readable().wrap(stream);
@@ -55,32 +89,6 @@ export const deploy: FastifyFn = (fastify) => {
       response.on("end", async () => {
         await rm(folder);
       });
-
-      // find template
-      const templates = await getTemplates(ctx);
-      let template: DepkerTemplate | undefined;
-      if (config.template) {
-        ctx.$logger.debug(
-          `Looking up template from config: ${config.template}`
-        );
-        template = templates.find((t) => t.name === config.template);
-      } else {
-        template = templates.find((t) => t.check());
-      }
-
-      // template not found
-      if (!template) {
-        ctx.$logger.debug(`Build failed! Couldn't find template!`);
-        ctx.logger.error(`Build failed! Couldn't find template!`);
-        stream.end();
-        return;
-      }
-
-      ctx.$logger.debug(`Using template: ${template.name}`);
-      ctx.logger.info(`Using template: ${template.name}`);
-
-      // execute template
-      await template.execute();
     }
   );
 };

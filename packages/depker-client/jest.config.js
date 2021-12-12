@@ -2,6 +2,7 @@
 const config = {
   preset: "ts-jest",
   testEnvironment: "node",
+  testTimeout: 300_000,
   globals: {
     "ts-jest": {
       useESM: true,
