@@ -1,22 +1,21 @@
-import { FastifyFn } from "../types";
-import { IncomingMessage } from "http";
-import { randomUUID } from "crypto";
+import { SocketIOFn } from "../types";
 import { extract } from "tar-fs";
+import rimraf from "rimraf";
 import { join } from "path";
 import { dir } from "../config/dir";
-import { ClientConfig } from "../config/config";
-import highland from "highland";
-import { Readable } from "stream";
-import rimraf from "rimraf";
+import { randomUUID } from "crypto";
 import { readYml } from "../utils/yml";
+import { ClientConfig } from "../config/config";
 import Ctx from "../docker/ctx";
 import { templates as getTemplates } from "../templates";
 import DepkerTemplate from "../templates/template";
+// @ts-ignore
+import ss from "@sap_oss/node-socketio-stream";
 
-const unpack = (folder: string, stream: IncomingMessage) => {
-  return new Promise((resolve, reject) => {
+const unpack = (folder: string, stream: NodeJS.ReadableStream) => {
+  return new Promise<void>((resolve, reject) => {
     const pipe = stream.pipe(extract(folder));
-    pipe.on("finish", () => resolve(undefined));
+    pipe.on("finish", () => resolve());
     pipe.on("error", (e) => reject(e));
   });
 };
@@ -50,45 +49,33 @@ const $deploy = async (ctx: Ctx) => {
 
   // execute template
   await template.execute();
+
+  ctx.$logger.debug(`Deploy success: ${ctx.config.name}`);
 };
 
-export const deploy: FastifyFn = (fastify) => {
-  // deploy
-  fastify.post(
-    "/deploy",
-    { preValidation: fastify.authenticate },
-    async (request, reply) => {
+export const deploy: SocketIOFn = (io) => {
+  io.of("/deploy").on("connection", (socket) => {
+    ss(socket).on("deploy", async (stream: NodeJS.ReadableStream) => {
       // temp deploy folder
       const folder = join(dir.deploying, randomUUID());
-      // response
-      const stream = highland();
-
       // unpack project
-      await unpack(folder, request.raw);
+      await unpack(folder, stream);
       // config
       const config = readYml<ClientConfig>(join(folder, "depker.yml"));
-
       // ctx
       const ctx = new Ctx({
         folder,
         config,
-        stream,
+        socket,
       });
 
       // deploy
-      $deploy(ctx)
-        .catch((error) => {
-          ctx.logger.error(`Deploy error!`, error);
-        })
-        .finally(() => ctx.end());
-
-      // prepare
-      // @ts-ignore
-      const response = new Readable().wrap(stream);
-      reply.send(response);
-      response.on("end", async () => {
+      try {
+        await $deploy(ctx);
+      } finally {
         await rm(folder);
-      });
-    }
-  );
+        socket.emit("end");
+      }
+    });
+  });
 };

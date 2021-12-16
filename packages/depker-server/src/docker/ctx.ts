@@ -1,23 +1,24 @@
 import { ClientConfig, config, ServerConfig } from "../config/config";
-import Logger from "../logger";
-import { fastify } from "../index";
 import Dockerode, {
   ContainerCreateOptions,
   ContainerInfo,
   RestartPolicy,
 } from "dockerode";
-import { FastifyLoggerInstance } from "fastify/types/logger";
 import { docker } from "./api";
 import { pack } from "tar-fs";
 import { createNetwork, depkerNetwork } from "./network";
 import { secret } from "../config/database";
 import { dir } from "../config/dir";
 import { join } from "path";
+import { logger } from "../logger/client";
+import { $logger } from "../logger/server";
+import { Logger } from "pino";
+import { Socket } from "socket.io";
 
 export type CtxProps = {
-  config: ClientConfig;
-  stream: Highland.Stream<any>;
   folder: string;
+  config: ClientConfig;
+  socket: Socket;
 };
 
 export type PullData = {
@@ -48,24 +49,20 @@ export default class Ctx {
     process.env.NODE_ENV === "testing" ? 0 : 10_000;
   public readonly config: ClientConfig;
   public readonly $config: ServerConfig;
-  public readonly stream: Highland.Stream<any>;
+  public readonly socket: Socket;
   public readonly folder: string;
   public readonly docker: Dockerode;
-  public readonly logger: Logger;
-  public readonly $logger: FastifyLoggerInstance;
+  public readonly logger: ReturnType<typeof logger>;
+  public readonly $logger: Logger;
 
   constructor(props: CtxProps) {
     this.config = props.config;
     this.$config = config;
-    this.stream = props.stream;
+    this.socket = props.socket;
     this.folder = props.folder;
     this.docker = docker;
-    this.logger = new Logger(props.stream);
-    this.$logger = fastify.log;
-  }
-
-  public end() {
-    this.stream.end();
+    this.logger = logger(props.socket);
+    this.$logger = $logger;
   }
 
   public get tag() {
@@ -86,7 +83,7 @@ export default class Ctx {
         this.logger.verbose("progress", JSON.parse(d) as PullData);
       });
       output.on("end", () => {
-        resolve(undefined);
+        resolve();
       });
     });
   }

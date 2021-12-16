@@ -1,11 +1,12 @@
 import fs from "fs-extra";
 import { basename, join, relative } from "path";
-import ClientError from "./error/ClientError";
-import { readYml, writeYml } from "./utils/yml";
+import ClientError from "../error/ClientError";
+import { readYml, writeYml } from "../utils/yml";
 import { pack } from "tar-fs";
-import got from "got";
-import highland from "highland";
-import multimatch from "./utils/multimatch";
+import multimatch from "../utils/multimatch";
+import { io, Socket } from "socket.io-client";
+// @ts-ignore
+import ss from "@sap_oss/node-socketio-stream";
 
 export type DeployProps = {
   endpoint: string;
@@ -13,7 +14,7 @@ export type DeployProps = {
   folder: string;
 };
 
-export const deploy = ({ endpoint, token, folder }: DeployProps) => {
+export const deploy = ({ endpoint, token, folder }: DeployProps): Socket => {
   if (!fs.pathExistsSync(folder)) {
     throw new ClientError(`Path ${folder} do not exists!`);
   }
@@ -47,14 +48,11 @@ export const deploy = ({ endpoint, token, folder }: DeployProps) => {
     },
   });
 
-  return highland(
-    tar.pipe(
-      got.stream.post(`${endpoint}/deploy`, {
-        headers: {
-          authorization: `Bearer ${token}`,
-          "content-type": "application/octet-stream",
-        },
-      })
-    )
-  );
+  const socket = io(`${endpoint}/deploy`, { auth: { token } });
+  const stream = ss.createStream();
+  socket.on("connect", () => {
+    ss(socket).emit("deploy", stream);
+    tar.pipe(stream);
+  });
+  return socket;
 };

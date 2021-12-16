@@ -6,6 +6,7 @@ import { readYml, writeYml } from "../utils/yml";
 
 export interface ServerConfig {
   name: string;
+  debug: boolean;
   secret: string;
   token: string;
   gzip: boolean;
@@ -69,6 +70,7 @@ export interface ClientConfig {
 
 const defaultConfig: ServerConfig = {
   name: "depker-server",
+  debug: false,
   secret: randomUUID().replace(/-/g, ""),
   token: hashSync("token", 10),
   gzip: true,
