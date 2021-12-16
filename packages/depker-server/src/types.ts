@@ -1,3 +1,3 @@
-import { fastify } from "./index";
+import { Server } from "socket.io";
 
-export type FastifyFn = (instance: typeof fastify) => void;
+export type SocketIOFn = (io: Server) => void;

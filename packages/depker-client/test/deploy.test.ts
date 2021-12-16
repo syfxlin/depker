@@ -1,5 +1,5 @@
-import { deploy } from "../src/deploy";
-import { login } from "../src/auth";
+import { deploy } from "../src/api/deploy";
+import { login } from "../src/api/auth";
 import { join } from "path";
 
 const endpoint = "http://localhost:3000";
@@ -7,17 +7,23 @@ const endpoint = "http://localhost:3000";
 test("deploy", async () => {
   const token = await login({ endpoint, token: "token" });
 
-  await new Promise(async (resolve) => {
-    const request = await deploy({
+  await new Promise<void>((resolve) => {
+    const socket = deploy({
       endpoint,
       token,
       folder: join(__dirname, "__deploy__"),
     });
-    request.on("data", (d) => {
-      console.log(d.toString());
+    socket.on("info", (data) => {
+      console.log(data);
     });
-    request.on("end", () => {
-      resolve(undefined);
+    socket.on("error", (data) => {
+      console.log(data);
+    });
+    socket.on("verbose", (data) => {
+      console.log(data);
+    });
+    socket.on("end", () => {
+      resolve();
     });
   });
 });

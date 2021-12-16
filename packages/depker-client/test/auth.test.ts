@@ -1,10 +1,10 @@
 import {
   addToken,
-  deleteToken,
-  listToken,
+  listTokens,
   login,
   loginByToken,
-} from "../src/auth";
+  removeToken,
+} from "../src/api/auth";
 
 const endpoint = "http://localhost:3000";
 
@@ -27,17 +27,17 @@ test("login by token", async () => {
 test("tokens", async () => {
   const token = await login({ endpoint, token: "token" });
 
-  const tokens1 = await listToken({ endpoint, token });
+  const tokens1 = await listTokens({ endpoint, token });
 
   const name = "11111";
   const t = await addToken({ endpoint, token, name });
   expect(t.name === name && t.token.length > 0).toBe(true);
 
-  const tokens2 = await listToken({ endpoint, token });
+  const tokens2 = await listTokens({ endpoint, token });
   expect(tokens1.length + 1 === tokens2.length).toBe(true);
 
-  await deleteToken({ endpoint, token, name });
+  await removeToken({ endpoint, token, name });
 
-  const tokens3 = await listToken({ endpoint, token });
+  const tokens3 = await listTokens({ endpoint, token });
   expect(tokens1.length === tokens3.length).toBe(true);
 });
