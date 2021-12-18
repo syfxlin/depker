@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "CommonJS",
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "outDir": "dist",
     "strict": true,
-    "declaration": true
+    "jsx": "react"
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

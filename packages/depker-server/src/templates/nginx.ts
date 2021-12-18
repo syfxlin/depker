@@ -18,9 +18,7 @@ export default class NginxTemplate extends DepkerTemplate {
     COPY . /usr/share/nginx/html
     RUN chmod -R 755 /usr/share/nginx/html`
     );
-    this.ctx.logger.info("Build image");
     await this.ctx.build();
-    this.ctx.logger.info("Start container");
     await this.ctx.start();
   }
 }

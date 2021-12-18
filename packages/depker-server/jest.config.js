@@ -1,5 +1,5 @@
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
-const config = {
+module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   testTimeout: 300_000,
@@ -9,5 +9,3 @@ const config = {
     },
   },
 };
-
-export default config;

@@ -1,11 +1,11 @@
-import { match } from "minimatch";
+import minimatch from "minimatch";
 
 export default function multimatch(item: string, patterns: string[]) {
   for (let pattern of patterns) {
-    if (pattern[0] === "!" && !match([item], pattern)) {
+    if (pattern[0] === "!" && !minimatch.match([item], pattern)) {
       return true;
     }
-    if (match([item], pattern)) {
+    if (minimatch.match([item], pattern)) {
       return true;
     }
   }

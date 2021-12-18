@@ -12,7 +12,7 @@ const $storage = join($base, "storage");
 const $config = join($base, "server.config.yml");
 const $database = join($base, "database.json");
 
-const ensurePath = () => {
+const ensureDir = () => {
   // ensure base dir
   fs.ensureDirSync($base);
   // ensure extensions
@@ -33,7 +33,7 @@ const ensurePath = () => {
     );
   }
 };
-ensurePath();
+ensureDir();
 
 export const dir = {
   base: $base,

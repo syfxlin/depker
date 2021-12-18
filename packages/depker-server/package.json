@@ -5,10 +5,9 @@
   "keywords": [],
   "author": "Otstar Lin <syfxlin@gmail.com>",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "nodemon --watch",
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@sap_oss/node-socketio-stream": "^1.0.3",

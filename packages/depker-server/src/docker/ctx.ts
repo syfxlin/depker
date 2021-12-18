@@ -75,54 +75,81 @@ export default class Ctx {
 
   public pull(tag: string) {
     this.$logger.debug(`Pull image with tag: ${tag}`);
-    this.logger.verbose(`Pull image with tag: ${tag}`);
+    this.logger.info(`Pull image with tag: ${tag}`);
 
-    return new Promise<void>(async (resolve) => {
-      const output = (await this.docker.pull(tag)) as NodeJS.ReadableStream;
-      output.on("data", (d) => {
-        this.logger.verbose("progress", JSON.parse(d) as PullData);
-      });
-      output.on("end", () => {
-        resolve();
+    return new Promise<void>((resolve, reject) => {
+      this.docker.pull(tag, {}, (error, output: NodeJS.ReadableStream) => {
+        if (error) {
+          this.$logger.error(`Pull image error with tag: ${this.tag}`, {
+            error: error.message,
+          });
+          this.logger.error(`Pull image error with tag: ${tag}`, {
+            error: error.message,
+          });
+          reject(error);
+          return;
+        }
+        output.on("data", (d) => {
+          this.logger.verbose("progress", JSON.parse(d) as PullData);
+        });
+        output.on("end", () => {
+          resolve();
+        });
       });
     });
   }
 
   public build() {
     this.$logger.debug(`Build image with tag: ${this.tag}`);
-    this.logger.verbose(`Build image with tag: ${this.tag}`);
+    this.logger.info(`Build image with tag: ${this.tag}`);
 
-    return new Promise<string>(async (resolve, reject) => {
-      const output = await this.docker.buildImage(pack(this.folder), {
-        t: this.tag,
-        pull: "true",
-      });
-      output.on("data", (d) => {
-        const data = JSON.parse(d) as BuildData;
-        if (data.error) {
-          this.$logger.error(
-            `Build image error with tag: ${this.tag}`,
-            data.error
-          );
-          this.logger.error(
-            `Build image error with tag: ${this.tag}`,
-            data.error
-          );
-          reject(data.error);
-          return;
-        } else if (data.stream) {
-          this.logger.verbose("progress", data);
+    return new Promise<string>((resolve, reject) => {
+      this.docker.buildImage(
+        pack(this.folder),
+        {
+          t: this.tag,
+          pull: "true",
+        },
+        (error, output) => {
+          if (error) {
+            this.$logger.error(`Build image error with tag: ${this.tag}`, {
+              error: error.message,
+            });
+            this.logger.error(`Build image error with tag: ${this.tag}`, {
+              error: error.message,
+            });
+            reject(error);
+            return;
+          }
+          output?.on("data", (d) => {
+            const data = JSON.parse(d) as BuildData;
+            if (data.error) {
+              this.$logger.error(`Build image error with tag: ${this.tag}`, {
+                error: data.error,
+              });
+              this.logger.error(`Build image error with tag: ${this.tag}`, {
+                error: data.error,
+              });
+              reject(data.error);
+              return;
+            } else if (data.stream) {
+              this.logger.verbose("progress", data);
+            }
+            // aux and pull image progress skip
+          });
+          output?.on("end", () => {
+            resolve(this.tag);
+          });
         }
-        // aux and pull image progress skip
-      });
-      output.on("end", () => {
-        resolve(this.tag);
-      });
+      );
     });
   }
 
   // prettier-ignore
   public async start() {
+    this.$logger.debug(`Start container with name: ${this.config.name}`);
+    this.logger.info(`Start container with name: ${this.config.name}`);
+
     const containers = await this.docker.listContainers({ all: true });
     const exists = containers.filter(
       (c) => c.Labels["depker.name"] === this.config.name
@@ -159,6 +186,7 @@ export default class Ctx {
           const p = Object.keys(image.Config.ExposedPorts)[0];
           port = parseInt(p.split("/")[0]);
           this.$logger.debug(`Detected deployment port: ${port}`);
+          this.logger.verbose(`Detected deployment port: ${port}`);
         } catch {
           port = 80;
         }
@@ -309,13 +337,14 @@ export default class Ctx {
       // rename running, zero downtime update
       if (runningContainer) {
         const rename = `${this.config.name}-${Date.now()}-rename`;
-        this.$logger.debug(
-          `Found previous container named ${this.config.name}, renaming to ${rename}`
-        );
+        this.$logger.debug(`Found previous container named ${this.config.name} (${runningContainer.id.substring(0, 10)}), renaming to ${rename}`);
+        this.logger.info(`Found previous container named ${this.config.name} (${runningContainer.id.substring(0, 10)}), renaming to ${rename}`);
         await runningContainer.rename({ name: rename });
       }
 
       // rename container to project name
+      this.$logger.debug(`Renaming ${name} (${container.id.substring(0, 10)}) to ${this.config.name}`);
+      this.logger.info(`Renaming ${name} (${container.id.substring(0, 10)}) to ${this.config.name}`);
       await container.rename({ name: this.config.name });
 
       // clean
@@ -327,6 +356,8 @@ export default class Ctx {
   }
 
   public clean(containers: ContainerInfo[]) {
+    this.$logger.debug(`Shutting down old containers in ${Ctx.WAIT_TIME}ms`);
+    this.logger.info(`Shutting down old containers in ${Ctx.WAIT_TIME}ms`);
     process.nextTick(async () => {
       // wait timeout
       await new Promise((resolve) => setTimeout(resolve, Ctx.WAIT_TIME));
