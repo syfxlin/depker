@@ -1,5 +1,4 @@
-import { deploy } from "../src/api/deploy";
-import { login } from "../src/api/auth";
+import { deploy, login } from "../src";
 import { join } from "path";
 
 const endpoint = "http://localhost:3000";

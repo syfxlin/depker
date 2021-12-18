@@ -2,21 +2,32 @@ import { Socket } from "socket.io";
 
 export const logger = (socket: Socket) => {
   const info = (message?: string, data?: any) => {
-    socket.emit("info", {
+    socket.emit("log", {
+      level: "info",
+      message,
+      ...data,
+    });
+  };
+
+  const warn = (message?: string, data?: any) => {
+    socket.emit("log", {
+      level: "warn",
       message,
       ...data,
     });
   };
 
   const error = (message?: string, data?: any) => {
-    socket.emit("error", {
+    socket.emit("log", {
+      level: "error",
       message,
       ...data,
     });
   };
 
   const verbose = (message?: string, data?: any) => {
-    socket.emit("verbose", {
+    socket.emit("log", {
+      level: "verbose",
       message,
       ...data,
     });
@@ -24,6 +35,7 @@ export const logger = (socket: Socket) => {
 
   return {
     info,
+    warn,
     error,
     verbose,
   };

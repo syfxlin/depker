@@ -5,14 +5,21 @@ import { dir } from "./dir";
 import { readYml, writeYml } from "../utils/yml";
 
 export interface ServerConfig {
+  // depker-server 容器名称
   name: string;
+  // 启用调试模式
   debug: boolean;
+  // 机密，用于 JWT
   secret: string;
+  // 令牌，用于登录，使用 bcrypt 摘要
   token: string;
+  // 启用 gzip 压缩
   gzip: boolean;
+  // 自动删除无用的镜像和挂载卷
   autoprune: boolean;
+  // depker 默认网络名称
   network: string;
-  domain: string | false;
+  // traefik 配置
   traefik: {
     name: string;
     image: string;
@@ -76,7 +83,6 @@ const defaultConfig: ServerConfig = {
   gzip: true,
   autoprune: false,
   network: "depker",
-  domain: false,
   traefik: {
     name: "depker-traefik",
     image: "traefik:latest",

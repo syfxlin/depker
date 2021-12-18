@@ -32,6 +32,9 @@ const $deploy = async (ctx: Ctx) => {
     ctx.$logger.debug(
       `Looking up template from config: ${ctx.config.template}`
     );
+    ctx.logger.verbose(
+      `Looking up template from config: ${ctx.config.template}`
+    );
     template = templates.find((t) => t.name === ctx.config.template);
   } else {
     template = templates.find((t) => t.check());
@@ -50,7 +53,8 @@ const $deploy = async (ctx: Ctx) => {
   // execute template
   await template.execute();
 
-  ctx.$logger.debug(`Deploy success: ${ctx.config.name}`);
+  ctx.$logger.debug(`Application deployed: ${ctx.config.name}`);
+  ctx.logger.info(`Application deployed: ${ctx.config.name}`);
 };
 
 export const deploy: SocketIOFn = (io) => {
@@ -72,6 +76,14 @@ export const deploy: SocketIOFn = (io) => {
       // deploy
       try {
         await $deploy(ctx);
+      } catch (e) {
+        const error = e as Error;
+        ctx.$logger.error(`Deploy error with name: ${config.name}`, {
+          error: error.message,
+        });
+        ctx.logger.error(`Deploy error with name: ${config.name}`, {
+          error: error.message,
+        });
       } finally {
         await rm(folder);
         socket.emit("end");

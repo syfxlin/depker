@@ -106,7 +106,7 @@ export const addToken = ({ endpoint, token, name }: AddTokenProps) => {
   });
 };
 
-export const removeToken = ({ endpoint, token, name }: AddTokenProps) => {
+export const removeToken = ({ endpoint, token, name }: RemoveTokenProps) => {
   return new Promise<void>((resolve, reject) => {
     const socket = io(`${endpoint}/tokens`, {
       auth: {
