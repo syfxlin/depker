@@ -18,14 +18,14 @@ depker（**dep**loyment, doc**ker**） 是一个基于 Docker 的部署工具，
 - 中央存储管理（用于提供一键备份支持）
 - 部署模板（通过不同的部署模板实现不同应用的部署）
 - 快速访问日志（无须远程至服务器即可访问）
-- 快速执行命令（无需远程至服务器即可链接到内执行命令）
+- 快速执行命令（无需远程至服务器即可链接到容器内执行命令）
 - Traefik 功能
 
 ## Installation
 
 目前 depker 还处于开发及测试阶段，暂时不提供文档
 
-## 维护者 Maintainer
+## Maintainer
 
 depker 由 [Otstar Lin](https://ixk.me/)
 和下列 [贡献者](https://github.com/syfxlin/depker/graphs/contributors)
@@ -33,7 +33,7 @@ depker 由 [Otstar Lin](https://ixk.me/)
 
 > Otstar Lin - [Personal Website](https://ixk.me/) · [Blog](https://blog.ixk.me/) · [Github](https://github.com/syfxlin)
 
-## 许可证 License
+## License
 
 ![License](https://img.shields.io/github/license/syfxlin/depker.svg?style=flat-square)
 
