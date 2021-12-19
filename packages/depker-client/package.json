@@ -4,7 +4,7 @@
   "description": "",
   "keywords": [],
   "author": "Otstar Lin <syfxlin@gmail.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsup",
     "watch": "tsup --watch"
@@ -36,7 +36,6 @@
     "@sap_oss/node-socketio-stream": "^1.0.3",
     "error-cause": "^1.0.2",
     "fs-extra": "^10.0.0",
-    "highland": "^2.13.5",
     "minimatch": "^3.0.4",
     "socket.io-client": "^4.4.0",
     "tar-fs": "^2.1.1",

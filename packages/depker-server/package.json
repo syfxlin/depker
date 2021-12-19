@@ -4,7 +4,7 @@
   "description": "",
   "keywords": [],
   "author": "Otstar Lin <syfxlin@gmail.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "dev": "nodemon --watch",
     "build": "tsc -p tsconfig.json"
@@ -12,6 +12,7 @@
   "dependencies": {
     "@sap_oss/node-socketio-stream": "^1.0.3",
     "bcrypt": "^5.0.1",
+    "dedent": "^0.7.0",
     "dockerode": "^3.3.1",
     "fs-extra": "^10.0.0",
     "jsonwebtoken": "^8.5.1",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
+    "@types/dedent": "^0.7.0",
     "@types/dockerode": "^3.3.0",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.0.3",

@@ -34,7 +34,11 @@ const $deploy = async (ctx: Ctx) => {
     );
     template = templates.find((t) => t.name === ctx.config.template);
   } else {
-    template = templates.find((t) => t.check());
+    for (const t of templates) {
+      if (await t.check()) {
+        template = t;
+      }
+    }
   }
 
   // template not found

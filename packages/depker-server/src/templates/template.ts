@@ -1,9 +1,12 @@
 import Ctx from "../docker/ctx";
+import { ClientConfig } from "../config/config";
 
-export default abstract class DepkerTemplate {
-  protected ctx: Ctx;
+export default abstract class DepkerTemplate<
+  C extends ClientConfig = ClientConfig
+> {
+  protected ctx: Ctx<C>;
 
-  constructor(ctx: Ctx) {
+  constructor(ctx: Ctx<C>) {
     this.ctx = ctx;
   }
 
