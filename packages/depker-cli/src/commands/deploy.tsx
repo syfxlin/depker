@@ -94,7 +94,10 @@ export const deployCmd: CacFn = (cli) => {
     });
   // deploy by tar file
   cli
-    .command("deploy:archive <file>")
+    .command(
+      "deploy:archive <file>",
+      "Deploy your app from tar archive to depker"
+    )
     .alias("deploy:tar")
     .option("-v, --verbose", "Show verbose log")
     .action((file, options) => {
@@ -107,7 +110,7 @@ export const deployCmd: CacFn = (cli) => {
     });
   // deploy by git
   cli
-    .command("deploy:git <repo>")
+    .command("deploy:git <repo>", "Deploy your app from git to depker")
     .alias("deploy:repo <repo>")
     .option("-v, --verbose", "Show verbose log")
     .action(async (repo, options) => {

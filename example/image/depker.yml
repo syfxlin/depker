@@ -1,0 +1,3 @@
+name: image
+domain: localhost
+image: "nginx:alpine"

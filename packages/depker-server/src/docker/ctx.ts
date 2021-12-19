@@ -14,10 +14,11 @@ import { logger } from "../logger/client";
 import { $logger } from "../logger/server";
 import { Logger } from "pino";
 import { Socket } from "socket.io";
+import fs from "fs-extra";
 
-export type CtxProps = {
+export type CtxProps<C extends ClientConfig = ClientConfig> = {
   folder: string;
-  config: ClientConfig;
+  config: C;
   socket: Socket;
 };
 
@@ -44,10 +45,10 @@ export type BuildData = {
   error?: string;
 };
 
-export default class Ctx {
+export default class Ctx<C extends ClientConfig = ClientConfig> {
   public static readonly WAIT_TIME =
     process.env.NODE_ENV === "testing" ? 0 : 10_000;
-  public readonly config: ClientConfig;
+  public readonly config: C;
   public readonly $config: ServerConfig;
   public readonly socket: Socket;
   public readonly folder: string;
@@ -55,7 +56,7 @@ export default class Ctx {
   public readonly logger: ReturnType<typeof logger>;
   public readonly $logger: Logger;
 
-  constructor(props: CtxProps) {
+  constructor(props: CtxProps<C>) {
     this.config = props.config;
     this.$config = config;
     this.socket = props.socket;
@@ -63,10 +64,6 @@ export default class Ctx {
     this.docker = docker;
     this.logger = logger(props.socket);
     this.$logger = $logger;
-  }
-
-  public get tag() {
-    return `depker-${this.config.name}:latest`;
   }
 
   public network(name: string) {
@@ -80,7 +77,7 @@ export default class Ctx {
     return new Promise<void>((resolve, reject) => {
       this.docker.pull(tag, {}, (error, output: NodeJS.ReadableStream) => {
         if (error) {
-          this.$logger.error(`Pull image error with tag: ${this.tag}`, {
+          this.$logger.error(`Pull image error with tag: ${tag}`, {
             error: error.message,
           });
           this.logger.error(`Pull image error with tag: ${tag}`, {
@@ -100,22 +97,46 @@ export default class Ctx {
   }
 
   public build() {
-    this.$logger.debug(`Build image with tag: ${this.tag}`);
-    this.logger.info(`Build image with tag: ${this.tag}`);
+    const tag = `depker-${this.config.name}:latest`;
+    this.$logger.debug(`Build image with tag: ${tag}`);
+    this.logger.info(`Build image with tag: ${tag}`);
 
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<string>(async (resolve, reject) => {
+      if (this.config.env_file) {
+        const env: Record<string, string> = {
+          ...this.config.env,
+          DEPKER_NAME: this.config.name,
+        };
+        const envFile = Object.entries(env)
+          .map(([key, value]) => {
+            return `${key}=${secret(value)}`;
+          })
+          .join("\n");
+        try {
+          await fs.outputFile(join(this.folder, this.config.env_file), envFile);
+        } catch (e) {
+          const error = e as Error;
+          this.$logger.error(`Write env file error with tag: ${tag}`, {
+            error: error.message,
+          });
+          this.logger.error(`Write env file error with tag: ${tag}`, {
+            error: error.message,
+          });
+          reject(error);
+        }
+      }
       this.docker.buildImage(
         pack(this.folder),
         {
-          t: this.tag,
+          t: tag,
           pull: "true",
         },
         (error, output) => {
           if (error) {
-            this.$logger.error(`Build image error with tag: ${this.tag}`, {
+            this.$logger.error(`Build image error with tag: ${tag}`, {
               error: error.message,
             });
-            this.logger.error(`Build image error with tag: ${this.tag}`, {
+            this.logger.error(`Build image error with tag: ${tag}`, {
               error: error.message,
             });
             reject(error);
@@ -124,10 +145,10 @@ export default class Ctx {
           output?.on("data", (d) => {
             const data = JSON.parse(d) as BuildData;
             if (data.error) {
-              this.$logger.error(`Build image error with tag: ${this.tag}`, {
+              this.$logger.error(`Build image error with tag: ${tag}`, {
                 error: data.error,
               });
-              this.logger.error(`Build image error with tag: ${this.tag}`, {
+              this.logger.error(`Build image error with tag: ${tag}`, {
                 error: data.error,
               });
               reject(data.error);
@@ -138,7 +159,7 @@ export default class Ctx {
             // aux and pull image progress skip
           });
           output?.on("end", () => {
-            resolve(this.tag);
+            resolve(tag);
           });
         }
       );
@@ -146,7 +167,7 @@ export default class Ctx {
   }
 
   // prettier-ignore
-  public async start() {
+  public async start(tag: string) {
     this.$logger.debug(`Start container with name: ${this.config.name}`);
     this.logger.info(`Start container with name: ${this.config.name}`);
 
@@ -182,7 +203,7 @@ export default class Ctx {
       let port = this.config.port;
       if (!port) {
         try {
-          const image = await this.docker.getImage(this.tag).inspect();
+          const image = await this.docker.getImage(tag).inspect();
           const p = Object.keys(image.Config.ExposedPorts)[0];
           port = parseInt(p.split("/")[0]);
           this.$logger.debug(`Detected deployment port: ${port}`);
@@ -216,15 +237,15 @@ export default class Ctx {
     }
 
     // rateLimit
-    if (this.config.rateLimit) {
-      labels[`traefik.http.middlewares.${name}-rate.ratelimit.average`] = String(this.config.rateLimit.average);
-      labels[`traefik.http.middlewares.${name}-rate.ratelimit.burst`] = String(this.config.rateLimit.burst);
+    if (this.config.rate_limit) {
+      labels[`traefik.http.middlewares.${name}-rate.ratelimit.average`] = String(this.config.rate_limit.average);
+      labels[`traefik.http.middlewares.${name}-rate.ratelimit.burst`] = String(this.config.rate_limit.burst);
       middlewares.push(`${name}-rate@docker`);
     }
 
     // basic auth
-    if (this.config.basicAuth) {
-      labels[`traefik.http.middlewares.${name}-auth.basicauth.users`] = this.config.basicAuth;
+    if (this.config.basic_auth) {
+      labels[`traefik.http.middlewares.${name}-auth.basicauth.users`] = this.config.basic_auth;
       middlewares.push(`${name}-auth@docker`);
     }
 
@@ -290,7 +311,7 @@ export default class Ctx {
 
     const options: ContainerCreateOptions = {
       name,
-      Image: this.tag,
+      Image: tag,
       Labels,
       Env,
       ExposedPorts: {
@@ -383,5 +404,24 @@ export default class Ctx {
         await Promise.all([docker.pruneImages(), docker.pruneVolumes()]);
       });
     }
+  }
+
+  public dockerfile(data: any) {
+    fs.outputFileSync(join(this.folder, "Dockerfile"), data, "utf-8");
+  }
+
+  public existsFile(path: string) {
+    return fs.pathExistsSync(join(this.folder, path));
+  }
+
+  public writeFile(path: string, data: any, overwrite?: boolean) {
+    const _path = join(this.folder, path);
+    if (overwrite !== false || !fs.pathExistsSync(_path)) {
+      fs.outputFileSync(_path, data, "utf-8");
+    }
+  }
+
+  public readFile(path: string) {
+    return fs.readFileSync(path).toString("utf-8");
   }
 }

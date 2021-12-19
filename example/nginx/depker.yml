@@ -1,0 +1,4 @@
+name: nginx
+domain: localhost
+nginx:
+  root: public1

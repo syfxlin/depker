@@ -36,14 +36,14 @@ export interface ClientConfig {
   // traefik 中间件
   middlewares?: string[];
   // 访问限制
-  rateLimit?: {
+  rate_limit?: {
     // 时间段
     average: number;
     // 最大突发
     burst: number;
   };
   // 授权
-  basicAuth?: string;
+  basic_auth?: string;
   // 其他选项
   [key: string]: any;
 }

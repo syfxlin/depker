@@ -3,7 +3,9 @@ import { join } from "path";
 import { dir } from "../config/dir";
 import DepkerTemplate from "./template";
 import Ctx from "../docker/ctx";
+import DockerfileTemplate from "./dockerfile";
 import NginxTemplate from "./nginx";
+import ImageTemplate from "./image";
 
 export const templates = async (ctx: Ctx) => {
   const json = fs.readJsonSync(join(dir.extensions, "package.json"));
@@ -15,5 +17,5 @@ export const templates = async (ctx: Ctx) => {
     })
   );
   // prettier-ignore
-  return [NginxTemplate, ...templates].map((template) => new template(ctx)) as DepkerTemplate[];
+  return [DockerfileTemplate, ImageTemplate, NginxTemplate, ...templates].map((template) => new template(ctx)) as DepkerTemplate[];
 };

@@ -1,0 +1,5 @@
+name: dockerfile
+domain: localhost
+env:
+  TEST1: test1
+env_file: .env
