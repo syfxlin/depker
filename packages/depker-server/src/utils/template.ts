@@ -5,11 +5,11 @@ export const $choose = (
   return value !== null && value !== undefined ? value : defaultValue;
 };
 
-export const $if = (canonical: any, value: string) => {
+export const $if = (canonical: any, v1: string, v2: string = "") => {
   if (canonical) {
-    return value;
+    return v1;
   } else {
-    return "";
+    return v2;
   }
 };
 
@@ -28,4 +28,14 @@ export const $inject = (command?: string | string[]) => {
     return command;
   }
   return command.join("\n");
+};
+
+export const $cmd = (command?: string | string[]) => {
+  if (!command) {
+    return "";
+  }
+  if (typeof command === "string") {
+    return `CMD ${command}`;
+  }
+  return `CMD ${JSON.stringify(command)}`;
 };
