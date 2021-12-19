@@ -37,6 +37,7 @@ const $deploy = async (ctx: Ctx) => {
     for (const t of templates) {
       if (await t.check()) {
         template = t;
+        break;
       }
     }
   }

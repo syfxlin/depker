@@ -6,6 +6,8 @@ import Ctx from "../docker/ctx";
 import DockerfileTemplate from "./dockerfile";
 import NginxTemplate from "./nginx";
 import ImageTemplate from "./image";
+import NodejsTemplate from "./nodejs";
+import NodejsStaticTemplate from "./nodejs-static";
 
 export const templates = async (ctx: Ctx) => {
   const json = fs.readJsonSync(join(dir.extensions, "package.json"));
@@ -16,6 +18,12 @@ export const templates = async (ctx: Ctx) => {
       return import(path);
     })
   );
-  // prettier-ignore
-  return [DockerfileTemplate, ImageTemplate, NginxTemplate, ...templates].map((template) => new template(ctx)) as DepkerTemplate[];
+  return [
+    DockerfileTemplate,
+    ImageTemplate,
+    NodejsStaticTemplate,
+    NodejsTemplate,
+    NginxTemplate,
+    ...templates,
+  ].map((template) => new template(ctx)) as DepkerTemplate[];
 };

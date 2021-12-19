@@ -3,10 +3,10 @@ import { basename, join, relative } from "path";
 import ClientError from "../error/ClientError";
 import { readYml, writeYml } from "../utils/yml";
 import { pack } from "tar-fs";
-import multimatch from "../utils/multimatch";
 import { io, Socket } from "socket.io-client";
 // @ts-ignore
 import ss from "@sap_oss/node-socketio-stream";
+import ignore from "ignore";
 
 export type DeployProps = {
   endpoint: string;
@@ -44,19 +44,20 @@ export const deploy = ({ endpoint, token, folder }: DeployProps): Socket => {
     throw new ClientError(`Your depker.yml is not valid`, e);
   }
 
-  const ignorePath = join(folder, ".gitignore");
-  const ignores = fs.pathExistsSync(ignorePath)
-    ? fs
-        .readFileSync(ignorePath)
-        .toString()
-        .split("\n")
-        .filter((l) => l)
-    : [];
-
+  const ignores = join(folder, ".gitignore");
+  const ig = ignore().add(
+    fs.pathExistsSync(ignores)
+      ? fs
+          .readFileSync(ignores)
+          .toString()
+          .split("\n")
+          .filter((l) => l)
+      : []
+  );
   const tar = pack(folder, {
     ignore: (name) => {
       const relativePath = relative(folder, name);
-      return multimatch(relativePath, ignores);
+      return ig.ignores(relativePath);
     },
   });
 

@@ -1,6 +1,4 @@
 import DepkerTemplate from "../template";
-import fs from "fs-extra";
-import { join } from "path";
 
 export default class DockerfileTemplate extends DepkerTemplate {
   public get name(): string {
@@ -8,7 +6,7 @@ export default class DockerfileTemplate extends DepkerTemplate {
   }
 
   public async check() {
-    return fs.pathExistsSync(join(this.ctx.folder, "Dockerfile"));
+    return this.ctx.existsFile("Dockerfile");
   }
 
   public async execute() {
