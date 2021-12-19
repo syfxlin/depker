@@ -1,30 +1,29 @@
 import { io } from "socket.io-client";
 import ServerError from "../error/ServerError";
 
-export type ListSecretsProps = {
+export type ListTemplatesProps = {
   endpoint: string;
   token: string;
 };
 
-export type AddSecretProps = {
-  endpoint: string;
-  token: string;
-  name: string;
-  value: string;
-};
-
-export type RemoveSecretProps = {
+export type AddTemplateProps = {
   endpoint: string;
   token: string;
   name: string;
 };
 
-export const listSecrets = ({ endpoint, token }: ListSecretsProps) => {
+export type RemoveTemplateProps = {
+  endpoint: string;
+  token: string;
+  name: string;
+};
+
+export const listTemplates = ({ endpoint, token }: ListTemplatesProps) => {
   return new Promise<{
     message: string;
-    secrets: { name: string; value: string }[];
+    templates: string[];
   }>((resolve, reject) => {
-    const socket = io(`${endpoint}/secrets`, {
+    const socket = io(`${endpoint}/templates`, {
       auth: {
         token,
       },
@@ -35,10 +34,7 @@ export const listSecrets = ({ endpoint, token }: ListSecretsProps) => {
     socket.on("ok", (res) => {
       resolve({
         message: res.message,
-        secrets: res.secrets.map((t: any) => ({
-          name: t.name,
-          value: t.value,
-        })),
+        templates: res.templates,
       });
     });
     socket.on("error", (res) => {
@@ -55,42 +51,42 @@ export const listSecrets = ({ endpoint, token }: ListSecretsProps) => {
   });
 };
 
-export const addSecret = ({ endpoint, token, name, value }: AddSecretProps) => {
-  return new Promise<{ message: string; name: string; value: string }>(
-    (resolve, reject) => {
-      const socket = io(`${endpoint}/secrets`, {
-        auth: {
-          token,
-        },
+export const addTemplate = ({ endpoint, token, name }: AddTemplateProps) => {
+  return new Promise<{ message: string }>((resolve, reject) => {
+    const socket = io(`${endpoint}/templates`, {
+      auth: {
+        token,
+      },
+    });
+    socket.on("connect", () => {
+      socket.emit("add", name);
+    });
+    socket.on("ok", (res) => {
+      resolve({
+        message: res.message,
       });
-      socket.on("connect", () => {
-        socket.emit("add", name, value);
-      });
-      socket.on("ok", (res) => {
-        resolve({
-          message: res.message,
-          name: res.name,
-          value: res.value,
-        });
-      });
-      socket.on("error", (res) => {
-        reject(
-          new ServerError(
-            res.message,
-            res.error ? new Error(res.error) : undefined
-          )
-        );
-      });
-      socket.on("connect_error", (err) => {
-        reject(new ServerError("Connect error!", err));
-      });
-    }
-  );
+    });
+    socket.on("error", (res) => {
+      reject(
+        new ServerError(
+          res.message,
+          res.error ? new Error(res.error) : undefined
+        )
+      );
+    });
+    socket.on("connect_error", (err) => {
+      reject(new ServerError("Connect error!", err));
+    });
+  });
 };
 
-export const removeSecret = ({ endpoint, token, name }: RemoveSecretProps) => {
+export const removeTemplate = ({
+  endpoint,
+  token,
+  name,
+}: RemoveTemplateProps) => {
   return new Promise<{ message: string }>((resolve, reject) => {
-    const socket = io(`${endpoint}/secrets`, {
+    const socket = io(`${endpoint}/templates`, {
       auth: {
         token,
       },

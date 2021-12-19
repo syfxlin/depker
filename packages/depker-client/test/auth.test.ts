@@ -1,10 +1,5 @@
-import {
-  addToken,
-  listTokens,
-  login,
-  loginByToken,
-  removeToken,
-} from "../src/api/auth";
+import { login, loginByToken } from "../src/api/auth";
+import { addToken, listTokens, removeToken } from "../src/api/token";
 
 const endpoint = "http://localhost:3000";
 

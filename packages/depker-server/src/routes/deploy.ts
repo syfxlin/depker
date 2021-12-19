@@ -1,6 +1,5 @@
 import { SocketIOFn } from "../types";
 import { extract } from "tar-fs";
-import rimraf from "rimraf";
 import { join } from "path";
 import { dir } from "../config/dir";
 import { randomUUID } from "crypto";
@@ -11,6 +10,8 @@ import { templates as getTemplates } from "../templates";
 import DepkerTemplate from "../templates/template";
 // @ts-ignore
 import ss from "@sap_oss/node-socketio-stream";
+import fs from "fs-extra";
+import { auth } from "../io/auth";
 
 const unpack = (folder: string, stream: NodeJS.ReadableStream) => {
   return new Promise<void>((resolve, reject) => {
@@ -18,10 +19,6 @@ const unpack = (folder: string, stream: NodeJS.ReadableStream) => {
     pipe.on("finish", () => resolve());
     pipe.on("error", (e) => reject(e));
   });
-};
-
-const rm = (folder: string) => {
-  return new Promise((resolve) => rimraf(folder, resolve));
 };
 
 const $deploy = async (ctx: Ctx) => {
@@ -58,36 +55,38 @@ const $deploy = async (ctx: Ctx) => {
 };
 
 export const deploy: SocketIOFn = (io) => {
-  io.of("/deploy").on("connection", (socket) => {
-    ss(socket).on("deploy", async (stream: NodeJS.ReadableStream) => {
-      // temp deploy folder
-      const folder = join(dir.deploying, randomUUID());
-      // unpack project
-      await unpack(folder, stream);
-      // config
-      const config = readYml<ClientConfig>(join(folder, "depker.yml"));
-      // ctx
-      const ctx = new Ctx({
-        folder,
-        config,
-        socket,
-      });
+  io.of("/deploy")
+    .use(auth)
+    .on("connection", (socket) => {
+      ss(socket).on("deploy", async (stream: NodeJS.ReadableStream) => {
+        // temp deploy folder
+        const folder = join(dir.deploying, `deploy-${randomUUID()}`);
+        // unpack project
+        await unpack(folder, stream);
+        // config
+        const config = readYml<ClientConfig>(join(folder, "depker.yml"));
+        // ctx
+        const ctx = new Ctx({
+          folder,
+          config,
+          socket,
+        });
 
-      // deploy
-      try {
-        await $deploy(ctx);
-      } catch (e) {
-        const error = e as Error;
-        ctx.$logger.error(`Deploy error with name: ${config.name}`, {
-          error: error.message,
-        });
-        ctx.logger.error(`Deploy error with name: ${config.name}`, {
-          error: error.message,
-        });
-      } finally {
-        await rm(folder);
-        socket.emit("end");
-      }
+        // deploy
+        try {
+          await $deploy(ctx);
+        } catch (e) {
+          const error = e as Error;
+          ctx.$logger.error(`Deploy error with name: ${config.name}`, {
+            error: error.message,
+          });
+          ctx.logger.error(`Deploy error with name: ${config.name}`, {
+            error: error.message,
+          });
+        } finally {
+          await fs.remove(folder);
+          socket.emit("end");
+        }
+      });
     });
-  });
 };

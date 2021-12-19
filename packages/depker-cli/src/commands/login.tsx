@@ -24,7 +24,7 @@ const Login: React.FC = () => {
   const onSubmit = async (value: string) => {
     try {
       setStatus("loading");
-      const token = await login({
+      const { token } = await login({
         endpoint: config.endpoint,
         token: value,
       });
@@ -63,23 +63,30 @@ const Login: React.FC = () => {
 };
 
 const LoginByToken: React.FC<{ token: string }> = ({ token }) => {
-  const state = useAsync(() =>
-    loginByToken({
+  const state = useAsync(async () => {
+    const res = await loginByToken({
       endpoint: config.endpoint,
       token,
-    })
-  );
+    });
+    updateConfig({ token: res.token });
+    return res;
+  });
 
   useAsyncEnd(state);
 
   return (
-    <>
+    <Text>
+      <Icon color={"green"}>!</Icon>
+      <Bold>Logging into:</Bold>
+      <Space />
+      <Link url={config.endpoint}>{config.endpoint}</Link>
+      <Newline />
       {state.status === "loading" && <Loading message={"Logging..."} />}
       {state.status === "success" && <Success message={"Login success!"} />}
       {state.status === "error" && (
         <Error message={"Login error:"} error={state.error} />
       )}
-    </>
+    </Text>
   );
 };
 

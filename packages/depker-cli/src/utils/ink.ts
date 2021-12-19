@@ -1,17 +1,23 @@
 import { ReactElement } from "react";
-import { render as ink, RenderOptions } from "ink";
+import { render as ink, RenderOptions as InkOptions } from "ink";
 
-export const render = <Props, K extends NodeJS.WriteStream | RenderOptions>(
+export type RenderOptions = InkOptions & {
+  exit?: (error?: Error) => void | Promise<void>;
+};
+
+export const render = <Props>(
   tree: ReactElement<Props>,
-  options?: K
+  options?: RenderOptions
 ) => {
   const instance = ink(tree, options);
   instance
     .waitUntilExit()
-    .then(() => {
+    .then(async () => {
+      await options?.exit?.();
       process.exit();
     })
-    .catch(() => {
+    .catch(async (err) => {
+      await options?.exit?.(err);
       process.exit(1);
     });
   return instance;

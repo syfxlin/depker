@@ -14,6 +14,18 @@ export type DeployProps = {
   folder: string;
 };
 
+export type DeployTarProps = {
+  endpoint: string;
+  token: string;
+  tar: NodeJS.ReadableStream;
+};
+
+export type DeployGitProps = {
+  endpoint: string;
+  token: string;
+  repo: string;
+};
+
 export const deploy = ({ endpoint, token, folder }: DeployProps): Socket => {
   if (!fs.pathExistsSync(folder)) {
     throw new ClientError(`Path ${folder} do not exists!`);
@@ -48,6 +60,10 @@ export const deploy = ({ endpoint, token, folder }: DeployProps): Socket => {
     },
   });
 
+  return deployTar({ endpoint, token, tar });
+};
+
+export const deployTar = ({ endpoint, token, tar }: DeployTarProps): Socket => {
   const socket = io(`${endpoint}/deploy`, { auth: { token } });
   const stream = ss.createStream();
   socket.on("connect", () => {

@@ -6,15 +6,19 @@ import { useAsyncEnd } from "../hooks/use-end";
 import { Newline, Text } from "ink";
 import { Bold } from "../components/Bold";
 import { Icon } from "../components/Icon";
-import { addSecret, listSecrets, removeSecret } from "@syfxlin/depker-client";
+import {
+  addTemplate,
+  listTemplates,
+  removeTemplate,
+} from "@syfxlin/depker-client";
 import { render } from "../utils/ink";
 import { Loading } from "../components/Loading";
 import { Success } from "../components/Success";
 import { Error } from "../components/Error";
 
-const ListSecret: React.FC = () => {
+const ListTemplate: React.FC = () => {
   const state = useAsync(() =>
-    listSecrets({
+    listTemplates({
       endpoint: config.endpoint,
       token: config.token as string,
     })
@@ -29,33 +33,28 @@ const ListSecret: React.FC = () => {
         <Text>
           <Success message={state.data.message} />
           <Newline />
-          {state.data.secrets.map((secret) => (
-            <Text key={secret.name}>
+          {state.data.templates.map((template) => (
+            <Text key={template}>
               <Icon color={"yellow"}>-</Icon>
-              <Bold>{secret.name}: </Bold>
-              <Text>{secret.value}</Text>
+              <Bold>{template}</Bold>
               <Newline />
             </Text>
           ))}
         </Text>
       )}
       {state.status === "error" && (
-        <Error message={"List secrets error:"} error={state.error} />
+        <Error message={"List templates error:"} error={state.error} />
       )}
     </>
   );
 };
 
-export const AddSecret: React.FC<{ name: string; value: string }> = ({
-  name,
-  value,
-}) => {
+export const AddTemplate: React.FC<{ name: string }> = ({ name }) => {
   const state = useAsync(() =>
-    addSecret({
+    addTemplate({
       endpoint: config.endpoint,
       token: config.token as string,
       name,
-      value,
     })
   );
 
@@ -66,27 +65,26 @@ export const AddSecret: React.FC<{ name: string; value: string }> = ({
       {state.status === "loading" && <Loading message={"Adding..."} />}
       {state.status === "success" && (
         <Text>
-          <Success message={"Add secret success!"} />
+          <Success message={"Add template success!"} />
           <Newline />
           {state.data && (
-            <Text key={state.data.name}>
+            <Text key={name}>
               <Icon color={"yellow"}>+</Icon>
-              <Bold>{state.data.name}: </Bold>
-              <Text>{state.data.value}</Text>
+              <Bold>{name}</Bold>
             </Text>
           )}
         </Text>
       )}
       {state.status === "error" && (
-        <Error message={"Add secret error:"} error={state.error} />
+        <Error message={"Add template error:"} error={state.error} />
       )}
     </>
   );
 };
 
-export const RemoveSecret: React.FC<{ name: string }> = ({ name }) => {
+export const RemoveTemplate: React.FC<{ name: string }> = ({ name }) => {
   const state = useAsync(() =>
-    removeSecret({
+    removeTemplate({
       endpoint: config.endpoint,
       token: config.token as string,
       name,
@@ -100,7 +98,7 @@ export const RemoveSecret: React.FC<{ name: string }> = ({ name }) => {
       {state.status === "loading" && <Loading message={"Removing..."} />}
       {state.status === "success" && (
         <Text>
-          <Success message={"Remove secret success!"} />
+          <Success message={"Remove template success!"} />
           <Newline />
           <Text key={name}>
             <Icon color={"yellow"}>-</Icon>
@@ -109,28 +107,26 @@ export const RemoveSecret: React.FC<{ name: string }> = ({ name }) => {
         </Text>
       )}
       {state.status === "error" && (
-        <Error message={"Remove secret error:"} error={state.error} />
+        <Error message={"Remove template error:"} error={state.error} />
       )}
     </>
   );
 };
 
-export const secretCmd: CacFn = (cli) => {
+export const templateCmd: CacFn = (cli) => {
   // list
   cli
-    .command("secret:list", "List your secrets")
-    .alias("secret")
+    .command("template:list", "List your templates")
+    .alias("template")
     .action(() => {
-      render(<ListSecret />);
+      render(<ListTemplate />);
     });
   // add
-  cli
-    .command("secret:add <name> <value>", "Create a new secret")
-    .action((name, value) => {
-      render(<AddSecret name={name} value={value} />);
-    });
+  cli.command("template:add <name>", "Create a new template").action((name) => {
+    render(<AddTemplate name={name} />);
+  });
   // remove
-  cli.command("secret:remove <name>", "Remove a secret").action((name) => {
-    render(<RemoveSecret name={name} />);
+  cli.command("template:remove <name>", "Remove a template").action((name) => {
+    render(<RemoveTemplate name={name} />);
   });
 };

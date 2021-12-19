@@ -39,7 +39,7 @@ export interface ClientConfig {
   // 域名
   domain?: string | string[];
   // 连接的网络
-  network?: string[];
+  networks?: string[];
   // 重启策略
   restart?:
     | "no"

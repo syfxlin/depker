@@ -25,11 +25,11 @@ const ListToken: React.FC = () => {
   return (
     <>
       {state.status === "loading" && <Loading message={"Fetching..."} />}
-      {state.status === "success" && (
+      {state.status === "success" && state.data && (
         <Text>
-          <Success message={"List tokens success!"} />
+          <Success message={state.data.message} />
           <Newline />
-          {state.data?.map((token) => (
+          {state.data.tokens.map((token) => (
             <Text key={token.token}>
               <Icon color={"yellow"}>-</Icon>
               <Bold>{token.name}: </Bold>
