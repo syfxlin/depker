@@ -27,6 +27,17 @@ export interface ServerConfig {
     env?: Record<string, string>;
     labels?: Record<string, string>;
   };
+  // dockerode 配置
+  docker?: {
+    host?: string;
+    port?: number;
+    username?: string;
+    ca?: string;
+    cert?: string;
+    key?: string;
+    protocol?: "https" | "http" | "ssh";
+    timeout?: number;
+  };
 }
 
 export interface ClientConfig {

@@ -1,6 +1,4 @@
 import Dockerode from "dockerode";
+import { config } from "../config/config";
 
-export const docker = new Dockerode({
-  host: "::1",
-  port: 2375,
-});
+export const docker = new Dockerode(config.docker);
