@@ -1,30 +1,29 @@
 import { io } from "socket.io-client";
 import ServerError from "../error/ServerError";
 
-export type ListSecretsProps = {
+export type ListStoragesProps = {
   endpoint: string;
   token: string;
 };
 
-export type AddSecretProps = {
-  endpoint: string;
-  token: string;
-  name: string;
-  value: string;
-};
-
-export type RemoveSecretProps = {
+export type AddStorageProps = {
   endpoint: string;
   token: string;
   name: string;
 };
 
-export const listSecrets = ({ endpoint, token }: ListSecretsProps) => {
+export type RemoveStorageProps = {
+  endpoint: string;
+  token: string;
+  name: string;
+};
+
+export const listStorages = ({ endpoint, token }: ListStoragesProps) => {
   return new Promise<{
     message: string;
-    secrets: { name: string; value: string }[];
+    storages: string[];
   }>((resolve, reject) => {
-    const socket = io(`${endpoint}/secrets`, {
+    const socket = io(`${endpoint}/storages`, {
       auth: {
         token,
       },
@@ -35,10 +34,7 @@ export const listSecrets = ({ endpoint, token }: ListSecretsProps) => {
     socket.on("ok", (res) => {
       resolve({
         message: res.message,
-        secrets: res.secrets.map((t: any) => ({
-          name: t.name,
-          value: t.value,
-        })),
+        storages: res.storages,
       });
     });
     socket.on("error", (res) => {
@@ -55,22 +51,22 @@ export const listSecrets = ({ endpoint, token }: ListSecretsProps) => {
   });
 };
 
-export const addSecret = ({ endpoint, token, name, value }: AddSecretProps) => {
-  return new Promise<{ message: string; name: string; value: string }>(
+export const addStorage = ({ endpoint, token, name }: AddStorageProps) => {
+  return new Promise<{ message: string; name: string; path: string }>(
     (resolve, reject) => {
-      const socket = io(`${endpoint}/secrets`, {
+      const socket = io(`${endpoint}/storages`, {
         auth: {
           token,
         },
       });
       socket.on("connect", () => {
-        socket.emit("add", name, value);
+        socket.emit("add", name);
       });
       socket.on("ok", (res) => {
         resolve({
           message: res.message,
           name: res.name,
-          value: res.value,
+          path: res.path,
         });
       });
       socket.on("error", (res) => {
@@ -88,9 +84,13 @@ export const addSecret = ({ endpoint, token, name, value }: AddSecretProps) => {
   );
 };
 
-export const removeSecret = ({ endpoint, token, name }: RemoveSecretProps) => {
+export const removeStorage = ({
+  endpoint,
+  token,
+  name,
+}: RemoveStorageProps) => {
   return new Promise<{ message: string }>((resolve, reject) => {
-    const socket = io(`${endpoint}/secrets`, {
+    const socket = io(`${endpoint}/storages`, {
       auth: {
         token,
       },

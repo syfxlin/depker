@@ -1,9 +1,17 @@
 import { Server } from "socket.io";
 import { routes } from "./routes";
+import { initDocker } from "./docker/init";
 
-const io = new Server();
+export const io = new Server();
 
-routes(io);
+const start = async () => {
+  await initDocker();
 
-io.listen(3000);
-console.log(`Server started!`);
+  routes(io);
+
+  io.listen(3000);
+
+  console.log(`Server started!`);
+};
+
+start();

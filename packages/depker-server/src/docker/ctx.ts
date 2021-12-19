@@ -314,9 +314,9 @@ export default class Ctx {
     await dn.connect({
       Container: container.id,
     });
-    if (this.config.network) {
+    if (this.config.networks) {
       await Promise.all(
-        this.config.network.map(async (name) => {
+        this.config.networks.map(async (name) => {
           const network = await createNetwork(name);
           await network.connect({
             Container: container.id,

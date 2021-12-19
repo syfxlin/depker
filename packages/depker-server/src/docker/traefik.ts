@@ -1,12 +1,12 @@
 import fs from "fs-extra";
 import { dir } from "../config/dir";
-import { fastify } from "../index";
 import { docker } from "./api";
 import { config } from "../config/config";
 import { join } from "path";
 import { depkerNetwork } from "./network";
 import { writeYml } from "../utils/yml";
 import { secret } from "../config/database";
+import { $logger } from "../logger/server";
 
 const defaultConfig = {
   log: {
@@ -34,7 +34,7 @@ const ensureConfig = () => {
 };
 
 export const initTraefik = async () => {
-  fastify.log.info("Initializing traefik...");
+  $logger.info("Initializing traefik...");
   // init config
   ensureConfig();
 
@@ -46,15 +46,15 @@ export const initTraefik = async () => {
 
   // if traefik container exists, restart
   if (traefik && !traefik.Status.includes("Exited")) {
-    fastify.log.info("Traefik already running. Restarting traefik...");
+    $logger.info("Traefik already running. Restarting traefik...");
     const container = await docker.getContainer(traefik.Id);
     await container.restart();
-    fastify.log.info("Traefik restart done!");
+    $logger.info("Traefik restart done!");
     return;
   }
   // if traefik container is exited, remove
   if (traefik && traefik.Status.includes("Exited")) {
-    fastify.log.info("Exited traefik instance found, re-creating ...");
+    $logger.info("Exited traefik instance found, re-creating ...");
     const container = await docker.getContainer(traefik.Id);
     await container.remove();
   }
@@ -65,7 +65,7 @@ export const initTraefik = async () => {
     (image) => image.RepoTags && image.RepoTags.includes(config.traefik.image)
   );
   if (!image) {
-    fastify.log.info("No traefik image found, pulling...");
+    $logger.info("No traefik image found, pulling...");
     await docker.pull(config.traefik.image);
   }
 
@@ -77,15 +77,15 @@ export const initTraefik = async () => {
     .replace(/\\/g, "/")
     .replace(/(\w):/, ($0, $1) => `/mnt/${$1.toLowerCase()}`);
   if (server) {
-    fastify.log.info("depker-server is running inside docker.");
+    $logger.info("depker-server is running inside docker.");
     const baseDir = server.Mounts.find((v) => v.Destination === dir.base);
     if (baseDir) {
       traefikDir = join(baseDir.Source, "traefik");
     }
   } else {
-    fastify.log.info("depker-server is running without docker.");
+    $logger.info("depker-server is running without docker.");
   }
-  fastify.log.info(`depker-traefik use dir: ${traefikDir}`);
+  $logger.info(`depker-traefik use dir: ${traefikDir}`);
 
   // set env
   const env = Object.entries(config.traefik.env || {}).map(([key, value]) => {
@@ -169,5 +169,5 @@ export const initTraefik = async () => {
   // start container
   await container.start();
 
-  fastify.log.info("depker-traefik started!");
+  $logger.info("depker-traefik started!");
 };

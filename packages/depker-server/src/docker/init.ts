@@ -1,9 +1,9 @@
 import { depkerNetwork } from "./network";
-import { fastify } from "../index";
 import { initTraefik } from "./traefik";
+import { $logger } from "../logger/server";
 
 export const initDocker = async () => {
-  fastify.log.info("Initializing docker services...");
+  $logger.info("Initializing docker services...");
 
   // init network
   await depkerNetwork();
