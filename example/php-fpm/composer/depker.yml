@@ -1,0 +1,3 @@
+name: composer
+template: php-fpm
+domain: localhost

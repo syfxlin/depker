@@ -1,8 +1,7 @@
 import DepkerTemplate from "../template";
 import { NodejsStaticConfig } from "./types";
-import { $choose, $if, $inject } from "../../utils/template";
+import { $choose, $if, $inject, $version } from "../../utils/template";
 import { nginxConf } from "../nginx/nginx.conf";
-import dedent from "dedent";
 
 export default class NodejsStaticTemplate extends DepkerTemplate<NodejsStaticConfig> {
   public get name(): string {
@@ -16,11 +15,12 @@ export default class NodejsStaticTemplate extends DepkerTemplate<NodejsStaticCon
   }
 
   public async execute() {
+    // 如果不存在 package.json 就没必要用 node-static 环境了，请直接使用 nginx 环境，或者 nodejs 环境
     if (!this.ctx.existsFile("package.json")) {
       throw new Error("Build failed! Couldn't find package.json!");
     }
-    // prepare
-    const version = this.ctx.config.nodejs?.version ?? "lts";
+    // prepare nodejs
+    const version = $version(this.ctx.config.nodejs?.version);
     const packageJson = this.ctx.existsFile("package.json");
     let packageType: "npm" | "pnpm" | "yarn" | "none" = packageJson
       ? "npm"
@@ -32,8 +32,8 @@ export default class NodejsStaticTemplate extends DepkerTemplate<NodejsStaticCon
       packageType = "yarn";
     }
 
-    // nginx
-    const nginxVersion = $choose(this.ctx.config.nginx?.version, "mainline");
+    // prepare nginx
+    const nginxVersion = $version(this.ctx.config.nginx?.version);
     const root = $choose(this.ctx.config.nginx?.root, "public");
     const nginxd = this.ctx.existsFile(".depker/nginx.d");
     // if exists: use custom, no-exists: use default
@@ -41,9 +41,9 @@ export default class NodejsStaticTemplate extends DepkerTemplate<NodejsStaticCon
 
     // dockerfile
     // prettier-ignore
-    const dockerfile = dedent`
+    const dockerfile = `
       # from nodejs
-      FROM node:${version}-alpine as builder
+      FROM node:${version.right}alpine as builder
       
       # copy package.json and lock file
       WORKDIR /app
@@ -93,8 +93,8 @@ export default class NodejsStaticTemplate extends DepkerTemplate<NodejsStaticCon
       ${$inject(this.ctx.config.nodejs?.inject)}
 
       # from nginx
-      FROM nginx:${nginxVersion}-alpine
-      
+      FROM nginx:${nginxVersion.right}alpine
+
       # config
       COPY --from=builder /app/.depker/nginx.conf /etc/nginx/nginx.conf
       ${$if(nginxd, `
@@ -103,7 +103,7 @@ export default class NodejsStaticTemplate extends DepkerTemplate<NodejsStaticCon
       
       # copy project
       WORKDIR /app
-      COPY --from=builder /app/${root} ./${root}
+      COPY --chown=nginx:nginx --from=builder /app/${root} ./${root}
       
       # inject
       ${$inject(this.ctx.config.nginx?.inject)}

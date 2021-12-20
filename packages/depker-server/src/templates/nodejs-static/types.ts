@@ -7,6 +7,5 @@ export interface NodejsStaticConfig extends NginxConfig, NodejsConfig {
     inject_prepare?: string | string[];
     inject_prebuild?: string;
     inject?: string | string[];
-    cmd?: string | string[];
   };
 }

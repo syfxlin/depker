@@ -8,6 +8,8 @@ import NginxTemplate from "./nginx";
 import ImageTemplate from "./image";
 import NodejsTemplate from "./nodejs";
 import NodejsStaticTemplate from "./nodejs-static";
+import PHPTemplate from "./php";
+import PHPFpmTemplate from "./php-fpm";
 
 export const templates = async (ctx: Ctx) => {
   const json = fs.readJsonSync(join(dir.extensions, "package.json"));
@@ -21,6 +23,8 @@ export const templates = async (ctx: Ctx) => {
   return [
     DockerfileTemplate,
     ImageTemplate,
+    PHPFpmTemplate,
+    PHPTemplate,
     NodejsStaticTemplate,
     NodejsTemplate,
     NginxTemplate,
