@@ -48,16 +48,26 @@ const Deploy: React.FC<{ socket: Socket; verbose: boolean }> = ({
                   {item.message}
                 </Bold>
               )}
-              {item.level === "info" && item.stream && (
+              {item.level === "info" && (
                 <Text>
                   <Space count={4} />
-                  <Text>{item.stream.replaceAll("\n", "")}</Text>
+                  <Text>
+                    {item.stream?.replaceAll("\n", "")}
+                    {item.id ? `${item.id}: ` : null}
+                    {item.status}
+                    {item.progress ? ` ${item.progress}` : null}
+                  </Text>
                 </Text>
               )}
-              {item.level === "verbose" && item.stream && (
+              {item.level === "verbose" && (
                 <Text>
                   <Space count={4} />
-                  <Text>{item.stream.replaceAll("\n", "")}</Text>
+                  <Text>
+                    {item.stream?.replaceAll("\n", "")}
+                    {item.id ? `${item.id}: ` : null}
+                    {item.status}
+                    {item.progress ? ` ${item.progress}` : null}
+                  </Text>
                 </Text>
               )}
               {item.level === "error" && item.error && (
