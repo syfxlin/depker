@@ -1,7 +1,6 @@
 import DepkerTemplate from "../template";
 import { NodejsConfig } from "./types";
-import dedent from "dedent";
-import { $cmd, $if, $inject } from "../../utils/template";
+import { $cmd, $if, $inject, $version } from "../../utils/template";
 
 export default class NodejsTemplate extends DepkerTemplate<NodejsConfig> {
   public get name(): string {
@@ -30,7 +29,7 @@ export default class NodejsTemplate extends DepkerTemplate<NodejsConfig> {
         "Build failed! Couldn't find nodejs script (package.json, server.js, app.js, main.js, index.js)!"
       );
     }
-    const version = this.ctx.config.nodejs?.version ?? "lts";
+    const version = $version(this.ctx.config.nodejs?.version);
     const packageJson = this.ctx.existsFile("package.json");
     let packageType: "npm" | "pnpm" | "yarn" | "none" = packageJson
       ? "npm"
@@ -42,9 +41,9 @@ export default class NodejsTemplate extends DepkerTemplate<NodejsConfig> {
       packageType = "yarn";
     }
     // prettier-ignore
-    const dockerfile = dedent`
+    const dockerfile = `
       # from nodejs
-      FROM node:${version}-alpine
+      FROM node:${version.right}alpine
       
       # copy package.json and lock file
       WORKDIR /app

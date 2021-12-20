@@ -39,3 +39,22 @@ export const $cmd = (command?: string | string[]) => {
   }
   return `CMD ${JSON.stringify(command)}`;
 };
+
+export const $version = (
+  version?: string | null | undefined,
+  defaultValue: string = ""
+) => {
+  if (version === null || version === undefined) {
+    return {
+      left: defaultValue,
+      none: defaultValue,
+      right: defaultValue,
+    };
+  } else {
+    return {
+      left: `-${version}`,
+      none: version,
+      right: `${version}-`,
+    };
+  }
+};
