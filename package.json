@@ -1,11 +1,12 @@
 {
   "name": "@syfxlin/depker",
   "scripts": {
-    "server": "pnpm run --filter @syfxlin/depker-server dev"
+    "build:cli": "pnpm --filter @syfxlin/depker-cli build",
+    "build:client": "pnpm --filter @syfxlin/depker-client build",
+    "build:server": "pnpm --filter @syfxlin/depker-server build"
   },
   "workspaces": [
-    "packages/depker-server",
-    "packages/depker-client"
+    "packages/*"
   ],
   "engines": {
     "node": ">=16.0.0",

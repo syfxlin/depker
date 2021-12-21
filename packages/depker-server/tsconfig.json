@@ -8,6 +8,5 @@
     "strict": true,
     "declaration": true,
     "resolveJsonModule": true
-  },
-  "include": ["src", "test"]
+  }
 }
