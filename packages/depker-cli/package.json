@@ -5,9 +5,13 @@
   "keywords": [],
   "author": "Otstar Lin <syfxlin@gmail.com>",
   "license": "Apache-2.0",
+  "bin": {
+    "depker": "bin/depker.js"
+  },
   "scripts": {
-    "cli": "ts-node src/index.ts",
-    "build": "tsc"
+    "dev": "ts-node src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "prod": "node bin/depker.js"
   },
   "dependencies": {
     "@syfxlin/depker-client": "workspace:^1.0.0",
