@@ -1,10 +1,10 @@
-FROM node:alpine
+FROM node:lts-alpine
 
 # prepare pnpm
 RUN npm i -g pnpm
+RUN apk add --no-cache python3-dev libc-dev make g++ openssl-dev libffi-dev gcc musl-dev
 
 # prepare server
-ENV NODE_ENV production
 WORKDIR /app
 
 # install deps
@@ -18,6 +18,9 @@ COPY ./packages/depker-server ./packages/depker-server
 
 # build
 RUN pnpm run -w build:server
+
+# set production
+ENV NODE_ENV production
 
 EXPOSE 3000
 
