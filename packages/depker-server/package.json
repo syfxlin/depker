@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "nodemon --watch",
-    "build": "tsc"
+    "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@sap_oss/node-socketio-stream": "^1.0.3",
