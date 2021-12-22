@@ -4,9 +4,9 @@
     "build:cli": "pnpm --filter @syfxlin/depker-cli build",
     "build:client": "pnpm --filter @syfxlin/depker-client build",
     "build:server": "pnpm --filter @syfxlin/depker-server build",
-    "publish:cli": "pnpm --filter @syfxlin/depker-cli publish --access public",
-    "publish:client": "pnpm --filter @syfxlin/depker-client publish --access public",
-    "publish:server": "pnpm --filter @syfxlin/depker-server publish --access public"
+    "publish:cli": "pnpm --filter @syfxlin/depker-cli publish --access public --no-git-checks",
+    "publish:client": "pnpm --filter @syfxlin/depker-client publish --access public --no-git-checks",
+    "publish:server": "pnpm --filter @syfxlin/depker-server publish --access public --no-git-checks"
   },
   "workspaces": [
     "packages/*"
