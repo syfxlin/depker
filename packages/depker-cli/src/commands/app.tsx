@@ -60,7 +60,7 @@ const ListApp: React.FC<{ state: string }> = ({ state: s }) => {
               <Space count={4} />
               <Text color={"cyan"}>Created:</Text>
               <Space />
-              <Text>{new Date(app.created).toLocaleString()}</Text>
+              <Text>{new Date(app.created * 1000).toLocaleString()}</Text>
               <Newline />
             </Text>
           ))}
@@ -258,7 +258,9 @@ const AppInfo: React.FC<{ name: string }> = ({ name }) => {
             <Icon color={"yellow"}>-</Icon>
             <Bold color={"cyan"}>Created:</Bold>
             <Space />
-            <Text>{new Date(state.data.info.created).toLocaleString()}</Text>
+            <Text>
+              {new Date(state.data.info.created * 1000).toLocaleString()}
+            </Text>
           </Text>
           <Newline />
           <Text>
