@@ -8,6 +8,7 @@ const $base = join($home, "depker");
 const $traefik = join($base, "traefik");
 const $extensions = join($base, "extensions");
 const $deploying = join($base, "deploying");
+const $histories = join($base, "histories");
 const $storage = join($base, "storage");
 const $config = join($base, "server.config.yml");
 const $database = join($base, "database.json");
@@ -23,6 +24,8 @@ const ensureDir = () => {
   fs.ensureDirSync($traefik);
   // ensure storage
   fs.ensureDirSync($storage);
+  // ensure histories
+  fs.ensureDirSync($histories);
 
   // ensure extensions package.json
   if (!fs.pathExistsSync(join($extensions, "package.json"))) {
@@ -43,4 +46,5 @@ export const dir = {
   database: $database,
   traefik: $traefik,
   storage: $storage,
+  histories: $histories,
 };

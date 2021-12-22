@@ -8,6 +8,7 @@ export * from "./api/storage";
 export * from "./api/template";
 export * from "./api/dev";
 export * from "./api/version";
+export * from "./api/restore";
 
 // error
 export { default as ClientError } from "./error/ClientError";
