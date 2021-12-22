@@ -5,6 +5,7 @@
   "keywords": [],
   "author": "Otstar Lin <syfxlin@gmail.com>",
   "license": "Apache-2.0",
+  "private": false,
   "bin": {
     "depker": "bin/depker.js"
   },

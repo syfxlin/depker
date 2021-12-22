@@ -5,6 +5,10 @@
   "keywords": [],
   "author": "Otstar Lin <syfxlin@gmail.com>",
   "license": "Apache-2.0",
+  "private": false,
+  "bin": {
+    "depker-server": "bin/depker-server.js"
+  },
   "scripts": {
     "dev": "nodemon --watch",
     "build": "tsc -p tsconfig.build.json"
