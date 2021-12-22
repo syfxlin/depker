@@ -20,12 +20,6 @@ export type DeployTarProps = {
   tar: NodeJS.ReadableStream;
 };
 
-export type DeployGitProps = {
-  endpoint: string;
-  token: string;
-  repo: string;
-};
-
 export const deploy = ({ endpoint, token, folder }: DeployProps): Socket => {
   if (!fs.pathExistsSync(folder)) {
     throw new ClientError(`Path ${folder} do not exists!`);

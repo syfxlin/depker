@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { template } from "./template";
 import { dev } from "./dev";
 import { version } from "./version";
+import { restore } from "./restore";
 
 export const routes: SocketIOFn = (io) => {
   login(io);
@@ -19,4 +20,5 @@ export const routes: SocketIOFn = (io) => {
   template(io);
   dev(io);
   version(io);
+  restore(io);
 };

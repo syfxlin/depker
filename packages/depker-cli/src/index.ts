@@ -11,6 +11,7 @@ import { storageCmd } from "./commands/storage";
 import { templateCmd } from "./commands/template";
 import { devCmd } from "./commands/dev";
 import { versionCmd } from "./commands/version";
+import { restoreCmd } from "./commands/restore";
 
 const cli = cac("depker");
 
@@ -25,6 +26,7 @@ storageCmd(cli);
 templateCmd(cli);
 devCmd(cli);
 versionCmd(cli);
+restoreCmd(cli);
 
 cli.help();
 
