@@ -38,7 +38,9 @@ export const deploy: SocketIOFn = (io) => {
           await $deploy(ctx);
 
           // store history
-          await fs.move(tar, join(dir.histories, `${config.name}.tar`));
+          await fs.move(tar, join(dir.histories, `${config.name}.tar`), {
+            overwrite: true,
+          });
         } catch (e) {
           const error = e as Error;
           ctx.$logger.error(`Deploy error with name: ${config.name}`, {
