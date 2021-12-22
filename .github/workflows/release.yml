@@ -4,8 +4,8 @@ on:
     tags:
       - "v*"
 jobs:
-  build:
-    name: Build Packages
+  publish:
+    name: Publish packages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
