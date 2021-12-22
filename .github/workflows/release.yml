@@ -16,5 +16,9 @@ jobs:
           version: 6.24.2
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build Client & Cli
-        run: pnpm -w build:client && pnpm -w build:cli
+      - name: Build
+        run: pnpm -w build:client && pnpm -w build:cli && pnpm -w build:server
+      - name: Publish
+        run: pnpm -w publish:client && pnpm -w publish:cli && pnpm -w publish:server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
