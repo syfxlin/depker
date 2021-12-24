@@ -50,7 +50,7 @@ export default class NginxTemplate extends DepkerTemplate<NginxConfig> {
     this.ctx.dockerfile(dockerfile);
 
     // build & start
-    const image = await this.ctx.build();
-    await this.ctx.start(image);
+    await this.ctx.build();
+    await this.ctx.start();
   }
 }

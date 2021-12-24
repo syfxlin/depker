@@ -121,7 +121,7 @@ export default class PHPFpmTemplate extends DepkerTemplate<PHPFpmConfig> {
     `;
     this.ctx.dockerfile(dockerfile);
 
-    const image = await this.ctx.build();
-    await this.ctx.start(image);
+    await this.ctx.build();
+    await this.ctx.start();
   }
 }

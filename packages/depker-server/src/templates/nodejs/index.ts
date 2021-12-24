@@ -108,7 +108,7 @@ export default class NodejsTemplate extends DepkerTemplate<NodejsConfig> {
     `;
     this.ctx.dockerfile(dockerfile);
 
-    const image = await this.ctx.build();
-    await this.ctx.start(image);
+    await this.ctx.build();
+    await this.ctx.start();
   }
 }
