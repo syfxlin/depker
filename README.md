@@ -24,11 +24,14 @@ depker（**dep**loyment, doc**ker**） 是一个基于 Docker 的部署工具，
 ## Installation
 
 ```shell
-# 目前 depker 还未正式发布，可以使用以下方式抢先体验
-git clone https://github.com/syfxlin/depker
-docker-compose up -d
-# 客户端（cli）
-node packages/depker-cli/bin/depker.js --help
+### depker-server
+# npm 安装方式
+npm i -g @syfxlin/depker-server
+# docker 安装方式，如果需要 traefik 进行反代，需要配置相关的 labels
+docker run --name depker-server -v ~/.config/depker:/root/.config/depker -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 syfxlin/depker-server
+
+### depker-cli
+npm i -g @syfxlin/depker-cli
 ```
 
 一些注意事项：
