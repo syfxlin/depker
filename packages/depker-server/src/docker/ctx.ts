@@ -1,12 +1,11 @@
 import { ClientConfig, config, ServerConfig } from "../config/config";
-import Dockerode, {
+import {
   ContainerCreateOptions,
   ContainerInfo,
   RestartPolicy,
 } from "dockerode";
-import { docker } from "./api";
+import { Docker, docker } from "./api";
 import { pack } from "tar-fs";
-import { createNetwork, depkerNetwork } from "./network";
 import { secret } from "../config/database";
 import { dir } from "../config/dir";
 import { join } from "path";
@@ -45,6 +44,38 @@ export type BuildData = {
   error?: string;
 };
 
+export type BuildProps = {
+  name: string;
+  stream: NodeJS.ReadableStream;
+  args?: Record<string, string>;
+};
+
+export type StartProps = {
+  tag?: string;
+  name: string;
+  env?: Record<string, string>;
+  labels?: Record<string, string>;
+  middlewares?: string[];
+  domain?: string | string[];
+  port?: number;
+  letsencrypt?: boolean;
+  gzip?: boolean;
+  rate_limit?: {
+    average: number;
+    burst: number;
+  };
+  basic_auth?: string;
+  restart?:
+    | "no"
+    | "on-failure"
+    | "unless-stopped"
+    | "always"
+    | `on-failure:${string}`;
+  volumes?: string[];
+  ports?: string[];
+  networks?: string[];
+};
+
 export default class Ctx<C extends ClientConfig = ClientConfig> {
   public static readonly WAIT_TIME =
     process.env.NODE_ENV === "testing" ? 0 : 10_000;
@@ -52,7 +83,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
   public readonly $config: ServerConfig;
   public readonly socket: Socket;
   public readonly folder: string;
-  public readonly docker: Dockerode;
+  public readonly docker: Docker;
   public readonly logger: ReturnType<typeof logger>;
   public readonly $logger: Logger;
 
@@ -67,7 +98,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
   }
 
   public network(name: string) {
-    return createNetwork(name);
+    return this.docker.initNetwork(name);
   }
 
   public pull(tag: string) {
@@ -97,39 +128,52 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
   }
 
   public build() {
-    const tag = `depker-${this.config.name}:latest`;
+    if (this.config.env_file) {
+      const env = Object.entries({
+        ...this.config.env,
+        DEPKER_NAME: this.config.name,
+      })
+        .map(([key, value]) => `${key}=${secret(value)}`)
+        .join("\n");
+      try {
+        fs.outputFileSync(join(this.folder, this.config.env_file), env);
+      } catch (e) {
+        const error = e as Error;
+        this.$logger.error(
+          `Write env file error with name: ${this.config.name}`,
+          {
+            error: error.message,
+          }
+        );
+        this.logger.error(
+          `Write env file error with name: ${this.config.name}`,
+          {
+            error: error.message,
+          }
+        );
+        return Promise.reject(e);
+      }
+    }
+
+    return this.buildAs({
+      name: this.config.name,
+      stream: pack(this.folder),
+    });
+  }
+
+  public buildAs(props: BuildProps) {
+    const tag = `depker-${props.name}:latest`;
     this.$logger.debug(`Build image with tag: ${tag}`);
     this.logger.info(`Build image with tag: ${tag}`);
 
     return new Promise<string>(async (resolve, reject) => {
-      if (this.config.env_file) {
-        const env: Record<string, string> = {
-          ...this.config.env,
-          DEPKER_NAME: this.config.name,
-        };
-        const envFile = Object.entries(env)
-          .map(([key, value]) => {
-            return `${key}=${secret(value)}`;
-          })
-          .join("\n");
-        try {
-          await fs.outputFile(join(this.folder, this.config.env_file), envFile);
-        } catch (e) {
-          const error = e as Error;
-          this.$logger.error(`Write env file error with tag: ${tag}`, {
-            error: error.message,
-          });
-          this.logger.error(`Write env file error with tag: ${tag}`, {
-            error: error.message,
-          });
-          reject(error);
-        }
-      }
+      // build image
       this.docker.buildImage(
-        pack(this.folder),
+        props.stream,
         {
           t: tag,
           pull: "true",
+          buildargs: props.args,
         },
         (error, output) => {
           if (error) {
@@ -166,41 +210,41 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     });
   }
 
-  // prettier-ignore
-  public async start(tag: string) {
-    this.$logger.debug(`Start container with name: ${this.config.name}`);
-    this.logger.info(`Start container with name: ${this.config.name}`);
+  public async start() {
+    return this.startAt(this.config);
+  }
 
-    const containers = await this.docker.listContainers({ all: true });
-    const exists = containers.filter(
-      (c) => c.Labels["depker.name"] === this.config.name
-    );
-    const running = exists.find((c) =>
-      c.Names.find((n) => n === `/${this.config.name}`)
-    );
-    const runningContainer =
-      running && (await this.docker.getContainer(running.Id));
+  // prettier-ignore
+  public async startAt(props: StartProps) {
+    this.$logger.debug(`Start container with name: ${props.name}`);
+    this.logger.info(`Start container with name: ${props.name}`);
+
+    const containerInfos = await this.docker.listContainers({ all: true });
+    const existInfos = containerInfos.filter(c => c.Labels["depker.name"] === props.name);
+    const runningInfo = existInfos.find(c => c.Names.find(n => n === `/${props.name}`));
+    const running = runningInfo && await docker.getContainer(runningInfo.Id);
 
     // params
-    const name = `${this.config.name}-${Date.now()}`;
+    const name = `${props.name}-${Date.now()}`;
+    const tag = props.tag ?? `depker-${props.name}:latest`;
+    const domain = typeof props.domain === "string" ? [props.domain] : props.domain;
     const env: Record<string, string> = {
-      ...this.config.env,
-      DEPKER_NAME: this.config.name,
+      ...props.env,
+      DEPKER_NAME: props.name,
       DEPKER_ID: name,
     };
     const labels: Record<string, string> = {
-      ...this.config.labels,
-      "depker.name": this.config.name,
+      ...props.labels,
+      "depker.name": props.name,
       "depker.id": name,
       "traefik.enable": "true",
       "traefik.docker.network": this.$config.network,
     };
-    const middlewares: string[] = this.config.middlewares || [];
-
+    const middlewares: string[] = props.middlewares ?? [];
+    
     // set domain
-    const domain = typeof this.config.domain === "string" ? [this.config.domain] : this.config.domain;
     if (domain) {
-      let port = this.config.port;
+      let port = props.port;
       if (!port) {
         try {
           const image = await this.docker.getImage(tag).inspect();
@@ -219,7 +263,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     }
 
     // set https
-    if (this.config.letsencrypt) {
+    if (props.letsencrypt) {
       labels[`traefik.http.middlewares.${name}-https.redirectscheme.scheme`] = "https";
       labels[`traefik.http.routers.${name}.tls.certresolver`] = "depkerChallenge";
       labels[`traefik.http.routers.${name}.entrypoints`] = "websecure";
@@ -231,21 +275,21 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     }
 
     // gzip
-    if (this.config.gzip) {
+    if (props.gzip) {
       labels[`traefik.http.middlewares.${name}-compress.compress`] = "true";
       middlewares.push(`${name}-compress@docker`);
     }
 
     // rateLimit
-    if (this.config.rate_limit) {
-      labels[`traefik.http.middlewares.${name}-rate.ratelimit.average`] = String(this.config.rate_limit.average);
-      labels[`traefik.http.middlewares.${name}-rate.ratelimit.burst`] = String(this.config.rate_limit.burst);
+    if (props.rate_limit) {
+      labels[`traefik.http.middlewares.${name}-rate.ratelimit.average`] = String(props.rate_limit.average);
+      labels[`traefik.http.middlewares.${name}-rate.ratelimit.burst`] = String(props.rate_limit.burst);
       middlewares.push(`${name}-rate@docker`);
     }
 
     // basic auth
-    if (this.config.basic_auth) {
-      labels[`traefik.http.middlewares.${name}-auth.basicauth.users`] = this.config.basic_auth;
+    if (props.basic_auth) {
+      labels[`traefik.http.middlewares.${name}-auth.basicauth.users`] = props.basic_auth;
       middlewares.push(`${name}-auth@docker`);
     }
 
@@ -255,9 +299,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     }
 
     // de-secret env and labels
-    const Env = Object.entries(env).map(([key, value]) => {
-      return `${key}=${secret(value)}`;
-    });
+    const Env = Object.entries(env).map(([key, value]) => `${key}=${secret(value)}`);
     const Labels = Object.entries(labels).reduce(
       (all, [key, value]) => ({
         ...all,
@@ -267,7 +309,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     );
 
     // set restart policy
-    const rp = this.config.restart || "on-failure:2";
+    const rp = props.restart || "on-failure:2";
     const _RestartPolicy: RestartPolicy = {
       Name: rp,
     };
@@ -281,7 +323,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     }
 
     // set volumes
-    const volumes = this.config.volumes?.map((vol) => {
+    const volumes = props.volumes?.map((vol) => {
       if (vol.startsWith("@/")) {
         vol = join(dir.storage, vol.substring(2));
       }
@@ -292,7 +334,7 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     });
 
     // set ports
-    const ports = this.config.ports?.reduce((all, port) => {
+    const ports = props.ports?.reduce((all, port) => {
       const [$0, $1, $2] = port.split(":");
       const [$port, $protocol = "tcp"] = ($2 ?? $1).split("/");
       if ($2) {
@@ -331,14 +373,14 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     const container = await docker.createContainer(options);
 
     // networks
-    const dn = await depkerNetwork();
+    const dn = await this.docker.depkerNetwork();
     await dn.connect({
       Container: container.id,
     });
-    if (this.config.networks) {
+    if (props.networks) {
       await Promise.all(
-        this.config.networks.map(async (name) => {
-          const network = await createNetwork(name);
+        props.networks.map(async (name) => {
+          const network = await this.docker.initNetwork(name);
           await network.connect({
             Container: container.id,
           });
@@ -347,8 +389,8 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     }
 
     // if define ports, must down running service
-    if (ports && runningContainer) {
-      await runningContainer.stop();
+    if (ports && running) {
+      await running.stop();
     }
 
     try {
@@ -356,23 +398,23 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
       await container.start();
 
       // rename running, zero downtime update
-      if (runningContainer) {
-        const rename = `${this.config.name}-${Date.now()}-rename`;
-        this.$logger.debug(`Found previous container named ${this.config.name} (${runningContainer.id.substring(0, 10)}), renaming to ${rename}`);
-        this.logger.info(`Found previous container named ${this.config.name} (${runningContainer.id.substring(0, 10)}), renaming to ${rename}`);
-        await runningContainer.rename({ name: rename });
+      if (running) {
+        const rename = `${props.name}-${Date.now()}-rename`;
+        this.$logger.debug(`Found previous container named ${props.name} (${running.id.substring(0, 10)}), renaming to ${rename}`);
+        this.logger.info(`Found previous container named ${props.name} (${running.id.substring(0, 10)}), renaming to ${rename}`);
+        await running.rename({ name: rename });
       }
 
       // rename container to project name
-      this.$logger.debug(`Renaming ${name} (${container.id.substring(0, 10)}) to ${this.config.name}`);
-      this.logger.info(`Renaming ${name} (${container.id.substring(0, 10)}) to ${this.config.name}`);
-      await container.rename({ name: this.config.name });
+      this.$logger.debug(`Renaming ${name} (${container.id.substring(0, 10)}) to ${props.name}`);
+      this.logger.info(`Renaming ${name} (${container.id.substring(0, 10)}) to ${props.name}`);
+      await container.rename({ name: props.name });
 
       // clean
-      await this.clean(exists);
+      await this.clean(existInfos);
     } catch (e) {
       // restart old container
-      await runningContainer?.start();
+      await running?.start();
     }
   }
 

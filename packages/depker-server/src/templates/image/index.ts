@@ -15,6 +15,9 @@ export default class ImageTemplate extends DepkerTemplate<ImageConfig> {
       throw new Error("Build failed! Couldn't find image config!");
     }
     await this.ctx.pull(this.ctx.config.image);
-    await this.ctx.start(this.ctx.config.image);
+    await this.ctx.startAt({
+      tag: this.ctx.config.image,
+      ...this.ctx.config,
+    });
   }
 }

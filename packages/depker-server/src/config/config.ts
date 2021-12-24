@@ -38,6 +38,7 @@ export interface ServerConfig {
     protocol?: "https" | "http" | "ssh";
     timeout?: number;
   };
+  [key: string]: any;
 }
 
 export interface ClientConfig {

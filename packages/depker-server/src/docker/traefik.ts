@@ -3,7 +3,6 @@ import { dir } from "../config/dir";
 import { docker } from "./api";
 import { config } from "../config/config";
 import { join } from "path";
-import { depkerNetwork } from "./network";
 import { writeYml } from "../utils/yml";
 import { secret } from "../config/database";
 import { $logger } from "../logger/server";
@@ -85,7 +84,7 @@ export const initTraefik = async () => {
   } else {
     $logger.info("depker-server is running without docker.");
   }
-  $logger.info(`depker-traefik use dir: ${traefikDir}`);
+  $logger.info(`Traefik use dir: ${traefikDir}`);
 
   // set env
   const env = Object.entries(config.traefik.env || {}).map(([key, value]) => {
@@ -126,13 +125,13 @@ export const initTraefik = async () => {
     Image: config.traefik.image,
     Cmd: ["--configFile=/var/traefik/traefik.yml"],
     Env: [
-      "DEPKER_NAME=depker-traefik",
-      "DEPKER_ID=depker-traefik",
+      `DEPKER_NAME=${config.traefik.name}`,
+      `DEPKER_ID=${config.traefik.name}`,
       ...env
     ],
     Labels: {
-      "depker.name": "depker-traefik",
-      "depker.id": "depker-traefik",
+      "depker.name": config.traefik.name,
+      "depker.id": config.traefik.name,
       ...labels,
     },
     ExposedPorts: {
@@ -163,11 +162,11 @@ export const initTraefik = async () => {
   });
 
   // connect to depker network
-  const network = await depkerNetwork();
+  const network = await docker.depkerNetwork();
   await network.connect({ Container: container.id });
 
   // start container
   await container.start();
 
-  $logger.info("depker-traefik started!");
+  $logger.info("Traefik started!");
 };
