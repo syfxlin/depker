@@ -12,6 +12,7 @@ import { templateCmd } from "./commands/template";
 import { devCmd } from "./commands/dev";
 import { versionCmd } from "./commands/version";
 import { restoreCmd } from "./commands/restore";
+import { pluginCmd } from "./commands/plugin";
 
 const cli = cac("depker");
 
@@ -27,6 +28,7 @@ templateCmd(cli);
 devCmd(cli);
 versionCmd(cli);
 restoreCmd(cli);
+pluginCmd(cli);
 
 cli.help();
 
