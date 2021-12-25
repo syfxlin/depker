@@ -2,11 +2,15 @@
   "name": "@syfxlin/depker",
   "scripts": {
     "build:cli": "pnpm --filter @syfxlin/depker-cli build",
-    "build:client": "pnpm --filter @syfxlin/depker-client build",
-    "build:server": "pnpm --filter @syfxlin/depker-server build",
     "publish:cli": "pnpm --filter @syfxlin/depker-cli publish --access public --no-git-checks",
+    "build:client": "pnpm --filter @syfxlin/depker-client build",
     "publish:client": "pnpm --filter @syfxlin/depker-client publish --access public --no-git-checks",
-    "publish:server": "pnpm --filter @syfxlin/depker-server publish --access public --no-git-checks"
+    "build:server": "pnpm --filter @syfxlin/depker-server build",
+    "publish:server": "pnpm --filter @syfxlin/depker-server publish --access public --no-git-checks",
+    "build:plugin-mysql": "pnpm --filter @syfxlin/depker-plugin-mysql build",
+    "publish:plugin-mysql": "pnpm --filter @syfxlin/depker-plugin-mysql publish --access public --no-git-checks",
+    "build:plugin-pgsql": "pnpm --filter @syfxlin/depker-plugin-pgsql build",
+    "publish:plugin-pgsql": "pnpm --filter @syfxlin/depker-plugin-pgsql publish --access public --no-git-checks"
   },
   "workspaces": [
     "packages/*"
