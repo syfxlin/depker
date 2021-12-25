@@ -48,9 +48,9 @@ export const ExecPlugin: React.FC<{ command: string; args: string[] }> = ({
 
 export const pluginCmd: CacFn = (cli) => {
   cli
-    .command("plugin:exec <command>", "Exec plugin command")
+    .command("plugin:exec <command> [...args]", "Exec plugin command")
     .alias("plugin")
-    .action(async (command, ...args) => {
+    .action(async (command, args) => {
       render(<ExecPlugin command={command} args={args} />);
     });
 };
