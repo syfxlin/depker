@@ -77,7 +77,7 @@ export const init: DepkerPlugin["init"] = async (ctx) => {
         Name: "on-failure",
         MaximumRetryCount: 2,
       },
-      Binds: [`/data/depker-mysql:/var/lib/mysql`],
+      Binds: [`${dataDir}:/var/lib/mysql`],
       PortBindings: {
         "3306/tcp": [{ HostPort: "3306" }],
       },
@@ -154,6 +154,12 @@ export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
       await conn.promise().query(`CREATE DATABASE \`${name}\``);
       await conn.promise().query(`GRANT ALL PRIVILEGES ON \`${name}\` . * TO '${name}'@'%'`);
       await conn.promise().query(`FLUSH PRIVILEGES`);
+      // store mysql password to secret
+      const collection = ctx.database.getCollection("secrets");
+      collection.insert({
+        name: `MYSQL_${name}_PASSWORD`.toUpperCase(),
+        value: password,
+      });
       socket.emit("ok", {
         message: "Create mysql database and user success!",
         username: name,
@@ -181,6 +187,14 @@ export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
       await conn.promise().query(`DROP DATABASE \`${name}\``);
       await conn.promise().query(`DROP USER \`${name}\``);
       await conn.promise().query(`FLUSH PRIVILEGES`);
+      // remove mysql password from secret
+      const collection = ctx.database.getCollection("secrets");
+      const secret = collection.findOne({
+        name: `MYSQL_${name}_PASSWORD`.toUpperCase(),
+      });
+      if (secret) {
+        collection.remove(secret);
+      }
       socket.emit("ok", {
         message: "Remove mysql database and user success!"
       });
