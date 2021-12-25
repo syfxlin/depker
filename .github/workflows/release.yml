@@ -23,18 +23,18 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: |
-        pnpm -w build:client &&
-        pnpm -w build:cli &&
-        pnpm -w build:server &&
-        pnpm -w build:plugin-mysql &&
-        pnpm -w build:plugin-pgsql
+          pnpm -w build:client &&
+          pnpm -w build:cli &&
+          pnpm -w build:server &&
+          pnpm -w build:plugin-mysql &&
+          pnpm -w build:plugin-pgsql
       - name: Publish
         run: |
-        pnpm -w publish:client &&
-        pnpm -w publish:cli &&
-        pnpm -w publish:server &&
-        pnpm -w publish:plugin-mysql &&
-        pnpm -w publish:plugin-pgsql
+          pnpm -w publish:client &&
+          pnpm -w publish:cli &&
+          pnpm -w publish:server &&
+          pnpm -w publish:plugin-mysql &&
+          pnpm -w publish:plugin-pgsql
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: Sleep 60s
