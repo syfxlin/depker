@@ -30,11 +30,8 @@ export const plugins = async () => {
     logger: $logger,
   };
   return {
-    init: async () => {
-      await Promise.all(plugins.map((plugin) => plugin.init?.(ctx)));
-    },
-    started: async () => {
-      await Promise.all(plugins.map((plugin) => plugin.started?.(ctx)));
+    register: async () => {
+      await Promise.all(plugins.map((plugin) => plugin.register?.(ctx)));
     },
     routes: async (io: Server) => {
       io.of("/plugin")

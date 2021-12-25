@@ -8,8 +8,8 @@ export type MysqlPluginConfig = {
   password: string;
 };
 
-export const init: DepkerPlugin["init"] = async (ctx) => {
-  ctx.logger.info("Initializing MySQL...");
+export const register: DepkerPlugin["register"] = async (ctx) => {
+  ctx.logger.info("Initializing MySQL plugin...");
   const config = ctx.config.mysql as MysqlPluginConfig;
 
   if (!config) {
