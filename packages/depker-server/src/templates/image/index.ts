@@ -1,23 +1,19 @@
-import DepkerTemplate from "../template";
+import { DepkerTemplate } from "../template";
 import { ImageConfig } from "./types";
 
-export default class ImageTemplate extends DepkerTemplate<ImageConfig> {
-  public get name(): string {
-    return "image";
-  }
+export const name: DepkerTemplate<ImageConfig>["name"] = "image";
 
-  public async check() {
-    return !!this.ctx.config.image;
-  }
+export const check: DepkerTemplate<ImageConfig>["check"] = async (ctx) => {
+  return !!ctx.config.image;
+};
 
-  public async execute() {
-    if (!this.ctx.config.image) {
-      throw new Error("Build failed! Couldn't find image config!");
-    }
-    await this.ctx.pull(this.ctx.config.image);
-    await this.ctx.startAt({
-      tag: this.ctx.config.image,
-      ...this.ctx.config,
-    });
+export const execute: DepkerTemplate<ImageConfig>["execute"] = async (ctx) => {
+  if (!ctx.config.image) {
+    throw new Error("Build failed! Couldn't find image config!");
   }
-}
+  await ctx.pull(ctx.config.image);
+  await ctx.startAt({
+    tag: ctx.config.image,
+    ...ctx.config,
+  });
+};

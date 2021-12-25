@@ -6,7 +6,8 @@ import { spawn } from "child_process";
 const $home = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
 const $base = join($home, "depker");
 const $traefik = join($base, "traefik");
-const $extensions = join($base, "extensions");
+const $templates = join($base, "templates");
+const $plugins = join($base, "plugins");
 const $deploying = join($base, "deploying");
 const $histories = join($base, "histories");
 const $storage = join($base, "storage");
@@ -16,8 +17,10 @@ const $database = join($base, "database.json");
 const ensureDir = () => {
   // ensure base dir
   fs.ensureDirSync($base);
-  // ensure extensions
-  fs.ensureDirSync($extensions);
+  // ensure templates
+  fs.ensureDirSync($templates);
+  // ensure plugins
+  fs.ensureDirSync($plugins);
   // ensure deploying
   fs.ensureDirSync($deploying);
   // ensure traefik
@@ -27,12 +30,21 @@ const ensureDir = () => {
   // ensure histories
   fs.ensureDirSync($histories);
 
-  // ensure extensions package.json
-  if (!fs.pathExistsSync(join($extensions, "package.json"))) {
+  // ensure templates package.json
+  if (!fs.pathExistsSync(join($templates, "package.json"))) {
     spawn(
       process.platform === "win32" ? "npm.cmd" : "npm",
       ["init", "-y", "--silent"],
-      { cwd: $extensions }
+      { cwd: $templates }
+    );
+  }
+
+  // ensure plugins package.json
+  if (!fs.pathExistsSync(join($plugins, "package.json"))) {
+    spawn(
+      process.platform === "win32" ? "npm.cmd" : "npm",
+      ["init", "-y", "--silent"],
+      { cwd: $plugins }
     );
   }
 };
@@ -40,7 +52,8 @@ ensureDir();
 
 export const dir = {
   base: $base,
-  extensions: $extensions,
+  templates: $templates,
+  plugins: $plugins,
   deploying: $deploying,
   config: $config,
   database: $database,

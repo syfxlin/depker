@@ -1,6 +1,6 @@
 import Ctx from "./ctx";
 import { templates as getTemplates } from "../templates";
-import DepkerTemplate from "../templates/template";
+import { DepkerTemplate } from "../templates/template";
 import { PassThrough } from "stream";
 import { extract } from "tar-fs";
 import fs from "fs-extra";
@@ -37,7 +37,7 @@ export const readConfig = (folder: string) => {
 
 export const deploy = async (ctx: Ctx) => {
   // find template
-  const templates = await getTemplates(ctx);
+  const templates = await getTemplates();
   let template: DepkerTemplate | undefined;
   if (ctx.config.template) {
     ctx.$logger.debug(
@@ -49,7 +49,7 @@ export const deploy = async (ctx: Ctx) => {
     template = templates.find((t) => t.name === ctx.config.template);
   } else {
     for (const t of templates) {
-      if (await t.check()) {
+      if (await t.check(ctx)) {
         template = t;
         break;
       }
@@ -67,7 +67,7 @@ export const deploy = async (ctx: Ctx) => {
   ctx.logger.info(`Using template: ${template.name}`);
 
   // execute template
-  await template.execute();
+  await template.execute(ctx);
 
   ctx.$logger.debug(`Application deployed: ${ctx.config.name}`);
   ctx.logger.info(`Application deployed: ${ctx.config.name}`);

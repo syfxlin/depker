@@ -11,7 +11,7 @@ export const template: SocketIOFn = (io) => {
     .on("connection", (socket) => {
       // list
       socket.on("list", async () => {
-        const json = await fs.readJson(join(dir.extensions, "package.json"));
+        const json = await fs.readJson(join(dir.templates, "package.json"));
         const templates = Object.keys(json.dependencies || {});
         socket.emit("ok", {
           message: "List templates success!",
@@ -23,7 +23,7 @@ export const template: SocketIOFn = (io) => {
         const child = spawn(
           process.platform === "win32" ? "npm.cmd" : "npm",
           ["install", name],
-          { cwd: dir.extensions }
+          { cwd: dir.templates }
         );
         child.on("close", (code) => {
           if (code === 0) {
@@ -42,7 +42,7 @@ export const template: SocketIOFn = (io) => {
         const child = spawn(
           process.platform === "win32" ? "npm.cmd" : "npm",
           ["uninstall", name],
-          { cwd: dir.extensions }
+          { cwd: dir.templates }
         );
         child.on("close", (code) => {
           if (code === 0) {
