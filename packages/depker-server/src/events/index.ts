@@ -10,16 +10,14 @@ export class AsyncEventEmitter extends EventEmitter {
     if (handler === undefined) {
       return false;
     }
-    const promises: Promise<any>[] = [];
     if (typeof handler === "function") {
-      promises.push(handler.apply(this, args));
+      await handler.apply(this, args);
     } else {
       const listeners = [...handler];
       for (const listener of listeners) {
-        promises.push(listener.apply(this, args));
+        await listener.apply(this, args);
       }
     }
-    await Promise.all(promises);
     return true;
   }
 }

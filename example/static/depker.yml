@@ -1,5 +1,7 @@
 name: static
 domain: localhost
 env:
-  DB_PASSWORD: "${MYSQL_TEST2_PASSWORD}"
+  MYSQL_PASSWORD: "${MYSQL_TEST2_PASSWORD}"
+  PGSQL_PASSWORD: "${PGSQL_TEST2_PASSWORD}"
 mysql: test2
+pgsql: test2
