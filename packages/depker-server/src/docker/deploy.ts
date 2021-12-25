@@ -37,7 +37,7 @@ export const readConfig = (folder: string) => {
 };
 
 export const deploy = async (ctx: Ctx) => {
-  events.emit("pre-deploy", ctx);
+  await events.emitAsync("pre-deploy", ctx);
 
   // find template
   const templates = await getTemplates();
@@ -75,5 +75,5 @@ export const deploy = async (ctx: Ctx) => {
   ctx.$logger.debug(`Application deployed: ${ctx.config.name}`);
   ctx.logger.info(`Application deployed: ${ctx.config.name}`);
 
-  events.emit("post-deploy", ctx);
+  await events.emitAsync("post-deploy", ctx);
 };

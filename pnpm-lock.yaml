@@ -131,7 +131,6 @@ importers:
       bcrypt: ^5.0.1
       dedent: ^0.7.0
       dockerode: ^3.3.1
-      eventemitter3: ^4.0.7
       fs-extra: ^10.0.0
       jest: ^27.4.3
       jsonwebtoken: ^8.5.1
@@ -150,7 +149,6 @@ importers:
       bcrypt: 5.0.1
       dedent: 0.7.0
       dockerode: 3.3.1
-      eventemitter3: 4.0.7
       fs-extra: 10.0.0
       jsonwebtoken: 8.5.1
       lokijs: 1.5.12
@@ -2227,10 +2225,6 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
     dev: true
-
-  /eventemitter3/4.0.7:
-    resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
-    dev: false
 
   /execa/5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
@@ -4951,7 +4945,7 @@ packages:
       '@types/jest': 27.0.3
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 27.4.5
+      jest: 27.4.5_ts-node@10.4.0
       jest-util: 27.4.2
       json5: 2.2.0
       lodash.memoize: 4.1.2

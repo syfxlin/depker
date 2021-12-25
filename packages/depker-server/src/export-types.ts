@@ -1,7 +1,9 @@
-export { ServerConfig, ClientConfig } from "./config/config";
+export type { ServerConfig, ClientConfig } from "./config/config";
 
 // template
-export * from "./templates/template";
+export type { DepkerTemplate } from "./templates/template";
+export type { default as Ctx } from "./docker/ctx";
 
 // plugin
-export * from "./plugins/plugin";
+export type { DepkerPlugin } from "./plugins/plugin";
+export type { default as PluginCtx } from "./plugins/ctx";
