@@ -1,7 +1,7 @@
 import { ServerConfig } from "../config/config";
 import { dir } from "../config/dir";
 import Loki from "lokijs";
-import EventEmitter from "eventemitter3";
+import { AsyncEventEmitter } from "../events";
 import { Logger } from "pino";
 import { Docker } from "../docker/api";
 
@@ -9,7 +9,7 @@ export type PluginProps = {
   config: ServerConfig;
   database: Loki;
   dir: typeof dir;
-  events: EventEmitter;
+  events: AsyncEventEmitter;
   docker: Docker;
   logger: Logger;
 };
@@ -18,7 +18,7 @@ export default class PluginCtx {
   public readonly config: ServerConfig;
   public readonly database: Loki;
   public readonly dir: typeof dir;
-  public readonly events: EventEmitter;
+  public readonly events: AsyncEventEmitter;
   public readonly docker: Docker;
   public readonly logger: Logger;
 

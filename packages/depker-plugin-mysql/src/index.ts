@@ -1,8 +1,6 @@
-import { DepkerPlugin } from "@syfxlin/depker-server";
-import { join } from "path";
-import mysql from "mysql2";
-import { RowDataPacket } from "mysql2/typings/mysql/lib/protocol/packets";
-import { randomUUID } from "crypto";
+import type { Ctx, DepkerPlugin } from "@syfxlin/depker-server";
+import { initContainer } from "./docker";
+import { create, list, remove } from "./mysql";
 
 export type MysqlPluginConfig = {
   name: string;
@@ -12,7 +10,6 @@ export type MysqlPluginConfig = {
 
 export const init: DepkerPlugin["init"] = async (ctx) => {
   ctx.logger.info("Initializing MySQL...");
-
   const config = ctx.config.mysql as MysqlPluginConfig;
 
   if (!config) {
@@ -20,80 +17,32 @@ export const init: DepkerPlugin["init"] = async (ctx) => {
     return;
   }
 
-  // check mysql
-  const containers = await ctx.docker.listContainers({ all: true });
-  const mysql = containers.find((container) =>
-    container.Names.find((n) => n.startsWith(`/${config.name}`))
-  );
+  // init container
+  await initContainer(ctx);
 
-  // if mysql container exists, restart
-  if (mysql && !mysql.Status.includes("Exited")) {
-    ctx.logger.info("MySQL already running. Restarting MySQL...");
-    const container = await ctx.docker.getContainer(mysql.Id);
-    await container.restart();
-    ctx.logger.info("MySQL restart done!");
-    return;
-  }
-  // if mysql container is exited, remove
-  if (mysql && mysql.Status.includes("Exited")) {
-    ctx.logger.info("Exited MySQL instance found, re-creating ...");
-    const container = await ctx.docker.getContainer(mysql.Id);
-    await container.remove();
-  }
+  // set deploy listener
+  ctx.events.on("pre-deploy", async (c: Ctx) => {
+    const config = ctx.config.mysql as MysqlPluginConfig;
+    const name = c.config.mysql as string;
+    if (!name || !config) {
+      return;
+    }
 
-  // pull mysql image
-  const images = await ctx.docker.listImages();
-  const image = images.find(
-    (image) => image.RepoTags && image.RepoTags.includes(config.image)
-  );
-  if (!image) {
-    ctx.logger.info("No MySQL image found, pulling...");
-    await ctx.docker.pull(config.image);
-  }
+    c.logger.info(
+      `Found the user-configured database ${name}, creating or skip(if created)`
+    );
 
-  // TODO: remove windows hook
-  const dataDir = join(ctx.dir.storage, "mysql")
-    .replace(/\\/g, "/")
-    .replace(/(\w):/, ($0, $1) => `/mnt/${$1.toLowerCase()}`);
-
-  // create container
-  const container = await ctx.docker.createContainer({
-    name: config.name,
-    Image: config.image,
-    Env: [
-      `DEPKER_NAME=${config.name}`,
-      `DEPKER_ID=${config.name}`,
-      `MYSQL_ROOT_PASSWORD=${config.password}`,
-    ],
-    Labels: {
-      "depker.name": config.name,
-      "depker.id": config.name,
-    },
-    ExposedPorts: {
-      "3306/tcp": {},
-    },
-    HostConfig: {
-      RestartPolicy: {
-        Name: "on-failure",
-        MaximumRetryCount: 2,
-      },
-      Binds: [`${dataDir}:/var/lib/mysql`],
-      PortBindings: {
-        "3306/tcp": [{ HostPort: "3306" }],
-      },
-    },
+    // prettier-ignore
+    try {
+      const data = await create(name, ctx) as { username: string, password: string, database: string };
+      c.logger.info(`Create or skip database success, username: ${data.username}, password: ${data.password}, database: ${data.database}`);
+    } catch (e) {
+      const error = e as Error;
+      c.logger.error(`Connect mysql error!`, {
+        error: error.message,
+      })
+    }
   });
-
-  // connect to depker network
-  const network = await ctx.docker.depkerNetwork();
-  await network.connect({
-    Container: container.id,
-  });
-
-  // start container
-  await container.start();
-
-  ctx.logger.info("MySQL started!");
 };
 
 export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
@@ -107,28 +56,17 @@ export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
   }
 
   socket.on("mysql:list", async () => {
-    const conn = mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: config.password,
-    });
     try {
-      const [databases] = await conn
-        .promise()
-        .query<RowDataPacket[]>("SHOW DATABASES");
+      const data = await list(ctx);
+      if (!data) {
+        socket.emit("error", {
+          message: "MySQL plugin not enable, your must set mysql config",
+        });
+        return;
+      }
       socket.emit("ok", {
         message: "List mysql database success!",
-        databases: databases
-          .map((r) => r.Database)
-          .filter(
-            (db) =>
-              ![
-                "information_schema",
-                "performance_schema",
-                "mysql",
-                "sys",
-              ].includes(db)
-          ),
+        databases: data,
       });
     } catch (e) {
       const error = e as Error;
@@ -141,30 +79,17 @@ export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
   });
 
   socket.on("mysql:create", async (name) => {
-    const password = randomUUID().replaceAll("-", "");
-    const conn = mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: config.password,
-    });
-    // prettier-ignore
     try {
-      await conn.promise().query(`CREATE USER '${name}'@'%' IDENTIFIED BY '${password}'`);
-      await conn.promise().query(`FLUSH PRIVILEGES`);
-      await conn.promise().query(`CREATE DATABASE \`${name}\``);
-      await conn.promise().query(`GRANT ALL PRIVILEGES ON \`${name}\` . * TO '${name}'@'%'`);
-      await conn.promise().query(`FLUSH PRIVILEGES`);
-      // store mysql password to secret
-      const collection = ctx.database.getCollection("secrets");
-      collection.insert({
-        name: `MYSQL_${name}_PASSWORD`.toUpperCase(),
-        value: password,
-      });
+      const data = await create(name, ctx);
+      if (!data) {
+        socket.emit("error", {
+          message: "MySQL plugin not enable, your must set mysql config",
+        });
+        return;
+      }
       socket.emit("ok", {
         message: "Create mysql database and user success!",
-        username: name,
-        password: password,
-        database: name,
+        ...data,
       });
     } catch (e) {
       const error = e as Error;
@@ -172,31 +97,20 @@ export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
         message: "Connect mysql error!",
         error: error.message,
       });
-      return;
     }
   });
 
   socket.on("mysql:remove", async (name) => {
-    const conn = mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: config.password,
-    });
-    // prettier-ignore
     try {
-      await conn.promise().query(`DROP DATABASE \`${name}\``);
-      await conn.promise().query(`DROP USER \`${name}\``);
-      await conn.promise().query(`FLUSH PRIVILEGES`);
-      // remove mysql password from secret
-      const collection = ctx.database.getCollection("secrets");
-      const secret = collection.findOne({
-        name: `MYSQL_${name}_PASSWORD`.toUpperCase(),
-      });
-      if (secret) {
-        collection.remove(secret);
+      const data = await remove(name, ctx);
+      if (!data) {
+        socket.emit("error", {
+          message: "MySQL plugin not enable, your must set mysql config",
+        });
+        return;
       }
       socket.emit("ok", {
-        message: "Remove mysql database and user success!"
+        message: "Remove mysql database and user success!",
       });
     } catch (e) {
       const error = e as Error;
