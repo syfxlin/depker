@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import { join } from "path";
 import { readYml } from "../utils/yml";
 import { ClientConfig } from "../config/config";
+import { events } from "../events";
 
 export const unpack = (folder: string, stream: NodeJS.ReadableStream) => {
   return new Promise<void>((resolve, reject) => {
@@ -36,6 +37,8 @@ export const readConfig = (folder: string) => {
 };
 
 export const deploy = async (ctx: Ctx) => {
+  events.emit("pre-deploy", ctx);
+
   // find template
   const templates = await getTemplates();
   let template: DepkerTemplate | undefined;
@@ -71,4 +74,6 @@ export const deploy = async (ctx: Ctx) => {
 
   ctx.$logger.debug(`Application deployed: ${ctx.config.name}`);
   ctx.logger.info(`Application deployed: ${ctx.config.name}`);
+
+  events.emit("post-deploy", ctx);
 };

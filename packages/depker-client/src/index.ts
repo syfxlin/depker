@@ -9,6 +9,7 @@ export * from "./api/template";
 export * from "./api/dev";
 export * from "./api/version";
 export * from "./api/restore";
+export * from "./api/plugin";
 
 // error
 export { default as ClientError } from "./error/ClientError";
