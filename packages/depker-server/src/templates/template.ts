@@ -1,18 +1,8 @@
 import Ctx from "../docker/ctx";
 import { ClientConfig } from "../config/config";
 
-export default abstract class DepkerTemplate<
-  C extends ClientConfig = ClientConfig
-> {
-  protected ctx: Ctx<C>;
-
-  constructor(ctx: Ctx<C>) {
-    this.ctx = ctx;
-  }
-
-  public abstract get name(): string;
-
-  public abstract check(): Promise<boolean>;
-
-  public abstract execute(): Promise<void>;
-}
+export type DepkerTemplate<C extends ClientConfig = ClientConfig> = {
+  name: string;
+  check(ctx: Ctx<C>): Promise<boolean>;
+  execute(ctx: Ctx<C>): Promise<void>;
+};

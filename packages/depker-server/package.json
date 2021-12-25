@@ -9,6 +9,7 @@
   "bin": {
     "depker-server": "bin/depker-server.js"
   },
+  "types": "dist/src/export-types.d.ts",
   "scripts": {
     "dev": "nodemon --watch",
     "build": "tsc -p tsconfig.build.json"

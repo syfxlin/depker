@@ -1,19 +1,15 @@
-import DepkerTemplate from "../template";
+import { DepkerTemplate } from "../template";
 
-export default class DockerfileTemplate extends DepkerTemplate {
-  public get name(): string {
-    return "dockerfile";
-  }
+export const name: DepkerTemplate["name"] = "dockerfile";
 
-  public async check() {
-    return this.ctx.existsFile("Dockerfile");
-  }
+export const check: DepkerTemplate["check"] = async (ctx) => {
+  return ctx.existsFile("Dockerfile");
+};
 
-  public async execute() {
-    if (!(await this.check())) {
-      throw new Error("Build failed! Couldn't find Dockerfile!");
-    }
-    await this.ctx.build();
-    await this.ctx.start();
+export const execute: DepkerTemplate["execute"] = async (ctx) => {
+  if (!(await check(ctx))) {
+    throw new Error("Build failed! Couldn't find Dockerfile!");
   }
-}
+  await ctx.build();
+  await ctx.start();
+};

@@ -1,0 +1,23 @@
+{
+  "name": "@syfxlin/depker-template-nginx",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsup",
+    "watch": "tsup --watch"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "devDependencies": {
+    "@syfxlin/depker-server": "workspace:^1.0.3",
+    "tsup": "^5.11.7",
+    "typescript": "^4.5.4"
+  }
+}
