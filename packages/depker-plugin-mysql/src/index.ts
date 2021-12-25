@@ -2,6 +2,7 @@ import { DepkerPlugin } from "@syfxlin/depker-server";
 import { join } from "path";
 import mysql from "mysql2";
 import { RowDataPacket } from "mysql2/typings/mysql/lib/protocol/packets";
+import { randomUUID } from "crypto";
 
 export type MysqlPluginConfig = {
   name: string;
@@ -111,37 +112,85 @@ export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
       user: "root",
       password: config.password,
     });
-    conn.connect((err) => {
-      if (err) {
-        socket.emit("error", {
-          message: "Connect mysql error!",
-          error: err.message,
-        });
-        return;
-      }
-      conn.query("SHOW DATABASES;", (err, result: RowDataPacket[]) => {
-        if (err) {
-          socket.emit("error", {
-            message: "Connect mysql error!",
-            error: err.message,
-          });
-          return;
-        }
-        socket.emit("ok", {
-          message: "List mysql database success!",
-          databases: result
-            .map((r) => r.Database)
-            .filter(
-              (db) =>
-                ![
-                  "information_schema",
-                  "performance_schema",
-                  "mysql",
-                  "sys",
-                ].includes(db)
-            ),
-        });
+    try {
+      const [databases] = await conn
+        .promise()
+        .query<RowDataPacket[]>("SHOW DATABASES");
+      socket.emit("ok", {
+        message: "List mysql database success!",
+        databases: databases
+          .map((r) => r.Database)
+          .filter(
+            (db) =>
+              ![
+                "information_schema",
+                "performance_schema",
+                "mysql",
+                "sys",
+              ].includes(db)
+          ),
       });
+    } catch (e) {
+      const error = e as Error;
+      socket.emit("error", {
+        message: "Connect mysql error!",
+        error: error.message,
+      });
+      return;
+    }
+  });
+
+  socket.on("mysql:create", async (name) => {
+    const password = randomUUID().replaceAll("-", "");
+    const conn = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: config.password,
     });
+    // prettier-ignore
+    try {
+      await conn.promise().query(`CREATE USER '${name}'@'%' IDENTIFIED BY '${password}'`);
+      await conn.promise().query(`FLUSH PRIVILEGES`);
+      await conn.promise().query(`CREATE DATABASE \`${name}\``);
+      await conn.promise().query(`GRANT ALL PRIVILEGES ON \`${name}\` . * TO '${name}'@'%'`);
+      await conn.promise().query(`FLUSH PRIVILEGES`);
+      socket.emit("ok", {
+        message: "Create mysql database and user success!",
+        username: name,
+        password: password,
+        database: name,
+      });
+    } catch (e) {
+      const error = e as Error;
+      socket.emit("error", {
+        message: "Connect mysql error!",
+        error: error.message,
+      });
+      return;
+    }
+  });
+
+  socket.on("mysql:remove", async (name) => {
+    const conn = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: config.password,
+    });
+    // prettier-ignore
+    try {
+      await conn.promise().query(`DROP DATABASE \`${name}\``);
+      await conn.promise().query(`DROP USER \`${name}\``);
+      await conn.promise().query(`FLUSH PRIVILEGES`);
+      socket.emit("ok", {
+        message: "Remove mysql database and user success!"
+      });
+    } catch (e) {
+      const error = e as Error;
+      socket.emit("error", {
+        message: "Connect mysql error!",
+        error: error.message,
+      });
+      return;
+    }
   });
 };

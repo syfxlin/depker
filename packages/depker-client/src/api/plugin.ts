@@ -17,7 +17,7 @@ export const execPlugin = <R = any>({
   return new Promise<R>((resolve, reject) => {
     const socket = io(`${endpoint}/plugin`, { auth: { token } });
     socket.on("connect", () => {
-      socket.emit(command, args);
+      socket.emit(command, ...(args ?? []));
     });
     socket.on("ok", (res) => {
       resolve(res);
