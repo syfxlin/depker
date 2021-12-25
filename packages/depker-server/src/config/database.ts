@@ -17,7 +17,7 @@ export const database = new Loki(dir.database, {
 
 export const secret = (value: string) => {
   const collection = database.getCollection("secrets");
-  return value.replace(/\${(\w+)}/g, ($0, $1) => {
+  return value.replace(/\${([a-zA-Z0-9_-]+)}/g, ($0, $1) => {
     return collection.findOne({ name: $1 })?.value ?? $0;
   });
 };
