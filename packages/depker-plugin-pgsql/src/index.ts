@@ -1,19 +1,19 @@
 import type { Ctx, DepkerPlugin } from "@syfxlin/depker-server";
 import { initContainer } from "./docker";
-import { create, list, remove } from "./mysql";
+import { create, list, remove } from "./pgsql";
 
-export type MysqlPluginConfig = {
+export type PgsqlPluginConfig = {
   name: string;
   image: string;
   password: string;
 };
 
 export const register: DepkerPlugin["register"] = async (ctx) => {
-  ctx.logger.info("Initializing MySQL plugin...");
-  const config = ctx.config.mysql as MysqlPluginConfig;
+  ctx.logger.info("Initializing PostgreSQL plugin...");
+  const config = ctx.config.pgsql as PgsqlPluginConfig;
 
   if (!config) {
-    ctx.logger.info("No MySQL config, disable mysql plugin");
+    ctx.logger.info("No PostgreSQL config, disable pgsql plugin");
     return;
   }
 
@@ -22,23 +22,23 @@ export const register: DepkerPlugin["register"] = async (ctx) => {
 
   // set deploy listener
   ctx.events.on("pre-deploy", async (c: Ctx) => {
-    const config = ctx.config.mysql as MysqlPluginConfig;
-    const name = c.config.mysql as string;
+    const config = ctx.config.pgsql as PgsqlPluginConfig;
+    const name = c.config.pgsql as string;
     if (!name || !config) {
       return;
     }
 
     c.logger.info(
-      `Found the user-configured mysql ${name}, creating or skip(if created)`
+      `Found the user-configured pgsql ${name}, creating or skip(if created)`
     );
 
     // prettier-ignore
     try {
-      const data = await create(name, ctx) as { username: string, password: string, database: string };
+      const data = await create(name, ctx) as any as { username: string, password: string, database: string };
       c.logger.info(`Create or skip database success, username: ${data.username}, password: ${data.password}, database: ${data.database}`);
     } catch (e) {
       const error = e as Error;
-      c.logger.error(`Connect mysql error!`, {
+      c.logger.error(`Connect pgsql error!`, {
         error: error.message,
       })
     }
@@ -46,76 +46,76 @@ export const register: DepkerPlugin["register"] = async (ctx) => {
 };
 
 export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
-  const config = ctx.config.mysql as MysqlPluginConfig;
+  const config = ctx.config.pgsql as PgsqlPluginConfig;
 
   if (!config) {
     socket.emit("error", {
-      message: "MySQL plugin not enable, your must set mysql config",
+      message: "PostgreSQL plugin not enable, your must set pgsql config",
     });
     return;
   }
 
-  socket.on("mysql:list", async () => {
+  socket.on("pgsql:list", async () => {
     try {
       const data = await list(ctx);
       if (!data) {
         socket.emit("error", {
-          message: "MySQL plugin not enable, your must set mysql config",
+          message: "PostgreSQL plugin not enable, your must set pgsql config",
         });
         return;
       }
       socket.emit("ok", {
-        message: "List mysql database success!",
+        message: "List pgsql database success!",
         databases: data,
       });
     } catch (e) {
       const error = e as Error;
       socket.emit("error", {
-        message: "Connect mysql error!",
+        message: "Connect pgsql error!",
         error: error.message,
       });
       return;
     }
   });
 
-  socket.on("mysql:create", async (name) => {
+  socket.on("pgsql:create", async (name) => {
     try {
       const data = await create(name, ctx);
       if (!data) {
         socket.emit("error", {
-          message: "MySQL plugin not enable, your must set mysql config",
+          message: "PostgreSQL plugin not enable, your must set pgsql config",
         });
         return;
       }
       socket.emit("ok", {
-        message: "Create mysql database and user success!",
+        message: "Create pgsql database and user success!",
         ...data,
       });
     } catch (e) {
       const error = e as Error;
       socket.emit("error", {
-        message: "Connect mysql error!",
+        message: "Connect pgsql error!",
         error: error.message,
       });
     }
   });
 
-  socket.on("mysql:remove", async (name) => {
+  socket.on("pgsql:remove", async (name) => {
     try {
       const data = await remove(name, ctx);
       if (!data) {
         socket.emit("error", {
-          message: "MySQL plugin not enable, your must set mysql config",
+          message: "PostgreSQL plugin not enable, your must set pgsql config",
         });
         return;
       }
       socket.emit("ok", {
-        message: "Remove mysql database and user success!",
+        message: "Remove pgsql database and user success!",
       });
     } catch (e) {
       const error = e as Error;
       socket.emit("error", {
-        message: "Connect mysql error!",
+        message: "Connect pgsql error!",
         error: error.message,
       });
       return;
