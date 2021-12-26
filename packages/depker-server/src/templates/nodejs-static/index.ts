@@ -103,6 +103,7 @@ export const execute: DepkerTemplate<NodejsStaticConfig>["execute"] = async (
     # copy project
     WORKDIR /app
     COPY --chown=nginx:nginx --from=builder /app/${root} ./${root}
+    RUN chmod 755 -R ./${root}
     
     # inject
     ${$inject(ctx.config.nginx?.inject)}
