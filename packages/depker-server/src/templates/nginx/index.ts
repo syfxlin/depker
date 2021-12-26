@@ -36,6 +36,7 @@ export const execute: DepkerTemplate<NginxConfig>["execute"] = async (ctx) => {
     # copy project
     WORKDIR /app
     COPY --chown=nginx:nginx ./${root} ./${root}
+    RUN chmod 755 -R ./${root}
     
     # inject
     ${$inject(ctx.config.nginx?.inject)}
