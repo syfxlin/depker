@@ -1,6 +1,6 @@
 {
   "name": "@syfxlin/depker-plugin-pgsql",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "scripts": {
     "build": "tsup",
     "watch": "tsup --watch"

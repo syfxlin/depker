@@ -1,6 +1,6 @@
 import { DepkerTemplate } from "../template";
 import { PHPFpmConfig } from "./types";
-import { $choose, $if, $inject, $version } from "../../utils/template";
+import { $if, $inject, $version } from "../../utils/template";
 import fs from "fs-extra";
 import { join } from "path";
 import { nginxConf } from "./nginx.conf";
@@ -42,6 +42,7 @@ export const execute: DepkerTemplate<PHPFpmConfig>["execute"] = async (ctx) => {
   const dockerfile = `
     # from php
     FROM php:${version.right}fpm-alpine
+    RUN apk add --no-cache shadow && usermod -u 1000 www-data && groupmod -g 1000 www-data
     
     # install nginx
     COPY --from=nginx:${nginxVersion.right}alpine /etc/nginx /etc/nginx
@@ -101,7 +102,7 @@ export const execute: DepkerTemplate<PHPFpmConfig>["execute"] = async (ctx) => {
     
     # copy project
     COPY --chown=www-data:www-data . .
-    RUN chmod 755 ./${$choose(ctx.config.nginx?.root, "public")}
+    RUN chmod 755 -R .
     
     # run composer postcopy
     ${$if(composerJson, `
