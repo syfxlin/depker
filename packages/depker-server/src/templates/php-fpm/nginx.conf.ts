@@ -90,7 +90,7 @@ http {
     
     ${$if(!config.nginx?.disable_try, `
       location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ /index.php$is_args$args;
       }
     `)}
     
