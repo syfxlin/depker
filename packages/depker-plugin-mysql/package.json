@@ -1,6 +1,6 @@
 {
   "name": "@syfxlin/depker-plugin-mysql",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "scripts": {
     "build": "tsup",
     "watch": "tsup --watch"
