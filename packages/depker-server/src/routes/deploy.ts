@@ -51,6 +51,7 @@ export const deploy: SocketIOFn = (io) => {
           });
         } finally {
           await fs.remove(folder);
+          await fs.remove(tar);
           socket.emit("end");
         }
       });

@@ -62,13 +62,13 @@ export const execute: DepkerTemplate<NodejsStaticConfig>["execute"] = async (
     # install node modules
     ${$if(packageType === "pnpm", `
       RUN npm i -g pnpm
-      RUN pnpm install --prod --frozen-lockfile
+      RUN pnpm install --frozen-lockfile
     `)}
     ${$if(packageType === "yarn", `
-      RUN yarn install --production --frozen-lockfile && yarn cache clean
+      RUN yarn install --frozen-lockfile && yarn cache clean
     `)}
     ${$if(packageType === "npm", `
-      RUN npm ${ctx.existsFile("package-lock.json") ? "ci" : "install"} --only=production && npm cache clean --force
+      RUN npm ${ctx.existsFile("package-lock.json") ? "ci" : "install"} && npm cache clean --force
     `)}
 
     # copy project
