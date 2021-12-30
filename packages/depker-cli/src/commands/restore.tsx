@@ -1,6 +1,5 @@
 import { CacFn } from "../types";
 import React, { useState } from "react";
-import { Socket } from "socket.io-client";
 import { useEndFn } from "../hooks/use-end";
 import { Logger } from "../components/Logger";
 import { Newline, Text } from "ink";
@@ -11,6 +10,7 @@ import { Loading } from "../components/Loading";
 import { config } from "../config/config";
 import { render } from "../utils/ink";
 import { restore, restoreAll } from "@syfxlin/depker-client";
+import parser from "stream-json/jsonl/Parser";
 
 const colors = {
   info: "blue",
@@ -19,16 +19,16 @@ const colors = {
   error: "red",
 };
 
-const Restore: React.FC<{ socket: Socket; verbose: boolean }> = ({
-  socket,
-  verbose,
-}) => {
+const Restore: React.FC<{
+  stream: NodeJS.ReadableStream;
+  verbose: boolean;
+}> = ({ stream, verbose }) => {
   const end = useEndFn();
   const [restoring, setRestoring] = useState(true);
   return (
     <>
       <Logger
-        socket={socket}
+        stream={stream}
         onEnd={() => {
           setRestoring(false);
           end();
@@ -89,22 +89,32 @@ export const restoreCmd: CacFn = (cli) => {
     .command("restore:app <name>", "Restore your app to depker")
     .alias("restore")
     .option("-v, --verbose", "Show verbose log")
-    .action((name, options) => {
-      const socket = restore({
+    .action(async (name, options) => {
+      const request = await restore({
         endpoint: config.endpoint,
         token: config.token as string,
         name,
       });
-      render(<Restore socket={socket} verbose={options.verbose} />);
+      render(
+        <Restore
+          stream={request.pipe(parser.parser())}
+          verbose={options.verbose}
+        />
+      );
     });
   cli
     .command("restore:all", "Restore your all apps to depker")
     .option("-v, --verbose", "Show verbose log")
-    .action((options) => {
-      const socket = restoreAll({
+    .action(async (options) => {
+      const request = await restoreAll({
         endpoint: config.endpoint,
         token: config.token as string,
       });
-      render(<Restore socket={socket} verbose={options.verbose} />);
+      render(
+        <Restore
+          stream={request.pipe(parser.parser())}
+          verbose={options.verbose}
+        />
+      );
     });
 };

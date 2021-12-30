@@ -3,7 +3,6 @@ import { render } from "../utils/ink";
 import React, { useState } from "react";
 import { deploy, deployTar } from "@syfxlin/depker-client";
 import { config } from "../config/config";
-import { Socket } from "socket.io-client";
 import { Logger } from "../components/Logger";
 import { join, resolve } from "path";
 import { Newline, Text } from "ink";
@@ -16,6 +15,7 @@ import fs from "fs-extra";
 import gitP from "simple-git";
 import { dir } from "../config/dir";
 import { randomUUID } from "crypto";
+import parser from "stream-json/jsonl/Parser";
 
 const colors = {
   info: "blue",
@@ -24,8 +24,8 @@ const colors = {
   error: "red",
 };
 
-const Deploy: React.FC<{ socket: Socket; verbose: boolean }> = ({
-  socket,
+const Deploy: React.FC<{ stream: NodeJS.ReadableStream; verbose: boolean }> = ({
+  stream,
   verbose,
 }) => {
   const end = useEndFn();
@@ -33,7 +33,7 @@ const Deploy: React.FC<{ socket: Socket; verbose: boolean }> = ({
   return (
     <>
       <Logger
-        socket={socket}
+        stream={stream}
         onEnd={() => {
           setDeploying(false);
           end();
@@ -94,13 +94,18 @@ export const deployCmd: CacFn = (cli) => {
     .command("deploy:local [folder]", "Deploy your app to depker")
     .alias("deploy")
     .option("-v, --verbose", "Show verbose log")
-    .action((folder, options) => {
-      const socket = deploy({
+    .action(async (folder, options) => {
+      const request = await deploy({
         endpoint: config.endpoint,
         token: config.token as string,
         folder: resolve(folder || process.cwd()),
       });
-      render(<Deploy socket={socket} verbose={options.verbose} />);
+      render(
+        <Deploy
+          stream={request.pipe(parser.parser())}
+          verbose={options.verbose}
+        />
+      );
     });
   // deploy by tar file
   cli
@@ -110,13 +115,18 @@ export const deployCmd: CacFn = (cli) => {
     )
     .alias("deploy:tar")
     .option("-v, --verbose", "Show verbose log")
-    .action((file, options) => {
-      const socket = deployTar({
+    .action(async (file, options) => {
+      const request = await deployTar({
         endpoint: config.endpoint,
         token: config.token as string,
         tar: fs.createReadStream(resolve(file)),
       });
-      render(<Deploy socket={socket} verbose={options.verbose} />);
+      render(
+        <Deploy
+          stream={request.pipe(parser.parser())}
+          verbose={options.verbose}
+        />
+      );
     });
   // deploy by git
   cli
@@ -127,15 +137,21 @@ export const deployCmd: CacFn = (cli) => {
       const git = gitP();
       const folder = join(dir.deploying, `git-${randomUUID()}`);
       await git.clone(repo, folder);
-      const socket = deploy({
+      const request = await deploy({
         endpoint: config.endpoint,
         token: config.token as string,
         folder,
       });
-      render(<Deploy socket={socket} verbose={options.verbose} />, {
-        exit: async () => {
-          await fs.remove(folder);
-        },
-      });
+      render(
+        <Deploy
+          stream={request.pipe(parser.parser())}
+          verbose={options.verbose}
+        />,
+        {
+          exit: async () => {
+            await fs.remove(folder);
+          },
+        }
+      );
     });
 };

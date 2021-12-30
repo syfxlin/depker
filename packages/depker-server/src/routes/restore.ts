@@ -1,21 +1,17 @@
-import { SocketIOFn } from "../types";
-import { auth } from "../io/auth";
+import { KoaFn } from "../types";
 import { join } from "path";
 import { dir } from "../config/dir";
 import fs from "fs-extra";
 import { randomUUID } from "crypto";
 import { deploy as $deploy, readConfig, unpack } from "../docker/deploy";
 import Ctx from "../docker/ctx";
-import { Socket } from "socket.io";
+import { log } from "../logger/client";
+import { responseStream } from "../middleware/stream";
+import { Writable } from "stream";
+import { auth } from "../middleware/auth";
 
-const $restore = async (name: string, socket: Socket) => {
+const $restore = async (name: string, output: Writable) => {
   const tar = join(dir.histories, `${name}.tar`);
-  if (!(await fs.pathExists(tar))) {
-    socket.emit("error", {
-      message: `App ${name} not found!`,
-    });
-    return;
-  }
   // folder
   const folder = join(dir.deploying, `deploy-${randomUUID()}`);
   // unpack
@@ -23,25 +19,25 @@ const $restore = async (name: string, socket: Socket) => {
   // config
   const config = readConfig(folder);
   // ctx
-  const ctx = new Ctx({
+  const $ctx = new Ctx({
     folder,
     config,
-    socket,
+    logger: log(output),
   });
 
   // log
-  ctx.$logger.debug(`Restoring with name: ${config.name}`);
-  ctx.logger.info(`Restoring with name: ${config.name}`);
+  $ctx.$logger.debug(`Restoring with name: ${config.name}`);
+  $ctx.logger.info(`Restoring with name: ${config.name}`);
 
   // deploy
   try {
-    await $deploy(ctx);
+    await $deploy($ctx);
   } catch (e) {
     const error = e as Error;
-    ctx.$logger.error(`Deploy error with name: ${config.name}`, {
+    $ctx.$logger.error(`Deploy error with name: ${config.name}`, {
       error: error.message,
     });
-    ctx.logger.error(`Deploy error with name: ${config.name}`, {
+    $ctx.logger.error(`Deploy error with name: ${config.name}`, {
       error: error.message,
     });
   } finally {
@@ -49,28 +45,28 @@ const $restore = async (name: string, socket: Socket) => {
   }
 };
 
-export const restore: SocketIOFn = (io) => {
-  io.of("/restore")
-    .use(auth)
-    .on("connection", (socket) => {
-      // restore
-      socket.on("restore", async (name: string) => {
-        try {
-          await $restore(name, socket);
-        } finally {
-          socket.emit("end");
-        }
-      });
-      // restore all
-      socket.on("all", async () => {
+export const restore: KoaFn = (router) => {
+  router.post("/restore/:name", auth, async (ctx) => {
+    const name = ctx.params.name;
+    const output = responseStream(ctx, true);
+    try {
+      if (name === "all") {
         const tars = await fs.readdir(dir.histories);
-        try {
-          for (const tar of tars) {
-            await $restore(tar.replace(".tar", ""), socket);
-          }
-        } finally {
-          socket.emit("end");
+        for (const tar of tars) {
+          await $restore(tar.replace(".tar", ""), output);
         }
-      });
-    });
+      } else {
+        if (!(await fs.pathExists(join(dir.histories, `${name}.tar`)))) {
+          ctx.status = 404;
+          ctx.body = {
+            message: `App ${name} not found!`,
+          };
+          return;
+        }
+        await $restore(name, output);
+      }
+    } finally {
+      output.end();
+    }
+  });
 };

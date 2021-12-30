@@ -1,6 +1,6 @@
 import Dockerode from "dockerode";
 import { config } from "../config/config";
-import { $logger } from "../logger/server";
+import { logger } from "../logger/server";
 
 export class Docker extends Dockerode {
   public async initNetwork(name: string) {
@@ -10,7 +10,7 @@ export class Docker extends Dockerode {
     if (info) {
       network = await docker.getNetwork(info.Id);
     } else {
-      $logger.info(`Docker network ${name} does not exists, creating...`);
+      logger.info(`Docker network ${name} does not exists, creating...`);
       network = await docker.createNetwork({
         Name: name,
         Driver: "bridge",

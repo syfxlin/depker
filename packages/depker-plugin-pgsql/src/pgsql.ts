@@ -24,8 +24,8 @@ export const create = async (name: string, ctx: PluginCtx) => {
     user: "postgres",
     password: config.password
   });
+  await client.connect();
   try {
-    await client.connect();
     await client.query(`
       DO
       $do$
@@ -41,16 +41,17 @@ export const create = async (name: string, ctx: PluginCtx) => {
       await client.query(`CREATE DATABASE ${name};`);
     }
     await client.query(`GRANT ALL ON DATABASE ${name} TO ${name};`)
-  } catch (e) {
+  } finally {
     await client.end();
-    throw e;
   }
 
   // store password
-  collection.insert({
-    name: secret,
-    value: password,
-  });
+  if (!collection.findOne({ name: secret })) {
+    collection.insert({
+      name: secret,
+      value: password,
+    });
+  }
 
   return {
     username: name,
@@ -71,13 +72,12 @@ export const remove = async (name: string, ctx: PluginCtx) => {
     user: "postgres",
     password: config.password
   });
+  await client.connect();
   try {
-    await client.connect();
     await client.query(`DROP DATABASE IF EXISTS ${name};`);
     await client.query(`DROP USER IF EXISTS ${name};`);
-  } catch (e) {
+  } finally {
     await client.end();
-    throw e;
   }
 
   // remove pgsql password from secret
@@ -101,14 +101,13 @@ export const list = async (ctx: PluginCtx) => {
     user: "postgres",
     password: "123456",
   });
+  await client.connect();
   try {
-    await client.connect();
     const result = await client.query(`SELECT datname FROM pg_database;`);
     return result.rows
       .map((r) => r.datname)
       .filter((db) => !["postgres", "template0", "template1"].includes(db)) as string[];
-  } catch (e) {
+  } finally {
     await client.end();
-    throw e;
   }
 };

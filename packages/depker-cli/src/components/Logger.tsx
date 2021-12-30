@@ -1,9 +1,8 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
 import { Static } from "ink";
 
 export type LoggerProps = {
-  socket: Socket;
+  stream: NodeJS.ReadableStream;
   onData?: (data: LoggerData) => void;
   onEnd?: () => void;
   children: (item: LoggerData, index: number) => ReactNode;
@@ -16,31 +15,21 @@ export type LoggerData = {
 };
 
 export const Logger: React.FC<LoggerProps> = ({
-  socket,
+  stream,
   onData,
   onEnd,
   children,
 }) => {
   const [items, setItems] = useState<LoggerData[]>([]);
   useEffect(() => {
-    socket.on("connect_error", (err) => {
-      const data: LoggerData = {
-        level: "error",
-        message: "Connect error!",
-        error: err.message,
-      };
-      setItems((items) => [...items, data]);
-      onData?.(data);
-      onEnd?.();
-    });
-    socket.on("log", (data) => {
-      setItems((items) => [...items, data]);
+    stream.on("data", (data) => {
+      setItems((items) => [...items, data.value]);
       onData?.(data);
     });
-    socket.on("end", () => {
+    stream.on("end", () => {
       onEnd?.();
     });
-  }, [socket]);
+  }, [stream]);
 
   return <Static items={items}>{children}</Static>;
 };

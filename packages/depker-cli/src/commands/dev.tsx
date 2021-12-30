@@ -62,14 +62,14 @@ export const devCmd: CacFn = (cli) => {
     .command("dev:logs <name>", "Get container logs in app")
     .option("-f, --follow", "Keep connection after returning logs")
     .action(async (name, options) => {
-      const { stream } = await logs({
+      const request = await logs({
         endpoint: config.endpoint,
         token: config.token as string,
         name,
         follow: options.follow,
       });
-      stream.pipe(process.stdout);
-      stream.on("end", () => {
+      request.pipe(process.stdout);
+      request.on("end", () => {
         process.exit();
       });
     });

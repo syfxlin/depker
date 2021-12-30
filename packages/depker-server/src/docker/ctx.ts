@@ -9,16 +9,15 @@ import { pack } from "tar-fs";
 import { secret } from "../config/database";
 import { dir } from "../config/dir";
 import { join } from "path";
-import { logger } from "../logger/client";
-import { $logger } from "../logger/server";
+import { log } from "../logger/client";
+import { logger } from "../logger/server";
 import { Logger } from "pino";
-import { Socket } from "socket.io";
 import fs from "fs-extra";
 
 export type CtxProps<C extends ClientConfig = ClientConfig> = {
   folder: string;
   config: C;
-  socket: Socket;
+  logger: ReturnType<typeof log>;
 };
 
 export type PullData = {
@@ -81,20 +80,18 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
     process.env.NODE_ENV === "testing" ? 0 : 10_000;
   public readonly config: C;
   public readonly $config: ServerConfig;
-  public readonly socket: Socket;
   public readonly folder: string;
   public readonly docker: Docker;
-  public readonly logger: ReturnType<typeof logger>;
+  public readonly logger: ReturnType<typeof log>;
   public readonly $logger: Logger;
 
   constructor(props: CtxProps<C>) {
     this.config = props.config;
-    this.$config = config;
-    this.socket = props.socket;
     this.folder = props.folder;
+    this.logger = props.logger;
+    this.$config = config;
     this.docker = docker;
-    this.logger = logger(props.socket);
-    this.$logger = $logger;
+    this.$logger = logger;
   }
 
   public network(name: string) {

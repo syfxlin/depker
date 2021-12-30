@@ -8,6 +8,8 @@ export type MysqlPluginConfig = {
   password: string;
 };
 
+export const name: DepkerPlugin["name"] = "mysql";
+
 export const register: DepkerPlugin["register"] = async (ctx) => {
   ctx.logger.info("Initializing MySQL plugin...");
   const config = ctx.config.mysql as MysqlPluginConfig;
@@ -45,80 +47,98 @@ export const register: DepkerPlugin["register"] = async (ctx) => {
   });
 };
 
-export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
+export const routes: DepkerPlugin["routes"] = async (ctx, koa) => {
   const config = ctx.config.mysql as MysqlPluginConfig;
 
   if (!config) {
-    socket.emit("error", {
+    koa.status = 500;
+    koa.body = {
       message: "MySQL plugin not enable, your must set mysql config",
-    });
+    };
     return;
   }
 
-  socket.on("mysql:list", async () => {
+  const command = koa.request.body.command;
+
+  // list
+  if (command === "list") {
     try {
       const data = await list(ctx);
       if (!data) {
-        socket.emit("error", {
+        koa.status = 500;
+        koa.body = {
           message: "MySQL plugin not enable, your must set mysql config",
-        });
+        };
         return;
       }
-      socket.emit("ok", {
+      koa.status = 200;
+      koa.body = {
         message: "List mysql database success!",
         databases: data,
-      });
+      };
     } catch (e) {
       const error = e as Error;
-      socket.emit("error", {
+      koa.status = 500;
+      koa.body = {
         message: "Connect mysql error!",
         error: error.message,
-      });
-      return;
+      };
     }
-  });
+    return;
+  }
 
-  socket.on("mysql:create", async (name) => {
+  // create
+  if (command === "create") {
+    const [name] = koa.request.body.args as string[];
     try {
       const data = await create(name, ctx);
       if (!data) {
-        socket.emit("error", {
+        koa.status = 500;
+        koa.body = {
           message: "MySQL plugin not enable, your must set mysql config",
-        });
+        };
         return;
       }
-      socket.emit("ok", {
+      koa.status = 200;
+      koa.body = {
         message: "Create mysql database and user success!",
         ...data,
-      });
+      };
     } catch (e) {
       const error = e as Error;
-      socket.emit("error", {
+      koa.status = 500;
+      koa.body = {
         message: "Connect mysql error!",
         error: error.message,
-      });
+      };
     }
-  });
+    return;
+  }
 
-  socket.on("mysql:remove", async (name) => {
+  // remove
+  if (command === "remove") {
+    const [name] = koa.request.body.args as string[];
     try {
       const data = await remove(name, ctx);
       if (!data) {
-        socket.emit("error", {
+        koa.status = 500;
+        koa.body = {
           message: "MySQL plugin not enable, your must set mysql config",
-        });
+        };
         return;
       }
-      socket.emit("ok", {
+      koa.status = 200;
+      koa.body = {
         message: "Remove mysql database and user success!",
-      });
+      };
     } catch (e) {
       const error = e as Error;
-      socket.emit("error", {
+      koa.status = 500;
+      koa.body = {
         message: "Connect mysql error!",
         error: error.message,
-      });
-      return;
+      };
     }
-  });
+    return;
+  }
 };

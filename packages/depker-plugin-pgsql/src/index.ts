@@ -8,6 +8,8 @@ export type PgsqlPluginConfig = {
   password: string;
 };
 
+export const name: DepkerPlugin["name"] = "mysql";
+
 export const register: DepkerPlugin["register"] = async (ctx) => {
   ctx.logger.info("Initializing PostgreSQL plugin...");
   const config = ctx.config.pgsql as PgsqlPluginConfig;
@@ -45,80 +47,98 @@ export const register: DepkerPlugin["register"] = async (ctx) => {
   });
 };
 
-export const routes: DepkerPlugin["routes"] = async (socket, ctx) => {
+export const routes: DepkerPlugin["routes"] = async (ctx, koa) => {
   const config = ctx.config.pgsql as PgsqlPluginConfig;
 
   if (!config) {
-    socket.emit("error", {
+    koa.status = 500;
+    koa.body = {
       message: "PostgreSQL plugin not enable, your must set pgsql config",
-    });
+    };
     return;
   }
 
-  socket.on("pgsql:list", async () => {
+  const command = koa.request.body.command;
+
+  // list
+  if (command === "list") {
     try {
       const data = await list(ctx);
       if (!data) {
-        socket.emit("error", {
+        koa.status = 500;
+        koa.body = {
           message: "PostgreSQL plugin not enable, your must set pgsql config",
-        });
+        };
         return;
       }
-      socket.emit("ok", {
+      koa.status = 200;
+      koa.body = {
         message: "List pgsql database success!",
         databases: data,
-      });
+      };
     } catch (e) {
       const error = e as Error;
-      socket.emit("error", {
+      koa.status = 500;
+      koa.body = {
         message: "Connect pgsql error!",
         error: error.message,
-      });
-      return;
+      };
     }
-  });
+    return;
+  }
 
-  socket.on("pgsql:create", async (name) => {
+  // create
+  if (command === "create") {
+    const [name] = koa.request.body.args as string[];
     try {
       const data = await create(name, ctx);
       if (!data) {
-        socket.emit("error", {
+        koa.status = 500;
+        koa.body = {
           message: "PostgreSQL plugin not enable, your must set pgsql config",
-        });
+        };
         return;
       }
-      socket.emit("ok", {
+      koa.status = 200;
+      koa.body = {
         message: "Create pgsql database and user success!",
         ...data,
-      });
+      };
     } catch (e) {
       const error = e as Error;
-      socket.emit("error", {
+      koa.status = 500;
+      koa.body = {
         message: "Connect pgsql error!",
         error: error.message,
-      });
+      };
     }
-  });
+    return;
+  }
 
-  socket.on("pgsql:remove", async (name) => {
+  // remove
+  if (command === "remove") {
+    const [name] = koa.request.body.args as string[];
     try {
       const data = await remove(name, ctx);
       if (!data) {
-        socket.emit("error", {
+        koa.status = 500;
+        koa.body = {
           message: "PostgreSQL plugin not enable, your must set pgsql config",
-        });
+        };
         return;
       }
-      socket.emit("ok", {
+      koa.status = 200;
+      koa.body = {
         message: "Remove pgsql database and user success!",
-      });
+      };
     } catch (e) {
       const error = e as Error;
-      socket.emit("error", {
+      koa.status = 500;
+      koa.body = {
         message: "Connect pgsql error!",
         error: error.message,
-      });
-      return;
+      };
     }
-  });
+    return;
+  }
 };

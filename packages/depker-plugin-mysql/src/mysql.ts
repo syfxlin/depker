@@ -24,17 +24,23 @@ export const create = async (name: string, ctx: PluginCtx) => {
     user: "root",
     password: config.password,
   });
-  await conn.promise().query(`CREATE USER IF NOT EXISTS '${name}'@'%' IDENTIFIED BY '${password}'`)
-  await conn.promise().query(`FLUSH PRIVILEGES`);
-  await conn.promise().query(`CREATE DATABASE IF NOT EXISTS \`${name}\``);
-  await conn.promise().query(`GRANT ALL PRIVILEGES ON \`${name}\` . * TO '${name}'@'%'`);
-  await conn.promise().query(`FLUSH PRIVILEGES`);
+  try {
+    await conn.promise().query(`CREATE USER IF NOT EXISTS '${name}'@'%' IDENTIFIED BY '${password}'`)
+    await conn.promise().query(`FLUSH PRIVILEGES`);
+    await conn.promise().query(`CREATE DATABASE IF NOT EXISTS \`${name}\``);
+    await conn.promise().query(`GRANT ALL PRIVILEGES ON \`${name}\` . * TO '${name}'@'%'`);
+    await conn.promise().query(`FLUSH PRIVILEGES`);
+  } finally {
+    conn.end()
+  }
 
   // store password
-  collection.insert({
-    name: secret,
-    value: password,
-  });
+  if (!collection.findOne({ name: secret })) {
+    collection.insert({
+      name: secret,
+      value: password,
+    });
+  }
 
   return {
     username: name,
@@ -55,10 +61,13 @@ export const remove = async (name: string, ctx: PluginCtx) => {
     user: "root",
     password: config.password,
   });
-
-  await conn.promise().query(`DROP DATABASE IF EXISTS \`${name}\``);
-  await conn.promise().query(`DROP USER IF EXISTS \`${name}\``);
-  await conn.promise().query(`FLUSH PRIVILEGES`);
+  try {
+    await conn.promise().query(`DROP DATABASE IF EXISTS \`${name}\``);
+    await conn.promise().query(`DROP USER IF EXISTS \`${name}\``);
+    await conn.promise().query(`FLUSH PRIVILEGES`);
+  } finally {
+    conn.end();
+  }
 
   // remove mysql password from secret
   const collection = ctx.database.getCollection("secrets");
@@ -82,16 +91,20 @@ export const list = async (ctx: PluginCtx) => {
     user: "root",
     password: config.password,
   });
-  const [databases] = await conn.promise().query<RowDataPacket[]>("SHOW DATABASES");
-  return databases
-    .map((r) => r.Database)
-    .filter(
-      (db) =>
-        ![
-          "information_schema",
-          "performance_schema",
-          "mysql",
-          "sys",
-        ].includes(db)
-    ) as string[];
+  try { 
+    const [databases] = await conn.promise().query<RowDataPacket[]>("SHOW DATABASES");
+    return databases
+      .map((r) => r.Database)
+      .filter(
+        (db) =>
+          ![
+            "information_schema",
+            "performance_schema",
+            "mysql",
+            "sys",
+          ].includes(db)
+      ) as string[];
+  } finally {
+    conn.end();
+  }
 }

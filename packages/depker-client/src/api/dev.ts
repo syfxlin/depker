@@ -1,7 +1,5 @@
-import { io } from "socket.io-client";
-// @ts-ignore
-import ss from "@sap_oss/node-socketio-stream";
 import ServerError from "../error/ServerError";
+import got from "got";
 
 export type ExecProps = {
   endpoint: string;
@@ -24,7 +22,7 @@ export type PruneProps = {
   token: string;
 };
 
-export const exec = ({
+export const exec = async ({
   endpoint,
   token,
   name,
@@ -32,88 +30,63 @@ export const exec = ({
   stdin,
   stdout,
 }: ExecProps) => {
-  return new Promise<void>((resolve, reject) => {
-    const socket = io(`${endpoint}/dev`, { auth: { token } });
-
-    // exit
-    socket.on("exit", () => {
-      stdout.end();
-      resolve();
-    });
-    // error
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    // connect_error
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-
-    const $stdin = ss.createStream();
-    const $stdout = ss.createStream();
-    $stdout.pipe(stdout);
-    stdin.pipe($stdin);
-    ss(socket).emit("exec", name, command, $stdin, $stdout);
-  });
+  // return new Promise<void>((resolve, reject) => {
+  //   const socket = io(`${endpoint}/dev`, { auth: { token } });
+  //
+  //   // exit
+  //   socket.on("exit", () => {
+  //     stdout.end();
+  //     resolve();
+  //   });
+  //   // error
+  //   socket.on("error", (res) => {
+  //     reject(
+  //       new ServerError(
+  //         res.message,
+  //         res.error ? new Error(res.error) : undefined
+  //       )
+  //     );
+  //   });
+  //   // connect_error
+  //   socket.on("connect_error", (err) => {
+  //     reject(new ServerError("Connect error!", err));
+  //   });
+  //
+  //   const $stdin = ss.createStream();
+  //   const $stdout = ss.createStream();
+  //   $stdout.pipe(stdout);
+  //   stdin.pipe($stdin);
+  //   ss(socket).emit("exec", name, command, $stdin, $stdout);
+  // });
 };
 
-export const logs = ({ endpoint, token, name, follow }: LogsProps) => {
-  return new Promise<{
-    message: string;
-    stream: NodeJS.ReadableStream;
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/dev`, { auth: { token } });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-    ss(socket).on("ok", (res: any, stream: NodeJS.ReadableStream) => {
-      resolve({
-        message: res.message,
-        stream,
-      });
-    });
-    socket.emit("logs", name, follow);
-  });
-};
-
-export const prune = ({ endpoint, token }: PruneProps) => {
-  return new Promise<{
-    message: string;
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/dev`, {
-      auth: {
-        token,
+export const logs = async ({ endpoint, token, name, follow }: LogsProps) => {
+  try {
+    return await got.stream.get(`${endpoint}/logs/${name}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      searchParams: {
+        follow,
       },
     });
-    socket.on("connect", () => {
-      socket.emit("prune");
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
+};
+
+export const prune = async ({ endpoint, token }: PruneProps) => {
+  try {
+    return await got
+      .post(`${endpoint}/prune`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };

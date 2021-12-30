@@ -1,6 +1,6 @@
 ## undone
 
-- not something
+- dev:logs 404 友好提示
 
 ## done
 

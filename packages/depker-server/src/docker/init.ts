@@ -1,9 +1,9 @@
 import { initTraefik } from "./traefik";
-import { $logger } from "../logger/server";
+import { logger } from "../logger/server";
 import { docker } from "./api";
 
 export const initDocker = async () => {
-  $logger.info("Initializing docker services...");
+  logger.info("Initializing docker services...");
 
   // init network
   await docker.depkerNetwork();
