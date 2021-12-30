@@ -1,5 +1,5 @@
 // api
-export * from "./api/auth";
+export * from "./api/login";
 export * from "./api/token";
 export * from "./api/secret";
 export * from "./api/deploy";

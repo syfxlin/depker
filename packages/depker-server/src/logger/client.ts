@@ -1,8 +1,8 @@
-import { Socket } from "socket.io";
+import { Writable } from "stream";
 
-export const logger = (socket: Socket) => {
-  const info = (message?: string, data?: any) => {
-    socket.emit("log", {
+export const log = (stream: Writable) => {
+  const info = (message?: any, data?: any) => {
+    stream.write({
       level: "info",
       message,
       ...data,
@@ -10,7 +10,7 @@ export const logger = (socket: Socket) => {
   };
 
   const warn = (message?: string, data?: any) => {
-    socket.emit("log", {
+    stream.write({
       level: "warn",
       message,
       ...data,
@@ -18,7 +18,7 @@ export const logger = (socket: Socket) => {
   };
 
   const error = (message?: string, data?: any) => {
-    socket.emit("log", {
+    stream.write({
       level: "error",
       message,
       ...data,
@@ -26,7 +26,7 @@ export const logger = (socket: Socket) => {
   };
 
   const verbose = (message?: string, data?: any) => {
-    socket.emit("log", {
+    stream.write({
       level: "verbose",
       message,
       ...data,

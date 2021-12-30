@@ -18,14 +18,16 @@ import { render } from "../utils/ink";
 import { Icon } from "../components/Icon";
 import { Bold } from "../components/Bold";
 
-export const ExecPlugin: React.FC<{ command: string; args: string[] }> = ({
-  command,
-  args,
-}) => {
+export const ExecPlugin: React.FC<{
+  name: string;
+  command: string;
+  args: string[];
+}> = ({ name, command, args }) => {
   const state = useAsync(() =>
     execPlugin({
       endpoint: config.endpoint,
       token: config.token as string,
+      name,
       command,
       args,
     })
@@ -153,10 +155,11 @@ export const RemovePlugin: React.FC<{ name: string }> = ({ name }) => {
 export const pluginCmd: CacFn = (cli) => {
   // exec
   cli
-    .command("plugin:exec <command> [...args]", "Exec plugin command")
+    .command("plugin:exec <cmd> [...args]", "Exec plugin command")
     .alias("plugin")
-    .action(async (command, args) => {
-      render(<ExecPlugin command={command} args={args} />);
+    .action(async (cmd, args) => {
+      const [name, command] = cmd.split(":");
+      render(<ExecPlugin name={name} command={command} args={args} />);
     });
   // list
   cli.command("plugin:list", "List your plugins").action(() => {

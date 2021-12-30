@@ -1,5 +1,5 @@
-import { io } from "socket.io-client";
 import ServerError from "../error/ServerError";
+import got from "got";
 
 export type ListAppsProps = {
   endpoint: string;
@@ -38,199 +38,136 @@ export type AppInfoProps = {
   name: string;
 };
 
-export const listApps = ({ endpoint, token, state }: ListAppsProps) => {
-  return new Promise<{
-    message: string;
-    apps: {
-      id: string;
-      name: string;
-      container: string;
-      created: number;
-      status: string;
-      state: "running" | "exited" | "ready" | "paused";
-    }[];
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/apps`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("list", state || "all");
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+export const listApps = async ({ endpoint, token, state }: ListAppsProps) => {
+  try {
+    return await got
+      .get(`${endpoint}/apps`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        searchParams: {
+          state,
+        },
+      })
+      .json<{
+        message: string;
+        apps: {
+          id: string;
+          name: string;
+          container: string;
+          created: number;
+          status: string;
+          state: "running" | "exited" | "ready" | "paused";
+        }[];
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
-export const removeApp = ({ endpoint, token, name, force }: RemoveAppProps) => {
-  return new Promise<{
-    message: string;
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/apps`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("remove", name, force);
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+export const removeApp = async ({
+  endpoint,
+  token,
+  name,
+  force,
+}: RemoveAppProps) => {
+  try {
+    return await got
+      .delete(`${endpoint}/apps/${name}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        searchParams: {
+          force,
+        },
+      })
+      .json<{
+        message: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
-export const restartApp = ({ endpoint, token, name }: RestartAppProps) => {
-  return new Promise<{
-    message: string;
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/apps`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("restart", name);
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+export const restartApp = async ({
+  endpoint,
+  token,
+  name,
+}: RestartAppProps) => {
+  try {
+    return await got
+      .post(`${endpoint}/apps/${name}/restart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
-export const startApp = ({ endpoint, token, name }: StartAppProps) => {
-  return new Promise<{
-    message: string;
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/apps`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("start", name);
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+export const startApp = async ({ endpoint, token, name }: StartAppProps) => {
+  try {
+    return await got
+      .post(`${endpoint}/apps/${name}/start`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
-export const stopApp = ({ endpoint, token, name }: StopAppProps) => {
-  return new Promise<{
-    message: string;
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/apps`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("stop", name);
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+export const stopApp = async ({ endpoint, token, name }: StopAppProps) => {
+  try {
+    return await got
+      .post(`${endpoint}/apps/${name}/stop`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
-export const appInfo = ({ endpoint, token, name }: StopAppProps) => {
-  return new Promise<{
-    message: string;
-    info: {
-      id: string;
-      name: string;
-      container: string;
-      image: string;
-      command: string;
-      created: number;
-      ports: string[];
-      labels: string[];
-      state: "running" | "exited" | "ready" | "paused";
-      status: string;
-      networks: string[];
-      networkMode: string;
-      mounts: string[];
-    };
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/apps`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("info", name);
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+export const appInfo = async ({ endpoint, token, name }: AppInfoProps) => {
+  try {
+    return await got
+      .get(`${endpoint}/apps/${name}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+        info: {
+          id: string;
+          name: string;
+          container: string;
+          image: string;
+          command: string;
+          created: number;
+          ports: string[];
+          labels: string[];
+          state: "running" | "exited" | "ready" | "paused";
+          status: string;
+          networks: string[];
+          networkMode: string;
+          mounts: string[];
+        };
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };

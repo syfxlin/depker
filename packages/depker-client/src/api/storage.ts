@@ -1,5 +1,5 @@
-import { io } from "socket.io-client";
 import ServerError from "../error/ServerError";
+import got from "got";
 
 export type ListStoragesProps = {
   endpoint: string;
@@ -18,99 +18,61 @@ export type RemoveStorageProps = {
   name: string;
 };
 
-export const listStorages = ({ endpoint, token }: ListStoragesProps) => {
-  return new Promise<{
-    message: string;
-    storages: string[];
-  }>((resolve, reject) => {
-    const socket = io(`${endpoint}/storages`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("list");
-    });
-    socket.on("ok", (res) => {
-      resolve({
-        message: res.message,
-        storages: res.storages,
-      });
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
-};
-
-export const addStorage = ({ endpoint, token, name }: AddStorageProps) => {
-  return new Promise<{ message: string; name: string; path: string }>(
-    (resolve, reject) => {
-      const socket = io(`${endpoint}/storages`, {
-        auth: {
-          token,
+export const listStorages = async ({ endpoint, token }: ListStoragesProps) => {
+  try {
+    return await got
+      .get(`${endpoint}/storages`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      });
-      socket.on("connect", () => {
-        socket.emit("add", name);
-      });
-      socket.on("ok", (res) => {
-        resolve({
-          message: res.message,
-          name: res.name,
-          path: res.path,
-        });
-      });
-      socket.on("error", (res) => {
-        reject(
-          new ServerError(
-            res.message,
-            res.error ? new Error(res.error) : undefined
-          )
-        );
-      });
-      socket.on("connect_error", (err) => {
-        reject(new ServerError("Connect error!", err));
-      });
-    }
-  );
+      })
+      .json<{
+        message: string;
+        storages: string[];
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
-export const removeStorage = ({
+export const addStorage = async ({
+  endpoint,
+  token,
+  name,
+}: AddStorageProps) => {
+  try {
+    return await got
+      .post(`${endpoint}/storages/${name}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+        name: string;
+        path: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
+};
+
+export const removeStorage = async ({
   endpoint,
   token,
   name,
 }: RemoveStorageProps) => {
-  return new Promise<{ message: string }>((resolve, reject) => {
-    const socket = io(`${endpoint}/storages`, {
-      auth: {
-        token,
-      },
-    });
-    socket.on("connect", () => {
-      socket.emit("remove", name);
-    });
-    socket.on("ok", (res) => {
-      resolve(res);
-    });
-    socket.on("error", (res) => {
-      reject(
-        new ServerError(
-          res.message,
-          res.error ? new Error(res.error) : undefined
-        )
-      );
-    });
-    socket.on("connect_error", (err) => {
-      reject(new ServerError("Connect error!", err));
-    });
-  });
+  try {
+    return await got
+      .delete(`${endpoint}/storages/${name}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .json<{
+        message: string;
+      }>();
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };

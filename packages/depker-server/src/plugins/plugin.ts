@@ -1,7 +1,8 @@
 import PluginCtx from "./ctx";
-import { Socket } from "socket.io";
+import { Context } from "koa";
 
 export type DepkerPlugin = {
+  name: string;
   register?: (ctx: PluginCtx) => Promise<void>;
-  routes?: (socket: Socket, ctx: PluginCtx) => Promise<void>;
+  routes?: (ctx: PluginCtx, koa: Context) => Promise<void>;
 };

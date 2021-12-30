@@ -1,11 +1,12 @@
-import { SocketIOFn } from "../types";
+import { KoaFn } from "../types";
 import packageJson from "../../package.json";
 
-export const version: SocketIOFn = (io) => {
-  io.of("/version").on("connection", (socket) => {
-    socket.emit("ok", {
+export const version: KoaFn = (router) => {
+  router.get("/version", async (ctx) => {
+    ctx.status = 200;
+    ctx.body = {
       message: "Get server version success!",
       version: packageJson.version,
-    });
+    };
   });
 };

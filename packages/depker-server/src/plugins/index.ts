@@ -4,12 +4,12 @@ import { dir } from "../config/dir";
 import PluginCtx from "./ctx";
 import { config } from "../config/config";
 import { database } from "../config/database";
-import { $logger } from "../logger/server";
+import { logger } from "../logger/server";
 import { docker } from "../docker/api";
 import { events } from "../events";
 import { DepkerPlugin } from "./plugin";
-import { Server } from "socket.io";
-import { auth } from "../io/auth";
+import Router from "@koa/router";
+import { auth } from "../middleware/auth";
 
 export const plugins = async () => {
   const json = fs.readJsonSync(join(dir.plugins, "package.json"));
@@ -21,35 +21,31 @@ export const plugins = async () => {
     })
   )) as DepkerPlugin[];
 
-  const ctx: PluginCtx = {
+  const $ctx: PluginCtx = {
     config,
     database,
     dir,
     events,
     docker,
-    logger: $logger,
+    logger,
   };
   return {
     register: async () => {
-      await Promise.all(plugins.map((plugin) => plugin.register?.(ctx)));
+      await Promise.all(plugins.map((plugin) => plugin.register?.($ctx)));
     },
-    routes: async (io: Server) => {
-      io.of("/plugin")
-        .use(auth)
-        .on("connection", async (socket) => {
-          try {
-            await Promise.all(
-              plugins.map((plugin) => plugin.routes?.(socket, ctx))
-            );
-          } catch (e) {
-            const error = e as Error;
-            $logger.error(`List app error: ${error.message}`);
-            socket.emit("error", {
-              message: "Operate plugin error!",
-              error: error.message,
-            });
+    routes: async (router: Router) => {
+      plugins.forEach((plugin) => {
+        router.post(`/plugin-${plugin.name}`, auth, async (ctx) => {
+          if (plugin.routes) {
+            await plugin.routes?.($ctx, ctx);
+          } else {
+            ctx.status = 404;
+            ctx.body = {
+              message: "Plugin not found!",
+            };
           }
         });
+      });
     },
   };
 };
