@@ -8,6 +8,7 @@ import { Loading } from "../components/Loading";
 import { Success } from "../components/Success";
 import { Error } from "../components/Error";
 import { render } from "../utils/ink";
+import { PassThrough } from "stream";
 
 export const Prune: React.FC = () => {
   const state = useAsync(() =>
@@ -37,23 +38,20 @@ export const devCmd: CacFn = (cli) => {
   cli
     .command("dev:exec <name> [...command]", "Exec command in app")
     .action(async (name, command) => {
-      const isRaw = process.stdin.isRaw;
-      process.stdin.resume();
-      process.stdin.setEncoding("utf-8");
-      process.stdin.setRawMode(true);
       try {
+        const stdin = new PassThrough();
+        const stdout = new PassThrough();
+        process.stdin.pipe(stdin);
+        stdout.pipe(process.stdout);
         await exec({
           endpoint: config.endpoint,
           token: config.token as string,
           name,
           command,
-          stdin: process.stdin,
-          stdout: process.stdout,
+          stdin,
+          stdout,
         });
       } finally {
-        process.stdin.removeAllListeners();
-        process.stdin.setRawMode(isRaw);
-        process.stdin.resume();
         process.exit();
       }
     });
