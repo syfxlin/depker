@@ -6,6 +6,6 @@ export type KoaFn = (router: Router, app: Koa) => void;
 
 declare module "koa" {
   interface DefaultContext {
-    ws: () => Promise<WebSocket>;
+    ws?: () => Promise<WebSocket>;
   }
 }

@@ -63,6 +63,7 @@ importers:
       '@types/jest': ^27.0.3
       '@types/node': ^16.11.12
       '@types/tar-fs': ^2.0.1
+      '@types/ws': ^8.2.2
       '@types/yaml': ^1.9.7
       error-cause: ^1.0.2
       fs-extra: ^10.0.0
@@ -74,6 +75,7 @@ importers:
       ts-node: ^10.4.0
       tsup: ^5.11.6
       typescript: ^4.5.2
+      ws: ^8.3.0
       yaml: ^1.10.2
     dependencies:
       error-cause: 1.0.3
@@ -81,6 +83,7 @@ importers:
       got: 11.8.3
       ignore: 5.2.0
       tar-fs: 2.1.1
+      ws: 8.4.0
       yaml: 1.10.2
     devDependencies:
       '@types/error-cause': 1.0.1
@@ -88,6 +91,7 @@ importers:
       '@types/jest': 27.0.3
       '@types/node': 16.11.15
       '@types/tar-fs': 2.0.1
+      '@types/ws': 8.2.2
       '@types/yaml': 1.9.7
       jest: 27.4.5_ts-node@10.4.0
       ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56

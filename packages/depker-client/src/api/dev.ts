@@ -1,5 +1,6 @@
 import ServerError from "../error/ServerError";
 import got from "got";
+import { createWebSocketStream, WebSocket } from "ws";
 
 export type ExecProps = {
   endpoint: string;
@@ -30,34 +31,24 @@ export const exec = async ({
   stdin,
   stdout,
 }: ExecProps) => {
-  // return new Promise<void>((resolve, reject) => {
-  //   const socket = io(`${endpoint}/dev`, { auth: { token } });
-  //
-  //   // exit
-  //   socket.on("exit", () => {
-  //     stdout.end();
-  //     resolve();
-  //   });
-  //   // error
-  //   socket.on("error", (res) => {
-  //     reject(
-  //       new ServerError(
-  //         res.message,
-  //         res.error ? new Error(res.error) : undefined
-  //       )
-  //     );
-  //   });
-  //   // connect_error
-  //   socket.on("connect_error", (err) => {
-  //     reject(new ServerError("Connect error!", err));
-  //   });
-  //
-  //   const $stdin = ss.createStream();
-  //   const $stdout = ss.createStream();
-  //   $stdout.pipe(stdout);
-  //   stdin.pipe($stdin);
-  //   ss(socket).emit("exec", name, command, $stdin, $stdout);
-  // });
+  try {
+    const url = new URL(`${endpoint}/exec/${name}`);
+    url.protocol = url.protocol.replace("http", "ws");
+    command.forEach((cmd) => url.searchParams.append("command", cmd));
+    const ws = new WebSocket(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const duplex = createWebSocketStream(ws, { encoding: "binary" });
+    stdin.pipe(duplex);
+    duplex.pipe(stdout);
+    return new Promise<void>((resolve) => {
+      duplex.on("end", resolve);
+    });
+  } catch (e: any) {
+    throw new ServerError(e);
+  }
 };
 
 export const logs = async ({ endpoint, token, name, follow }: LogsProps) => {
