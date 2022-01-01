@@ -1,0 +1,16 @@
+# 以下配置为 https 方案，如不需要 https 可以去掉
+http:
+  routers:
+    traefik:
+      entryPoints: websecure
+      rule: "Host(`dashboard.example.com`)"
+      service: api@internal
+      middlewares:
+        - traefik-auth
+      tls:
+        certResolver: depkerChallenge
+  middlewares:
+    traefik-auth:
+      basicAuth:
+        users:
+          - "<your basicAuth secret>"

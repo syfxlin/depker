@@ -1,0 +1,27 @@
+# 这是配置了 https 的 traefik 配置文件
+log:
+  level: INFO
+  filePath: /var/traefik/traefik.log
+api:
+  # 如果要启动 dashboard 则需要将 dashboard.yml 放到 depker/traefik/conf.d 下，或者也可以使用其他的方式配置
+  dashboard: true
+entryPoints:
+  web:
+    address: :80
+  websecure:
+    address: :443
+providers:
+  file:
+    directory: /var/traefik/conf.d
+    watch: true
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+certificatesResolvers:
+  depkerChallenge:
+    acme:
+      httpChallenge:
+        entryPoint: web
+      # 更改 email 即可
+      email: example@example.com
+      storage: /var/traefik/acme.json

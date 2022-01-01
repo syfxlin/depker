@@ -1,0 +1,30 @@
+version: "3.5"
+services:
+  depker-server:
+    image: syfxlin/depker-server
+    container_name: depker-server
+    restart: on-failure
+    volumes:
+      - ~/.config/depker:/root/.config/depker
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "3000:3000"
+    labels:
+      # 以下配置为 https 方案，如果不需要 https 或者直接使用 3000 端口可以不填写 labels
+      traefik.docker.network: depker
+      traefik.enable: true
+      traefik.http.middlewares.depker-server-https.redirectscheme.scheme: https
+      traefik.http.middlewares.depker-server-redirect.redirectscheme.scheme: https
+      traefik.http.routers.depker-server-web.entrypoints: web
+      traefik.http.routers.depker-server-web.middlewares: depker-server-redirect@docker
+      traefik.http.routers.depker-server-web.rule: "Host(`deploy.example.com`)"
+      traefik.http.routers.depker-server.entrypoints: websecure
+      traefik.http.routers.depker-server.middlewares: depker-server-https@docker
+      traefik.http.routers.depker-server.rule: "Host(`deploy.example.com`)"
+      traefik.http.routers.depker-server.tls.certresolver: depkerChallenge
+      traefik.http.services.depker-server.loadbalancer.server.port: 3000
+# 此处需要在第一次启动后才可取消注释，或者也可以提前配置 network
+#networks:
+#  default:
+#    external:
+#      name: depker

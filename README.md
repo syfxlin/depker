@@ -25,6 +25,9 @@ depker（**dep**loyment, doc**ker**） 是一个基于 Docker 的部署工具，
 
 ```shell
 ### depker-server
+# docker-compose 安装方式，推荐
+cp misc/docker-compose.yml ./
+docker-compose up -d
 # npm 安装方式
 npm i -g @syfxlin/depker-server
 # docker 安装方式，如果需要 traefik 进行反代，需要配置相关的 labels
