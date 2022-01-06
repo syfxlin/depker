@@ -5,7 +5,6 @@ import { config } from "../config/config";
 import { useAsyncEnd } from "../hooks/use-end";
 import { Loading } from "../components/Loading";
 import { Newline, Text } from "ink";
-import { Success } from "../components/Success";
 import { Icon } from "../components/Icon";
 import { Bold } from "../components/Bold";
 import { Error } from "../components/Error";
@@ -24,31 +23,27 @@ export const Version: React.FC = () => {
   useAsyncEnd(state);
 
   return (
-    <>
+    <Text>
+      <Text>
+        <Icon color={"yellow"}>-</Icon>
+        <Bold>depker-cli:</Bold>
+        <Space />
+        <Text>{packageJson.version}</Text>
+        <Newline />
+      </Text>
       {state.status === "loading" && <Loading message={"Fetching..."} />}
       {state.status === "success" && (
         <Text>
-          <Success message={"Get version success!"} />
-          <Newline />
-          <Text>
-            <Icon color={"yellow"}>-</Icon>
-            <Bold>depker-cli:</Bold>
-            <Space />
-            <Text>{packageJson.version}</Text>
-          </Text>
-          <Newline />
-          <Text>
-            <Icon color={"yellow"}>-</Icon>
-            <Bold>depker-server:</Bold>
-            <Space />
-            <Text>{state.data?.version}</Text>
-          </Text>
+          <Icon color={"yellow"}>-</Icon>
+          <Bold>depker-server:</Bold>
+          <Space />
+          <Text>{state.data?.version}</Text>
         </Text>
       )}
       {state.status === "error" && (
-        <Error message={"Get version error:"} error={state.error} />
+        <Error message={"Get server version error:"} error={state.error} />
       )}
-    </>
+    </Text>
   );
 };
 
