@@ -65,7 +65,7 @@ export const initTraefik = async () => {
   );
   if (!image) {
     logger.info("No traefik image found, pulling...");
-    await docker.pull(config.traefik.image);
+    await docker.pullImage(config.traefik.image);
   }
 
   const server = containers.find((container) =>

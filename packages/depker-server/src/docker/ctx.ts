@@ -435,14 +435,11 @@ export default class Ctx<C extends ClientConfig = ClientConfig> {
           }
         })
       );
-    });
-
-    if (this.$config.autoprune) {
-      // prune
-      process.nextTick(async () => {
+      // auto prune
+      if (this.$config.autoprune) {
         await Promise.all([docker.pruneImages(), docker.pruneVolumes()]);
-      });
-    }
+      }
+    });
   }
 
   public dockerfile(data: any) {

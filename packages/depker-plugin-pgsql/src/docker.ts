@@ -33,7 +33,7 @@ export const initContainer = async (ctx: PluginCtx) => {
   );
   if (!image) {
     ctx.logger.info("No PostgreSQL image found, pulling...");
-    await ctx.docker.pull(config.image);
+    await ctx.docker.pullImage(config.image);
   }
 
   // TODO: remove windows hook
