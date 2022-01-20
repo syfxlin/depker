@@ -23,9 +23,9 @@ export const useAsyncEnd = (state: AsyncState) => {
 };
 
 export const useEndFn = () => {
-  const [end, setEnd] = useState(false);
+  const [end, setEnd] = useState<boolean | Error | null | undefined>(false);
 
   useEnd(end);
 
-  return () => setEnd(true);
+  return (end?: Error | null | undefined) => setEnd(end ?? true);
 };

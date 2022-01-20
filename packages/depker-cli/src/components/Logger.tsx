@@ -4,7 +4,7 @@ import { Static } from "ink";
 export type LoggerProps = {
   stream: NodeJS.ReadableStream;
   onData?: (data: LoggerData) => void;
-  onEnd?: () => void;
+  onEnd?: (items: LoggerData[]) => void;
   children: (item: LoggerData, index: number) => ReactNode;
 };
 
@@ -24,12 +24,19 @@ export const Logger: React.FC<LoggerProps> = ({
   useEffect(() => {
     stream.on("data", (data) => {
       setItems((items) => [...items, data.value]);
-      onData?.(data);
-    });
-    stream.on("end", () => {
-      onEnd?.();
+      onData?.(data.value);
     });
   }, [stream]);
+
+  useEffect(() => {
+    const fn = () => {
+      onEnd?.(items);
+    };
+    stream.on("end", fn);
+    return () => {
+      stream.off("end", fn);
+    };
+  }, [items]);
 
   return <Static items={items}>{children}</Static>;
 };

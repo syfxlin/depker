@@ -34,9 +34,10 @@ const Deploy: React.FC<{ stream: NodeJS.ReadableStream; verbose: boolean }> = ({
     <>
       <Logger
         stream={stream}
-        onEnd={() => {
+        onEnd={(items) => {
           setDeploying(false);
-          end();
+          const error = items.find((item) => item.level === "error");
+          end(error ? new Error(error.message) : undefined);
         }}
       >
         {(item, index) =>
