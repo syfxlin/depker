@@ -1,9 +1,36 @@
 import { join } from "https://deno.land/std@0.133.0/path/mod.ts";
 import { ensureDirSync } from "https://deno.land/std@0.133.0/fs/mod.ts";
-import homeDir from "https://deno.land/x/dir@v1.2.0/home_dir/mod.ts";
 
-const $homeDir = homeDir() as string;
-const $home = Deno.env.get("XDG_CONFIG_HOME") || join($homeDir, ".config");
+const home = () => {
+  let dir: string;
+  switch (Deno.build.os) {
+    case "windows":
+      dir = Deno.env.get("APPDATA");
+      if (!dir) {
+        throw new Error("%AppData% is not defined");
+      }
+      break;
+    case "darwin":
+      dir = Deno.env.get("HOME");
+      if (!dir) {
+        throw new Error("$HOME is not defined");
+      }
+      dir = join(dir, "Library", "Application Support");
+      break;
+    default:
+      dir = Deno.env.get("XDG_CONFIG_HOME");
+      if (!dir) {
+        dir = Deno.env.get("HOME");
+        if (!dir) {
+          throw new Error("Neither $XDG_CONFIG_HOME nor $HOME are defined");
+        }
+        dir = join(dir, ".config");
+      }
+  }
+  return dir;
+};
+
+const $home = home();
 const $base = join($home, "depker");
 const $config = join($base, "config");
 const $storage = join($base, "storage");
