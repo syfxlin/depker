@@ -5,22 +5,22 @@ const home = () => {
   let dir: string;
   switch (Deno.build.os) {
     case "windows":
-      dir = Deno.env.get("APPDATA");
+      dir = Deno.env.get("APPDATA") as string;
       if (!dir) {
         throw new Error("%AppData% is not defined");
       }
       break;
     case "darwin":
-      dir = Deno.env.get("HOME");
+      dir = Deno.env.get("HOME") as string;
       if (!dir) {
         throw new Error("$HOME is not defined");
       }
       dir = join(dir, "Library", "Application Support");
       break;
     default:
-      dir = Deno.env.get("XDG_CONFIG_HOME");
+      dir = Deno.env.get("XDG_CONFIG_HOME") as string;
       if (!dir) {
-        dir = Deno.env.get("HOME");
+        dir = Deno.env.get("HOME") as string;
         if (!dir) {
           throw new Error("Neither $XDG_CONFIG_HOME nor $HOME are defined");
         }
