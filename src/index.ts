@@ -19,4 +19,5 @@ try {
   await run(cli);
 } catch (e) {
   logger.error(e);
+  Deno.exit(1);
 }
