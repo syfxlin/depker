@@ -249,6 +249,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		err := install()
+		if err != nil {
+			panic(err)
+		}
 		return
 	}
 	// upgrade depker
