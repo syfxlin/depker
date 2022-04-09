@@ -1,0 +1,15 @@
+http:
+  routers:
+    traefik:
+      entryPoints: https
+      rule: "Host(`traefik.example.com`)"
+      service: api@internal
+      middlewares:
+        - traefik-auth
+      tls:
+        certResolver: docker
+  middlewares:
+    traefik-auth:
+      basicAuth:
+        users:
+          - "username:password-hash"

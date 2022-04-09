@@ -1,0 +1,29 @@
+log:
+  level: INFO
+  filePath: /var/traefik/traefik.log
+accessLog:
+  filePath: /var/traefik/traefik-access.log
+  bufferingSize: 100
+api:
+  dashboard: true
+entryPoints:
+  http:
+    address: :80
+  https:
+    address: :443
+providers:
+  file:
+    directory: /var/traefik/conf.d
+    watch: true
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+certificatesResolvers:
+  docker:
+    acme:
+      httpChallenge:
+        entryPoint: http
+      email: email@example.com
+      storage: /var/traefik/acme.json
+pilot:
+  token: "pilot-token"
