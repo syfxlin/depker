@@ -12,17 +12,17 @@ export const runCmd: CacFn = (cli) => {
     .alias("d")
     .allowUnknownOptions()
     .option("-f, --config <file>", "Name of the depker.ts", {
-      default: join(Deno.cwd(), "depker.ts"),
+      default: "depker.ts",
     })
     .option("-p, --project <project>", "Location of the project", {
-      default: Deno.cwd(),
+      default: ".",
     })
     .option("-e, --env <env>", "Env to override during execution", {
       default: [],
       type: [String],
     })
     .option("--env-file <file>", "Read env file to override during execution", {
-      default: join(Deno.cwd(), ".env"),
+      default: ".env",
     })
     .example((bin) => `  $ ${bin} run task1 task2`)
     .example((bin) => `  $ ${bin} run task1 task2 --some-option1 task1`)
