@@ -23,4 +23,4 @@ RUN COMPOSE_URL=$(curl -s https://api.github.com/repos/docker/compose/releases/l
     chmod +x "$DOCKER_PLUGINS/docker-compose"
 
 COPY ./depker /usr/local/bin/depker
-RUN chmod +x /usr/local/bin/depker && depker upgrade deno
+RUN chmod +x /usr/local/bin/depker
