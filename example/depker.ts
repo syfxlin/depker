@@ -1,4 +1,4 @@
-/// <reference path="https://raw.githubusercontent.com/syfxlin/depker/master/src/types/index.ts" />
+/// <reference path="https://raw.githubusercontent.com/syfxlin/depker/master/mod.ts" />
 
 // run command: bin/depker do task -f example/depker.ts
 export const task = async () => {
