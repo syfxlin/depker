@@ -51,7 +51,7 @@ export const runCmd: CacFn = (cli) => {
         if (!fn) {
           throw new Error("Task not found!");
         }
-        fn();
+        await fn();
         logger.success(`Successfully run task: ${task}`);
       }
     });
