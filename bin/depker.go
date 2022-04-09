@@ -216,13 +216,18 @@ func install() error {
 	return download()
 }
 
-func run(name string, cwd string, arg ...string) error {
+func run(name string, cwd string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 	cmd.Dir = cwd
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			os.Exit(exitError.ExitCode())
+		}
+		panic(err)
+	}
 }
 
 func main() {
@@ -257,25 +262,15 @@ func main() {
 	}
 	// upgrade depker
 	if os.Args[1] == "upgrade" && os.Args[2] == "depker" {
-		err := run(deno, cwd, "cache", "-r", mod)
-		if err != nil {
-			panic(err)
-		}
-		return
+		run(deno, cwd, "cache", "-r", mod)
 	}
 	// deno
 	if os.Args[1] == "deno" {
-		err := run(deno, cwd, os.Args[2:]...)
-		if err != nil {
-			panic(err)
-		}
+		run(deno, cwd, os.Args[2:]...)
 		return
 	}
 
 	// depker
 	args := []string{"run", "-q", "-A", mod}
-	err = run(deno, cwd, append(args, os.Args[1:]...)...)
-	if err != nil {
-		panic(err)
-	}
+	run(deno, cwd, append(args, os.Args[1:]...)...)
 }
