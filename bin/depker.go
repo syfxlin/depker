@@ -216,6 +216,15 @@ func install() error {
 	return download()
 }
 
+func run(name string, cwd string, arg ...string) error {
+	cmd := exec.Command(name, arg...)
+	cmd.Dir = cwd
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func main() {
 	// ensure deno install
 	err := install()
@@ -224,7 +233,7 @@ func main() {
 	}
 
 	// path
-	path, err := file()
+	deno, err := file()
 	if err != nil {
 		panic(err)
 	}
@@ -232,24 +241,36 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	mod := "https://github.com/syfxlin/depker/raw/master/mod.ts"
 
-	// upgrade
-	if os.Args[1] == "upgrade" {
-		err = os.Remove(path)
+	// upgrade deno
+	if os.Args[1] == "upgrade" && os.Args[2] == "deno" {
+		err = os.Remove(deno)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+	// upgrade depker
+	if os.Args[1] == "upgrade" && os.Args[2] == "depker" {
+		err := run(deno, cwd, "cache", "-r", mod)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+	// deno
+	if os.Args[1] == "deno" {
+		err := run(deno, cwd, os.Args[2:]...)
 		if err != nil {
 			panic(err)
 		}
 		return
 	}
 
-	// run deno
-	args := []string{"run", "-q", "-A", "https://github.com/syfxlin/depker/raw/master/src/index.ts"}
-	cmd := exec.Command(path, append(args, os.Args[1:]...)...)
-	cmd.Dir = cwd
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
+	// depker
+	args := []string{"run", "-q", "-A", mod}
+	err = run(deno, cwd, append(args, os.Args[1:]...)...)
 	if err != nil {
 		panic(err)
 	}

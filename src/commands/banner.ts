@@ -1,4 +1,4 @@
-import info from "../../info.ts";
+import info from "../info.ts";
 
 export const banner = () => {
   return (sections: any[]): any[] => {
