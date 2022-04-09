@@ -160,7 +160,7 @@ export const file = (
     // prettier-ignore
     if (value.volumes) {
       for (const volume of value.volumes) {
-        if (!values.volumes[volume]) {
+        if (!(volume.startsWith(".") || volume.startsWith("/") || values.volumes[volume.split(":")[0]])) {
           values.volumes[volume] = {};
         }
       }
