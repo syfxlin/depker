@@ -47,16 +47,16 @@ export const nodejs = (options?: NodeJSTemplateOptions) => {
 
     # inject prepare
     ${$inject(options.inject_prepare)}
-    
+
     # install node modules
     ${$if(type === "pnpm", `
-      RUN pnpm install --prod --frozen-lockfile
+      RUN pnpm install --frozen-lockfile
     `)}
     ${$if(type === "yarn", `
-      RUN yarn install --production --frozen-lockfile && yarn cache clean
+      RUN yarn install --frozen-lockfile && yarn cache clean
     `)}
     ${$if(type === "npm", `
-      RUN npm ${depker.fs.existsSync("package-lock.json") ? "ci" : "install"} --only=production && npm cache clean --force
+      RUN npm ${depker.fs.existsSync("package-lock.json") ? "ci" : "install"} && npm cache clean --force
     `)}
 
     # copy project
