@@ -192,3 +192,8 @@ dist
 
 ### VSCode
 .vscode
+
+### BIN
+bin/embed
+bin/depker
+bin/depker.exe

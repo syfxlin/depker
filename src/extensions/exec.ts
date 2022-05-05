@@ -8,12 +8,14 @@ export type ExecOptions = {
   output?: "inherit" | "piped" | "null";
 };
 
-export default async function exec<T>(
-  options: ExecOptions
-): Promise<{
+export default async function exec<T>(options: ExecOptions): Promise<{
   status: Deno.ProcessStatus;
   stdout: Uint8Array;
   stderr: Uint8Array;
+  encoder: TextEncoder;
+  decoder: TextDecoder;
+  strout: string;
+  strerr: string;
 }> {
   const p = Deno.run({
     cmd: options.cmd,
@@ -35,19 +37,37 @@ export default async function exec<T>(
     status: Deno.ProcessStatus;
     stdout: Uint8Array;
     stderr: Uint8Array;
+    encoder: TextEncoder;
+    decoder: TextDecoder;
+    strout: string;
+    strerr: string;
   };
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
   if (options.output === "piped") {
     const [status, stdout, stderr] = (await Promise.all([
       p.status(),
       p.output(),
       p.stderrOutput(),
     ])) as any;
-    result = { status, stdout, stderr };
+    result = {
+      status,
+      stdout,
+      stderr,
+      decoder: decoder,
+      encoder: encoder,
+      strout: decoder.decode(stdout),
+      strerr: decoder.decode(stderr),
+    };
   } else {
     result = {
       status: await p.status(),
       stdout: new Uint8Array(0),
       stderr: new Uint8Array(0),
+      decoder: decoder,
+      encoder: encoder,
+      strout: "",
+      strerr: "",
     };
   }
 
