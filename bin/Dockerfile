@@ -12,8 +12,8 @@ FROM ubuntu:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY --from=docker:latest /usr/local/bin/docker /app/embed/
-COPY --from=denoland/deno:latest /usr/bin/deno /app/embed/
+COPY --from=docker:latest /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=denoland/deno:latest /usr/bin/deno /usr/local/bin/deno
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
