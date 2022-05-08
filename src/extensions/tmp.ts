@@ -3,7 +3,7 @@ const gitignore = () => {
   const gitignore = depker.path.posix.join(".depker", ".gitignore");
   depker.fs.ensureFileSync(gitignore);
   const ignore = Deno.readTextFileSync(gitignore);
-  if (!ignore.split("\n").includes("tmp")) {
+  if (!ignore.split(/\r?\n/g).includes("tmp")) {
     Deno.writeTextFileSync(gitignore, `${ignore}\ntmp\n`);
   }
 };
