@@ -1,3 +1,4 @@
+// @formatter:off
 export type DockerBuildOptions = {
   dockerfile?: string;
   dockerfile_contents?: string;
@@ -601,46 +602,67 @@ export const rename = async (name: string, rename: string) => {
 };
 
 export const of = (...args: DockerOfArgs[]) => {
-  return async (cmd: string) => {
-    for (const arg of args) {
-      // @ts-ignore
-      const options: DockerOfOptions = await arg();
+  const map = async (names: string[] | undefined | null) => {
+    const opts: DockerOfOptions[] = await Promise.all(args.map((arg) => arg()));
+    return opts.filter((o) => !names || !names.length || names.includes(o.name));
+  };
 
-      const commands: Record<string, () => Promise<void>> = {
-        up: async () => {
-          const tag = options.build ? await build(options.image, options.build) : options.image;
-          await run(options.name, tag, options.run);
-        },
-        down: async () => {
-          await remove(options.name, true);
-        },
-        build: async () => {
-          await build(options.image, options.build);
-        },
-        push: async () => {
-          await push(options.image);
-        },
-        pull: async () => {
-          await pull(options.image);
-        },
-        start: async () => {
-          await start(options.name);
-        },
-        stop: async () => {
-          await stop(options.name);
-        },
-        restart: async () => {
-          await restart(options.name);
-        },
-        logs: async () => {
-          await logs(options.name);
-        },
-        status: async () => {
-          const s = await status(options.name);
-          depker.logger.info(`Service ${options.name} is ${s}`);
-        },
-      };
-      await commands[cmd]();
-    }
+  return {
+    up: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        const tag = option.build ? await build(option.image, option.build) : option.image;
+        await run(option.name, tag, option.run);
+      }
+    },
+    down: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        await remove(option.name);
+      }
+    },
+    build: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        await build(option.image, option.build);
+      }
+    },
+    push: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        await push(option.image);
+      }
+    },
+    pull: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        await pull(option.image);
+      }
+    },
+    start: async (opt: any) => {
+      const options = await map(opt.args);
+      await start(options.map(o => o.name));
+    },
+    stop: async (opt: any) => {
+      const options = await map(opt.args);
+      await stop(options.map(o => o.name));
+    },
+    restart: async (opt: any) => {
+      const options = await map(opt.args);
+      await restart(options.map(o => o.name));
+    },
+    logs: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        await logs(option.name);
+      }
+    },
+    status: async (opt: any) => {
+      const options = await map(opt.args);
+      for (const option of options) {
+        const s = await status(option.name);
+        depker.logger.info(`Service ${option.name} is ${s}`);
+      }
+    },
   };
 };

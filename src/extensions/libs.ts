@@ -12,7 +12,8 @@ import clone from "../utils/clone.ts";
 import ky from "https://cdn.skypack.dev/ky@0.30.0?dts";
 
 import { cli, logger } from "../index.ts";
-import { dir } from "../config/dir.ts";
+import { dir } from "../core/dir.ts";
+import { events } from "../core/events.ts";
 
 const json = JSON;
 const uuid = () => crypto.randomUUID();
@@ -35,4 +36,5 @@ export {
   cli,
   logger,
   dir,
+  events,
 };

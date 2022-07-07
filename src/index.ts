@@ -2,7 +2,7 @@ import cac from "https://unpkg.com/cac@6.7.12/deno/index.ts";
 import info from "./info.ts";
 import { Logger } from "./utils/logger.ts";
 import { banner } from "./commands/banner.ts";
-import { run } from "./loaders/depker.ts";
+import { run } from "./core/depker.ts";
 import { commands } from "./commands/index.ts";
 
 export * from "./types/index.ts";
