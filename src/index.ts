@@ -2,7 +2,7 @@ import cac from "https://unpkg.com/cac@6.7.12/deno/index.ts";
 import info from "./info.ts";
 import { Logger } from "./utils/logger.ts";
 import { banner } from "./commands/banner.ts";
-import { run } from "./core/depker.ts";
+import { run } from "./core/run.ts";
 import { commands } from "./commands/index.ts";
 
 export * from "./types/index.ts";
@@ -12,8 +12,6 @@ export const logger = new Logger();
 commands(cli);
 
 cli.help(banner());
-cli.on("command:!", () => cli.outputHelp());
-cli.on("command:*", () => cli.outputHelp());
 
 try {
   await run(cli);

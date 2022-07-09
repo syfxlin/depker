@@ -1,4 +1,4 @@
-import { join } from "https://deno.land/std@0.133.0/path/mod.ts";
+import { posix } from "https://deno.land/std@0.133.0/path/mod.ts";
 import { ensureDirSync } from "https://deno.land/std@0.133.0/fs/mod.ts";
 
 const home = () => {
@@ -15,7 +15,7 @@ const home = () => {
       if (!dir) {
         throw new Error("$HOME is not defined");
       }
-      dir = join(dir, "Library", "Application Support");
+      dir = posix.join(dir, "Library", "Application Support");
       break;
     default:
       dir = Deno.env.get("XDG_CONFIG_HOME") as string;
@@ -24,16 +24,17 @@ const home = () => {
         if (!dir) {
           throw new Error("Neither $XDG_CONFIG_HOME nor $HOME are defined");
         }
-        dir = join(dir, ".config");
+        dir = posix.join(dir, ".config");
       }
   }
   return dir;
 };
 
 const $home = home();
-const $base = join($home, "depker");
-const $config = join($base, "config");
-const $storage = join($base, "storage");
+const $base = posix.join($home, "depker");
+const $config = posix.join($base, "config");
+const $storage = posix.join($base, "storage");
+const $tmp = posix.join(".depker", "tmp");
 
 // ensure
 ensureDirSync($home);
@@ -46,4 +47,5 @@ export const dir = {
   base: $base,
   config: $config,
   storage: $storage,
+  tmp: $tmp,
 };

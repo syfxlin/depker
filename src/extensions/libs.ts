@@ -7,16 +7,19 @@ import * as base64 from "https://deno.land/std@0.133.0/encoding/base64.ts";
 import * as io from "https://deno.land/std@0.133.0/io/mod.ts";
 import * as dotenv from "https://deno.land/std@0.133.0/dotenv/mod.ts";
 import * as colors from "https://deno.land/x/nanocolors@0.1.12/mod.ts";
+import ky from "https://cdn.skypack.dev/ky@0.30.0?dts";
 import { deepmerge as merge } from "https://deno.land/x/deepmergets@v4.0.3/dist/deno/mod.ts";
 import clone from "../utils/clone.ts";
-import ky from "https://cdn.skypack.dev/ky@0.30.0?dts";
+import * as tmp from "./tmp.ts";
 
 import { cli, logger } from "../index.ts";
 import { dir } from "../core/dir.ts";
 import { events } from "../core/events.ts";
+import { Process, ProcessOptions } from "../exec/process.ts";
 
 const json = JSON;
 const uuid = () => crypto.randomUUID();
+const exec = (options: ProcessOptions) => new Process(options);
 
 export {
   fs,
@@ -37,4 +40,6 @@ export {
   logger,
   dir,
   events,
+  exec,
+  tmp,
 };

@@ -1,4 +1,5 @@
-// @formatter:off
+import {exec as $exec, logger, tmp} from "./libs.ts";
+
 export type DockerBuildOptions = {
   dockerfile?: string;
   dockerfile_contents?: string;
@@ -73,6 +74,8 @@ export type DockerRunOptions = {
   privileged?: boolean;
   user?: string;
   workdir?: string;
+  // rolling deployment
+  rolling?: number;
   // flags
   flags?: string[];
 };
@@ -89,11 +92,8 @@ export type DockerOfArgs = () => DockerOfOptions | Promise<DockerOfOptions>;
 export const context = async (context: string) => {
   const cmd = ["docker", "context", "use", context];
 
-  depker.logger.info(`Switch docker context: ${context}`);
-  await depker.exec({
-    cmd,
-    output: "inherit",
-  });
+  logger.info(`Switch docker context: ${context}`);
+  await $exec({ cmd, type: "inherit" });
 };
 
 export const login = async (server: string, username: string, password: string) => {
@@ -105,11 +105,8 @@ export const login = async (server: string, username: string, password: string) 
     server,
   ];
 
-  depker.logger.info(`Login docker registry: ${server}`);
-  await depker.exec({
-    cmd,
-    output: "inherit",
-  });
+  logger.info(`Login docker registry: ${server}`);
+  await $exec({ cmd, type: "inherit" });
 };
 
 export const build = async (image: string, options?: DockerBuildOptions) => {
@@ -130,9 +127,7 @@ export const build = async (image: string, options?: DockerBuildOptions) => {
   } = options ?? {};
 
   if (dockerfile && dockerfile_contents) {
-    throw new Error(
-      "Cannot specify both dockerfile and dockerfile_contents keyword arguments"
-    );
+    throw new Error("Cannot specify both dockerfile and dockerfile_contents keyword arguments");
   }
 
   const [img, tag = `depker-${Date.now()}`] = image.split(":");
@@ -188,9 +183,7 @@ export const build = async (image: string, options?: DockerBuildOptions) => {
   if (dockerfile) {
     cmd.push(`--file=${dockerfile}`);
   } else if (dockerfile_contents) {
-    cmd.push(
-      `--file=${depker.tmp.file("depker-dockerfile", dockerfile_contents)}`
-    );
+    cmd.push(`--file=${tmp.file("depker-dockerfile", dockerfile_contents)}`);
   } else {
     cmd.push(`--file=./Dockerfile`);
   }
@@ -203,79 +196,88 @@ export const build = async (image: string, options?: DockerBuildOptions) => {
   }
 
   // build
-  depker.logger.step(`Building docker image: ${img}:${tag}`);
-  await depker.exec({
-    cmd,
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully build image`);
+  logger.step(`Building docker image: ${img}:${tag}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully build image`);
 
   // push
   if ($push) {
     await push(`${img}:${tag}`);
   } else {
-    depker.logger.info(`Skip push image`);
+    logger.info(`Skip push image`);
   }
 
   return `${img}:${tag}`;
 };
 
 export const push = async (image: string) => {
-  depker.logger.step(`Pushing docker image: ${image}`);
-  await depker.exec({
-    cmd: ["docker", "push", image],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully push image`);
+  const cmd = ["docker", "push", image];
+
+  logger.step(`Pushing docker image: ${image}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully push image`);
 };
 
 export const pull = async (image: string) => {
-  depker.logger.step(`Pulling docker image: ${image}`);
-  await depker.exec({
-    cmd: ["docker", "pull", image],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully pull image`);
+  const cmd = ["docker", "pull", image];
+
+  logger.step(`Pulling docker image: ${image}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully pull image`);
 };
 
 export const start = async (container: string | string[]) => {
   const containers = [container].flat();
-  depker.logger.step(`Start container: ${containers.join(", ")}`);
-  await depker.exec({
-    cmd: ["docker", "start", ...containers],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully start container`);
+  const cmd = ["docker", "start", ...containers];
+
+  logger.step(`Start container: ${containers.join(", ")}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully start container`);
 };
 
 export const stop = async (container: string | string[]) => {
   const containers = [container].flat();
-  depker.logger.step(`Stop container: ${containers.join(", ")}`);
-  await depker.exec({
-    cmd: ["docker", "stop", ...containers],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully stop container`);
+  const cmd = ["docker", "stop", ...containers];
+
+  logger.step(`Stop container: ${containers.join(", ")}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully stop container`);
 };
 
 export const restart = async (container: string | string[]) => {
   const containers = [container].flat();
-  depker.logger.step(`Restart container: ${containers.join(", ")}`);
-  await depker.exec({
-    cmd: ["docker", "restart", ...containers],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully restart container`);
+  const cmd = ["docker", "restart", ...containers];
+
+  logger.step(`Restart container: ${containers.join(", ")}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully restart container`);
+};
+
+export const status = async (name: string): Promise<string> => {
+  const cmd = ["docker", "ps", "--all", "--format={{ .Names }}:{{ .Status }}"];
+
+  logger.step(`Get container status: ${name}`);
+  const logs = await $exec({ cmd }).combined;
+  const status = logs.map((i) => i.trim().split(":")).find((i) => i[0] === name)?.[1];
+  return status ?? "Not found";
+};
+
+export const state = async (name: string): Promise<"created" | "running" | "exited" | "no"> => {
+  const cmd = ["docker", "ps", "--all", "--format={{ .Names }}:{{ .State }}"];
+
+  logger.step(`Get container status: ${name}`);
+  const logs = await $exec({ cmd }).combined;
+  const status = logs.map((i) => i.trim().split(":")).find((i) => i[0] === name)?.[1] as any;
+  return status ?? "Not found";
 };
 
 export const remove = async (container: string | string[], force?: boolean) => {
   const containers = [container].flat().filter((s) => s);
-  depker.logger.step(`Remove container: ${containers.join(", ")}`);
-  await depker.exec({
-    cmd: ["docker", "rm", ...(force ? ["--force"] : []), ...containers],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully remove container`);
+  const cmd = ["docker", "rm", force && "--force", ...containers]
+
+  logger.step(`Remove container: ${containers.join(", ")}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully remove container`);
 };
 
 export const run = async (name: string, image: string, options?: DockerRunOptions) => {
@@ -309,6 +311,8 @@ export const run = async (name: string, image: string, options?: DockerRunOption
     privileged,
     user,
     workdir,
+    // rolling deployment
+    rolling,
     // flags
     flags,
   } = options ?? {};
@@ -509,30 +513,30 @@ export const run = async (name: string, image: string, options?: DockerRunOption
     await stop(name);
     await rename(name, old);
   } catch (e) {
+    // ignore
   }
   // ==
 
   try {
     // == start container
-    depker.logger.step(`Running container: ${name}`);
-    await depker.exec({
-      cmd,
-      output: "inherit",
-    });
-    depker.logger.success(`Successfully run container`);
+    logger.step(`Running container: ${name}`);
+    await $exec({ cmd, type: "inherit" });
+    logger.success(`Successfully run container`);
     // ==
 
     // == remove old container
     try {
       await remove(old, true);
     } catch (e) {
+      // ignore
     }
   } catch (e) {
-    depker.logger.error(e);
+    logger.error(e);
     // == rollback
     try {
       await start(old);
     } catch (e) {
+      // ignore
     }
     // ==
   }
@@ -540,65 +544,35 @@ export const run = async (name: string, image: string, options?: DockerRunOption
 };
 
 export const logs = async (container: string, flags: string[] = []) => {
-  depker.logger.step(`Showing container logs: ${container}`);
-  return await depker.exec({
-    cmd: ["docker", "logs", ...flags, container],
-    output: "piped",
-  });
+  const cmd = ["docker", "logs", ...flags, container];
+
+  logger.step(`Showing container logs: ${container}`);
+  const logs = await $exec({ cmd }).combined;
+  return logs.join("\n");
 };
 
 export const copy = async (src: string, dist: string, flags: string[] = []) => {
-  depker.logger.step(`Copy file to/from container: ${src} => ${dist}`);
-  await depker.exec({
-    cmd: ["docker", "cp", ...flags, src, dist],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully copy file to/from container`);
+  const cmd = ["docker", "cp", ...flags, src, dist];
+
+  logger.step(`Copy file to/from container: ${src} => ${dist}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully copy file to/from container`);
 };
 
 export const exec = async (container: string, command: string[], flags: string[] = []) => {
-  depker.logger.step(
-    `Exec command in container: ${container} => ${command.join(" ")}`
-  );
-  return await depker.exec({
-    cmd: ["docker", "exec", ...flags, container, ...command],
-    output: "piped",
-  });
-};
+  const cmd = ["docker", "exec", ...flags, container, ...command];
 
-export const status = async (name: string): Promise<string> => {
-  depker.logger.step(`Get container status: ${name}`);
-  const { strout } = await depker.exec({
-    cmd: [`docker`, `ps`, `--all`, `--format={{ .Names }}:{{ .Status }}`],
-    output: "piped",
-  });
-  const status = strout
-    .split("\n")
-    .map((i) => i.trim().split(":"))
-    .find((i) => i[0] === name)?.[1];
-  return status ?? "Not found";
-};
-
-export const state = async (name: string): Promise<"created" | "running" | "exited" | "no"> => {
-  depker.logger.step(`Get container status: ${name}`);
-  const { strout } = await depker.exec({
-    cmd: [`docker`, `ps`, `--all`, `--format={{ .Names }}:{{ .State }}`],
-    output: "piped",
-  });
-  const status = strout
-    .split("\n")
-    .map((i) => i.trim().split(":"))
-    .find((i) => i[0] === name)?.[1] as any;
-  return status ?? "Not found";
+  logger.step(`Exec command in container: ${container} => ${command.join(" ")}`);
+  const logs = await $exec({ cmd }).combined;
+  return logs.join("\n");
 };
 
 export const rename = async (name: string, rename: string) => {
-  depker.logger.step(`Rename container: ${name} => ${rename}`);
-  await depker.exec({
-    cmd: ["docker", "rename", name, rename],
-    output: "inherit",
-  });
-  depker.logger.success(`Successfully rename container`);
+  const cmd = ["docker", "rename", name, rename];
+
+  logger.step(`Rename container: ${name} => ${rename}`);
+  await $exec({ cmd, type: "inherit" });
+  logger.success(`Successfully rename container`);
 };
 
 export const of = (...args: DockerOfArgs[]) => {
@@ -618,7 +592,7 @@ export const of = (...args: DockerOfArgs[]) => {
     down: async (opt: any) => {
       const options = await map(opt.args);
       for (const option of options) {
-        await remove(option.name);
+        await remove(option.name, true);
       }
     },
     build: async (opt: any) => {
@@ -641,15 +615,15 @@ export const of = (...args: DockerOfArgs[]) => {
     },
     start: async (opt: any) => {
       const options = await map(opt.args);
-      await start(options.map(o => o.name));
+      await start(options.map((o) => o.name));
     },
     stop: async (opt: any) => {
       const options = await map(opt.args);
-      await stop(options.map(o => o.name));
+      await stop(options.map((o) => o.name));
     },
     restart: async (opt: any) => {
       const options = await map(opt.args);
-      await restart(options.map(o => o.name));
+      await restart(options.map((o) => o.name));
     },
     logs: async (opt: any) => {
       const options = await map(opt.args);
@@ -661,7 +635,7 @@ export const of = (...args: DockerOfArgs[]) => {
       const options = await map(opt.args);
       for (const option of options) {
         const s = await status(option.name);
-        depker.logger.info(`Service ${option.name} is ${s}`);
+        logger.info(`Service ${option.name} is ${s}`);
       }
     },
   };
