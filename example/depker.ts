@@ -18,3 +18,20 @@ export const task = depker.docker.of(
     },
   })
 );
+
+export const error1 = depker.docker.of(() => ({
+  name: "nginx3",
+  image: "syfxlin/nginx3",
+  build: {
+    dockerfile_contents: `
+      FROM nginx:latest
+      RUN exit 1
+    `,
+  },
+}));
+
+export const error2 = async () => {
+  await depker.exec({
+    cmd: ["powershell.exe", "aa"],
+  });
+};

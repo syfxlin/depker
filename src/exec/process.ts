@@ -17,7 +17,7 @@ export class Process implements Promise<Deno.ProcessStatus> {
   private readonly _process: Deno.Process<Deno.RunOptions>;
 
   private _started = false;
-  private _throws = false;
+  private _throws = true;
   private _defer = deferred<Deno.ProcessStatus>();
 
   constructor(options: ProcessOptions) {
@@ -53,7 +53,9 @@ export class Process implements Promise<Deno.ProcessStatus> {
     this._process.close();
 
     if (!status.success && this._throws) {
-      throw new ProcessError(status, this);
+      // prettier-ignore
+      const msg = `Run command error!\nExit code: ${status.code}\nMessage: ${(await this._combined).join("\n")}`;
+      throw new ProcessError(msg, status, this);
     }
 
     return status;
@@ -76,7 +78,7 @@ export class Process implements Promise<Deno.ProcessStatus> {
   }
 
   public get status() {
-    return this.run();
+    return this.noThrow.run();
   }
 
   public get stdin() {
@@ -99,8 +101,8 @@ export class Process implements Promise<Deno.ProcessStatus> {
     return this._combined;
   }
 
-  public get throws(): this {
-    this._throws = true;
+  public get noThrow(): this {
+    this._throws = false;
     return this;
   }
 

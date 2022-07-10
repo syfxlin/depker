@@ -446,10 +446,8 @@ export const run = async (name: string, image: string, options?: DockerRunOption
       labels[`traefik.http.routers.${name}.service`] = traefik.service;
     } else {
       labels[`traefik.http.routers.${name}.service`] = name;
-      labels[`traefik.http.services.${name}.loadbalancer.server.scheme`] =
-        schema;
-      labels[`traefik.http.services.${name}.loadbalancer.server.port`] =
-        String(port);
+      labels[`traefik.http.services.${name}.loadbalancer.server.scheme`] = schema;
+      labels[`traefik.http.services.${name}.loadbalancer.server.port`] = String(port);
     }
 
     // router
@@ -457,14 +455,12 @@ export const run = async (name: string, image: string, options?: DockerRunOption
       // https
       labels[`traefik.http.routers.${name}.rule`] = rule;
       labels[`traefik.http.routers.${name}.entrypoints`] = "https";
-      labels[`traefik.http.routers.${name}.tls.certresolver`] =
-        typeof traefik.tls === "string" ? traefik.tls : "docker";
+      labels[`traefik.http.routers.${name}.tls.certresolver`] = typeof traefik.tls === "string" ? traefik.tls : "docker";
       // http
       labels[`traefik.http.routers.${name}-http.rule`] = rule;
       labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
       labels[`traefik.http.routers.${name}-http.middlewares`] = name + "-https";
-      labels[`traefik.http.middlewares.${name}-https.redirectscheme.scheme`] =
-        "https";
+      labels[`traefik.http.middlewares.${name}-https.redirectscheme.scheme`] = "https";
     } else {
       // http
       labels[`traefik.http.routers.${name}-http.rule`] = rule;
@@ -475,16 +471,13 @@ export const run = async (name: string, image: string, options?: DockerRunOption
     if (traefik.middlewares) {
       for (const middleware of traefik.middlewares) {
         for (const [k, v] of Object.entries(middleware.options)) {
-          labels[
-            `traefik.http.middlewares.${name}-${middleware.name}.${middleware.type}.${k}`
-          ] = v;
+          labels[`traefik.http.middlewares.${name}-${middleware.name}.${middleware.type}.${k}`] = v;
           middlewares.push(`${name}-${middleware.name}`);
         }
       }
     }
     if (middlewares.length) {
-      labels[`traefik.http.routers.${name}.middlewares`] =
-        middlewares.join(",");
+      labels[`traefik.http.routers.${name}.middlewares`] = middlewares.join(",");
     }
 
     Object.entries(labels).forEach(([key, value]) => {

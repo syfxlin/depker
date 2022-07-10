@@ -11,6 +11,6 @@ const banner = `
 
 export default {
   name: "depker",
-  version: "2.1.0",
+  version: "2.1.1",
   banner: banner.substring(1, banner.length - 1),
 };
