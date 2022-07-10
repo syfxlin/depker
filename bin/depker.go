@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 )
 
-var mod = "https://github.com/syfxlin/depker/raw/master/mod.ts"
+const mod = "https://github.com/syfxlin/depker/raw/%s/mod.ts"
 
 func run(name string, command []string) {
 	cmd := exec.Command(name, command...)
@@ -17,6 +19,21 @@ func run(name string, command []string) {
 			os.Exit(exitError.ExitCode())
 		}
 		panic(err)
+	}
+}
+
+func version(version string) string {
+	if version == "master" {
+		return "master"
+	}
+	ok, err := regexp.MatchString("v\\d+\\.\\d+\\.\\d+(-beta\\d+|-alpha\\d+)?", version)
+	if err != nil {
+		panic(err)
+	}
+	if ok {
+		return version
+	} else {
+		return ""
 	}
 }
 
@@ -33,9 +50,20 @@ func main() {
 
 	// command
 	if os.Args[1] == "update" {
-		run("deno", []string{"cache", "-r", mod})
+		version := version(os.Args[2])
+		if version == "" {
+			run("deno", []string{"cache", "-r", fmt.Sprintf(mod, "master")})
+		} else {
+			run("deno", []string{"cache", "-r", fmt.Sprintf(mod, version)})
+		}
+		return
 	}
 
 	// depker
-	run("deno", append([]string{"run", "-q", "-A", mod}, os.Args[1:]...))
+	version := version(os.Args[1])
+	if version == "" {
+		run("deno", append([]string{"run", "-q", "-A", fmt.Sprintf(mod, "master")}, os.Args[1:]...))
+	} else {
+		run("deno", append([]string{"run", "-q", "-A", fmt.Sprintf(mod, version)}, os.Args[2:]...))
+	}
 }
