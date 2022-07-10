@@ -1,7 +1,5 @@
-import exec from "./exec.ts";
 import * as config from "./config.ts";
 import * as tmp from "./tmp.ts";
-import * as text from "./text.ts";
 import * as git from "./git.ts";
 import * as docker from "./docker.ts";
 import * as template from "../templates/index.ts";
@@ -10,4 +8,4 @@ import * as template from "../templates/index.ts";
 export * from "./libs.ts";
 
 // extensions
-export { exec, config, tmp, text, git, docker, template };
+export { config, tmp, git, docker, template };
