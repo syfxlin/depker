@@ -12,6 +12,7 @@ import {
 import { config } from "https://deno.land/std@0.133.0/dotenv/mod.ts";
 import { logger } from "../index.ts";
 import { events } from "./events.ts";
+import { dir } from "./dir.ts";
 
 export const task = async (location: string, name: string) => {
   if (!isAbsolute(location)) {
@@ -33,30 +34,41 @@ export const pipeline = async (
   args: string[],
   options: Record<string, any>
 ) => {
-  // env
-  const env = Object.assign(
-    {},
-    await config({ path: options.envFile }),
-    Object.fromEntries(options.env.map((e: string) => e.split("=")))
-  );
-  for (const key in env) {
-    if (Deno.env.get(key) !== undefined) {
-      continue;
+  try {
+    // env
+    const env = Object.assign(
+      {},
+      await config({ path: options.envFile }),
+      Object.fromEntries(options.env.map((e: string) => e.split("=")))
+    );
+    for (const key in env) {
+      if (Deno.env.get(key) !== undefined) {
+        continue;
+      }
+      Deno.env.set(key, env[key]);
     }
-    Deno.env.set(key, env[key]);
-  }
 
-  // chdir
-  Deno.chdir(options.project);
+    // chdir
+    Deno.chdir(options.project);
+    // ensure temp dir
+    Deno.mkdirSync(dir.tmp, { recursive: true });
 
-  // run task
-  logger.step(`Running task: ${name}`);
-  const fn = await task(options.config, name);
-  if (!fn) {
-    throw new Error("Task not found!");
+    // run task
+    logger.step(`Running task: ${name}`);
+    const fn = await task(options.config, name);
+    if (!fn) {
+      throw new Error("Task not found!");
+    }
+    await events.emit("init");
+    await fn({ args, options });
+    await events.emit("destroy");
+    logger.success(`Successfully run task: ${name}`);
+  } finally {
+    try {
+      // clear temp dir
+      Deno.removeSync(dir.tmp, { recursive: true });
+    } catch (e) {
+      // ignore
+    }
   }
-  await events.emit("init");
-  await fn({ args, options });
-  await events.emit("destroy");
-  logger.success(`Successfully run task: ${name}`);
 };
