@@ -1,37 +1,58 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { DockerService } from "./docker.service";
-import { Build } from "../entities/build.entity";
-import { BuildLogService } from "./build-log.service";
+import { Deploy } from "../entities/deploy.entity";
+import { DeployLogService } from "./deploy-log.service";
 import { StorageService } from "./storage.service";
 import { PassThrough } from "stream";
 import { LINUX_DIR } from "../constants/dir.constant";
 import { AppService } from "./app.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { createInterface } from "readline";
+import { DOCKER_IMAGE } from "../constants/docker.constant";
 
 @Injectable()
 export class DeployService implements OnModuleInit {
   constructor(
     private readonly dockerService: DockerService,
-    private readonly logService: BuildLogService,
+    private readonly logService: DeployLogService,
     private readonly storageService: StorageService,
     private readonly appService: AppService,
-    @InjectRepository(Build)
-    private readonly buildRepository: Repository<Build>
+    @InjectRepository(Deploy)
+    private readonly deployRepository: Repository<Deploy>
   ) {}
 
-  public async build(build: Build) {
-    const app = build.app;
-    const tag = `depker-${app.name}:${Date.now()}`;
-    const commands: string[] = [`DOCKER_BUILDKIT=1`, `docker`, `build`];
+  public async deploy(deploy: Deploy) {
+    await this.build(deploy);
+  }
+
+  public async start(deploy: Deploy) {
+    const app = deploy.app;
+    const tag = `depker-${app.name}:${deploy.id}`;
+
+    // logger
+    await this.logService.step(deploy, `Deployment container ${app.name} [${tag}] started.`);
+
+    const containerInfos = await this.dockerService.listContainers({ all: true });
+    const existInfos = containerInfos.filter((c) => c.Labels["depker.name"] === app.name);
+    const runningInfo = existInfos.find((c) => c.Names.find((n) => n === `/${app.name}`));
+  }
+
+  public async build(deploy: Deploy) {
+    const app = deploy.app;
+    const tag = `depker-${app.name}:${deploy.id}`;
+
+    // logger
+    await this.logService.step(deploy, `Building image ${tag} started.`);
 
     // base
+    const commands: string[] = [`DOCKER_BUILDKIT=1`, `docker`, `build`];
     commands.push(`--file=${app.dockerfile}`);
     commands.push(`--tag=${tag}`);
     if (app.pull === "always") {
       commands.push(`--pull`);
     }
-    if (build.force) {
+    if (deploy.force) {
       commands.push(`--no-cache`);
     }
 
@@ -48,50 +69,43 @@ export class DeployService implements OnModuleInit {
 
     // other
     commands.push(`--secret=id=secrets,src=/sec`);
-    commands.push(".");
-
-    // log
-    await this.logService.log(build, `build image with tag: ${tag}`);
+    commands.push(`.`);
 
     // checkout code
-    const dir = await this.storageService.project(build);
-    const sec = await this.storageService.secrets(build);
+    const dir = await this.storageService.project(deploy);
+    const sec = await this.storageService.secrets(deploy);
 
     // output
-    const pass = new PassThrough({ encoding: "utf-8" });
-    pass.on("data", (chunk) => {
-      this.logService.log(build, chunk);
+    const through = new PassThrough({ encoding: "utf-8" });
+    const readline = createInterface({ input: through });
+    readline.on("line", (line) => {
+      this.logService.log(deploy, line);
     });
 
     // build image
-    await this.dockerService.pullImage("docker:cli");
-    const [result] = await this.dockerService.run(
-      "docker:cli",
-      [`sh`, `-c`, commands.join(" ")],
-      pass,
-      {
-        WorkingDir: "/app",
-        HostConfig: {
-          AutoRemove: true,
-          Binds: [
-            `${LINUX_DIR(sec)}:/sec`,
-            `${LINUX_DIR(dir)}:/app`,
-            `/var/run/docker.sock:/var/run/docker.sock`,
-          ],
-        },
-      }
-    );
+    await this.dockerService.pullImage(DOCKER_IMAGE);
+    const [result] = await this.dockerService.run(DOCKER_IMAGE, [`sh`, `-c`, commands.join(" ")], through, {
+      WorkingDir: "/app",
+      HostConfig: {
+        AutoRemove: true,
+        Binds: [`${LINUX_DIR(sec)}:/sec`, `${LINUX_DIR(dir)}:/app`, `/var/run/docker.sock:/var/run/docker.sock`],
+      },
+    });
     if (result.StatusCode === 0) {
-      console.log("build success");
+      deploy.status = "succeed";
+      await this.deployRepository.update(deploy.id, deploy);
+      await this.logService.succeed(deploy, `Building image ${tag} successful.`);
+      return true;
     } else {
-      console.log("build failed");
+      deploy.status = "failed";
+      await this.deployRepository.update(deploy.id, deploy);
+      await this.logService.failed(deploy, `Building image ${tag} failure.`);
+      return false;
     }
-
-    return tag;
   }
 
   async onModuleInit() {
-    const build = await this.buildRepository.findOne({
+    const build = await this.deployRepository.findOne({
       where: {
         id: 1,
       },
@@ -100,13 +114,13 @@ export class DeployService implements OnModuleInit {
           secrets: true,
           volumes: true,
           exposes: true,
-          builds: true,
+          deploys: true,
         },
       },
     });
     if (!build) {
       return;
     }
-    await this.build(build);
+    await this.deploy(build);
   }
 }

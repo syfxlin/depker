@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Repository } from "typeorm";
-import { Setting } from "../entities/config.entity";
+import { Setting } from "../entities/setting.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { hashSync } from "bcrypt";
 import deepmerge from "deepmerge";

@@ -1,27 +1,12 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Relation,
-  Unique,
-  UpdateDateColumn,
-} from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Relation, UpdateDateColumn } from "typeorm";
 import { Secret } from "./secret.entity";
 import { Volume } from "./volume.entity";
 import { Expose } from "./expose.entity";
-import { Build } from "./build.entity";
+import { Deploy } from "./deploy.entity";
 
 @Entity()
-@Index(["name"], { unique: true })
-@Unique(["name"])
 export class App {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ length: 128, nullable: false })
+  @PrimaryColumn({ length: 128, nullable: false, unique: true })
   name: string;
 
   @Column({ length: 128, nullable: false })
@@ -41,9 +26,6 @@ export class App {
 
   @Column({ nullable: false, default: "always" })
   pull: "always" | "missing" | "never";
-
-  @Column({ nullable: false, default: 1 })
-  replica: number;
 
   @Column({ nullable: false, default: "{}", type: "simple-json" })
   extension: any;
@@ -126,10 +108,10 @@ export class App {
   })
   exposes: Relation<Expose[]>;
 
-  @OneToMany(() => Build, (build) => build.app, {
+  @OneToMany(() => Deploy, (deploy) => deploy.app, {
     orphanedRowAction: "delete",
   })
-  builds: Relation<Build[]>;
+  deploys: Relation<Deploy[]>;
 
   // date
   @CreateDateColumn({ nullable: false })

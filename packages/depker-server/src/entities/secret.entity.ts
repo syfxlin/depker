@@ -27,7 +27,7 @@ export class Secret {
   @Column({ nullable: false, default: false })
   onbuild: boolean;
 
-  @ManyToOne(() => App, (app) => app.secrets)
+  @ManyToOne(() => App, (app) => app.secrets, { nullable: false })
   app: Relation<App>;
 
   // date

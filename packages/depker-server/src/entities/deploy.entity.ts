@@ -9,10 +9,10 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { App } from "./app.entity";
-import { BuildLog } from "./build-log.entity";
+import { DeployLog } from "./deploy-log.entity";
 
 @Entity()
-export class Build {
+export class Deploy {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -20,7 +20,7 @@ export class Build {
   trigger: "manual" | "depker" | "git";
 
   @Column({ nullable: false, default: "queued" })
-  status: "queued" | "running" | "failed" | "success";
+  status: "queued" | "running" | "failed" | "succeed";
 
   @Column({ nullable: false, default: false })
   force: boolean;
@@ -28,11 +28,11 @@ export class Build {
   @Column({ nullable: false })
   commit: string;
 
-  @ManyToOne(() => App, (app) => app.builds)
+  @ManyToOne(() => App, (app) => app.deploys, { nullable: false })
   app: Relation<App>;
 
-  @OneToMany(() => BuildLog, (log) => log.build)
-  logs: Relation<BuildLog[]>;
+  @OneToMany(() => DeployLog, (log) => log.deploy)
+  logs: Relation<DeployLog[]>;
 
   // date
   @CreateDateColumn({ nullable: false })

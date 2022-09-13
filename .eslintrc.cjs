@@ -20,5 +20,6 @@ module.exports = {
     "react/prop-types": "off",
     "react/display-name": "warn",
     "react/no-unknown-property": "warn",
+    "max-len": ["error", { code: 120, ignoreUrls: true }],
   },
 };

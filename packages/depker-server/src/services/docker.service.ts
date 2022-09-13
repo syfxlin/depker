@@ -28,7 +28,7 @@ export class DockerService extends Docker {
     if (info) {
       network = await this.getNetwork(info.Id);
     } else {
-      this.logger.log(`docker network ${name} does not exists, creating...`);
+      this.logger.log(`Creating docker network ${name}.`);
       network = await this.createNetwork({
         Name: name,
         Driver: "bridge",
@@ -41,34 +41,35 @@ export class DockerService extends Docker {
     return await this.initNetwork(DEPKER_NETWORK);
   }
 
-  public pullImage(tag: string) {
-    return new Promise<void>((resolve, reject) => {
-      this.pull(tag, {}, (error, output: NodeJS.ReadableStream) => {
-        if (error) {
-          this.logger.error(
-            `pull image error with tag: ${tag}, message: ${error.message}`
-          );
-          reject(error);
-          return;
-        }
-        output.on("data", (d) => {
-          const data = JSON.parse(d);
-          let message = "";
-          if (data.id) {
-            message += `${data.id}: `;
+  public async pullImage(tag: string, force?: boolean) {
+    if (force || (await this.listImages()).find((i) => i.RepoTags?.includes(tag))) {
+      this.logger.log(`Pulling image ${tag}.`);
+      await new Promise<void>((resolve, reject) => {
+        this.pull(tag, {}, (error, output: NodeJS.ReadableStream) => {
+          if (error) {
+            this.logger.error(`Pull ${tag} image error, ${error.message}`);
+            reject(error);
+            return;
           }
-          if (data.status) {
-            message += `${data.status}`;
-          }
-          if (data.progress) {
-            message += ` ${data.progress}`;
-          }
-          this.logger.debug(message);
-        });
-        output.on("end", () => {
-          resolve();
+          output.on("data", (d) => {
+            const data = JSON.parse(d);
+            let message = "";
+            if (data.id) {
+              message += `${data.id}: `;
+            }
+            if (data.status) {
+              message += `${data.status}`;
+            }
+            if (data.progress) {
+              message += ` ${data.progress}`;
+            }
+            this.logger.debug(message);
+          });
+          output.on("end", () => {
+            resolve();
+          });
         });
       });
-    });
+    }
   }
 }

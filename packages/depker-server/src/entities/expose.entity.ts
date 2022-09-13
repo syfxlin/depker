@@ -32,7 +32,7 @@ export class Expose {
   @Column({ nullable: false, default: "tcp" })
   protocol: string;
 
-  @ManyToOne(() => App, (app) => app.exposes)
+  @ManyToOne(() => App, (app) => app.exposes, { nullable: false })
   app: Relation<App>;
 
   // date

@@ -30,7 +30,7 @@ export class Volume {
   @Column({ nullable: false, default: false })
   readonly: boolean;
 
-  @ManyToOne(() => App, (app) => app.volumes)
+  @ManyToOne(() => App, (app) => app.volumes, { nullable: false })
   app: Relation<App>;
 
   // date
