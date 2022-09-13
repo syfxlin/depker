@@ -1,0 +1,16 @@
+{
+  "name": "@syfxlin/depker-types",
+  "version": "3.0.0",
+  "description": "docker-based cloud deployment tool.",
+  "keywords": ["depker", "docker"],
+  "author": {
+    "name": "Otstar Lin",
+    "email": "i@ixk.me",
+    "url": "https://ixk.me"
+  },
+  "license": "Apache-2.0",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+  }
+}
