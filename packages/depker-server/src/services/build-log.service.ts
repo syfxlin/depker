@@ -17,10 +17,6 @@ export class BuildLogService {
     const time = new Date();
     // prettier-ignore
     this.logger.debug(`build log, build: ${build.id}, time: ${time.toISOString()}, line: ${line}`);
-    return this.repository.insert({
-      build,
-      time,
-      line,
-    });
+    return this.repository.insert({ build, time, line });
   }
 }
