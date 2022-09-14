@@ -3,8 +3,8 @@ import path from "path";
 import os from "os";
 import { simpleGit } from "simple-git";
 import { Deploy } from "../entities/deploy.entity";
-import { BASE_DIR } from "../constants/dir.constant";
 import fs from "fs-extra";
+import { ROOT_DIR } from "../constants/depker.constant";
 
 @Injectable()
 export class StorageService {
@@ -12,8 +12,8 @@ export class StorageService {
     const app = deploy.app;
     const name = app.name;
     const commit = deploy.commit;
-    const src = path.join(BASE_DIR, "repos", `${name}.git`);
-    const dst = path.join(os.tmpdir(), `${name}-${deploy.id}-dir`);
+    const src = path.join(ROOT_DIR, `repos`, `${name}.git`);
+    const dst = path.join(os.tmpdir(), `${name}-${deploy.id}`, `project`);
 
     fs.removeSync(dst);
     fs.ensureDirSync(dst);
@@ -23,15 +23,13 @@ export class StorageService {
     return dst;
   }
 
-  public async secrets(deploy: Deploy): Promise<string> {
+  public async file(deploy: Deploy, key: string, data: string): Promise<string> {
     const app = deploy.app;
     const name = app.name;
-    const secrets = app.secrets.filter((s) => s.onbuild);
-    const dst = path.join(os.tmpdir(), `${name}-${deploy.id}-env`);
+    const dst = path.join(os.tmpdir(), `${name}-${deploy.id}`, key);
 
-    const values = secrets.map((s) => `${s.name}=${s.value}`).join("\n");
     fs.removeSync(dst);
-    fs.outputFileSync(dst, `${values}\n`);
+    fs.outputFileSync(dst, data);
     return dst;
   }
 }

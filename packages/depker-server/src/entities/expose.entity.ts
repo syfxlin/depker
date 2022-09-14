@@ -23,16 +23,16 @@ export class Expose {
   @Column({ length: 128, nullable: false })
   name: string;
 
+  @Column({ nullable: false, default: "tcp" })
+  protocol: "tcp" | "udp";
+
   @Column({ nullable: false })
   src: number;
 
   @Column({ nullable: false })
   dst: number;
 
-  @Column({ nullable: false, default: "tcp" })
-  protocol: string;
-
-  @ManyToOne(() => App, (app) => app.exposes, { nullable: false })
+  @ManyToOne(() => App, (app) => app.exposes)
   app: Relation<App>;
 
   // date

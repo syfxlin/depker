@@ -1,41 +1,37 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { DockerService } from "../services/docker.service";
-import { BASE_DIR, LINUX_DIR } from "../constants/dir.constant";
 import path from "path";
 import fs from "fs-extra";
 import YAML from "yaml";
-import { DEPKER_CERT, DEPKER_LOGROTATE, DEPKER_SERVER, DEPKER_TRAEFIK } from "../constants/depker.constant";
-import { SettingService } from "../services/setting.service";
-import { LOGROTATE_IMAGE, TRAEFIK_IMAGE } from "../constants/docker.constant";
+import {
+  DEPKER_CERT,
+  DEPKER_LOGROTATE,
+  DEPKER_TRAEFIK,
+  LINUX_DIR,
+  LOGROTATE_IMAGE,
+  ROOT_DIR,
+  TRAEFIK_IMAGE,
+} from "../constants/depker.constant";
 import deepmerge from "deepmerge";
+import { SettingRepository } from "../repositories/setting.repository";
 
 @Injectable()
 export class TraefikTask implements OnModuleInit {
   private readonly logger = new Logger(TraefikTask.name);
 
-  constructor(private readonly settingService: SettingService, private readonly dockerService: DockerService) {}
+  constructor(private readonly settingRepository: SettingRepository, private readonly dockerService: DockerService) {}
 
   public async reload(force = false) {
     this.logger.log(`Reloading traefik and logrotate.`);
 
     // load config
-    const setting = await this.settingService.get();
+    const setting = await this.settingRepository.get();
 
     // find exists container
     const containers = await this.dockerService.listContainers({ all: true });
-    const server = containers.find((container) => container.Names.find((n) => n.startsWith(`/${DEPKER_SERVER}`)));
 
     // find traefik base dir
-    let dir = path.posix.join(BASE_DIR, "traefik");
-    if (server) {
-      this.logger.log(`Depker is running inside docker.`);
-      const base = server.Mounts.find((v) => v.Destination === LINUX_DIR(BASE_DIR));
-      if (base) {
-        dir = path.posix.join(base.Source, "traefik");
-      }
-    } else {
-      this.logger.log(`Depker is running outside docker.`);
-    }
+    const dir = path.posix.join(ROOT_DIR, "traefik");
     this.logger.log(`Traefik use dir: ${dir}`);
 
     // ensure dir
@@ -95,6 +91,7 @@ export class TraefikTask implements OnModuleInit {
             },
             ...ports.reduce(
               (a, p) => ({
+                ...a,
                 [`tcp${p}`]: { address: `:${p}/tcp` },
                 [`udp${p}`]: { address: `:${p}/udp` },
               }),

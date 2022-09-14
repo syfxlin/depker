@@ -1,5 +1,4 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Relation, UpdateDateColumn } from "typeorm";
-import { Secret } from "./secret.entity";
 import { Volume } from "./volume.entity";
 import { Expose } from "./expose.entity";
 import { Deploy } from "./deploy.entity";
@@ -12,9 +11,6 @@ export class App {
   @Column({ length: 128, nullable: false })
   buildpark: string;
 
-  @Column({ nullable: false, default: "Dockerfile" })
-  dockerfile: string;
-
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   commands: string[];
 
@@ -24,11 +20,14 @@ export class App {
   @Column({ nullable: false, default: "always" })
   restart: "no" | "always" | "on-failure" | `on-failure:${number}`;
 
-  @Column({ nullable: false, default: "always" })
-  pull: "always" | "missing" | "never";
+  @Column({ nullable: false, default: true })
+  pull: boolean;
+
+  @Column({ nullable: false, default: true })
+  rolling: boolean;
 
   @Column({ nullable: false, default: "{}", type: "simple-json" })
-  extension: any;
+  extension: Record<string, any>;
 
   // web
   @Column({ nullable: false, default: "[]", type: "simple-json" })
@@ -56,11 +55,11 @@ export class App {
   // healthcheck
   @Column({ nullable: false, default: "{}", type: "simple-json" })
   healthcheck: {
-    cmd?: string;
+    cmd?: string[];
     retries?: number;
-    interval?: string;
-    start?: string;
-    timeout?: string;
+    interval?: number;
+    start?: number;
+    timeout?: number;
   };
 
   // extensions
@@ -81,31 +80,37 @@ export class App {
 
   // values
   @Column({ nullable: false, default: "{}", type: "simple-json" })
-  labels: Record<string, string>;
-
-  @Column({ nullable: false, default: "{}", type: "simple-json" })
   buildArgs: Record<string, string>;
 
   @Column({ nullable: false, default: "{}", type: "simple-json" })
-  hosts: Record<string, string>;
+  networks: Record<string, string>;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  networks: string[];
+  labels: {
+    name: string;
+    value: string;
+    onbuild: boolean;
+  }[];
+
+  @Column({ nullable: false, default: "[]", type: "simple-json" })
+  secrets: {
+    name: string;
+    value: string;
+    onbuild: boolean;
+  }[];
+
+  @Column({ nullable: false, default: "[]", type: "simple-json" })
+  hosts: {
+    name: string;
+    value: string;
+    onbuild: boolean;
+  }[];
 
   // relations
-  @OneToMany(() => Secret, (secret) => secret.app, {
-    orphanedRowAction: "delete",
-  })
-  secrets: Relation<Secret[]>;
-
-  @OneToMany(() => Volume, (volume) => volume.app, {
-    orphanedRowAction: "delete",
-  })
+  @OneToMany(() => Volume, (volume) => volume.app)
   volumes: Relation<Volume[]>;
 
-  @OneToMany(() => Expose, (expose) => expose.app, {
-    orphanedRowAction: "delete",
-  })
+  @OneToMany(() => Expose, (expose) => expose.app)
   exposes: Relation<Expose[]>;
 
   @OneToMany(() => Deploy, (deploy) => deploy.app, {

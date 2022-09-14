@@ -17,21 +17,23 @@ export class Deploy {
   id: number;
 
   @Column({ nullable: false })
-  trigger: "manual" | "depker" | "git";
+  commit: string;
 
   @Column({ nullable: false, default: "queued" })
   status: "queued" | "running" | "failed" | "succeed";
 
+  @Column({ nullable: false })
+  trigger: "manual" | "depker" | "git";
+
   @Column({ nullable: false, default: false })
   force: boolean;
-
-  @Column({ nullable: false })
-  commit: string;
 
   @ManyToOne(() => App, (app) => app.deploys, { nullable: false })
   app: Relation<App>;
 
-  @OneToMany(() => DeployLog, (log) => log.deploy)
+  @OneToMany(() => DeployLog, (log) => log.deploy, {
+    orphanedRowAction: "delete",
+  })
   logs: Relation<DeployLog[]>;
 
   // date
