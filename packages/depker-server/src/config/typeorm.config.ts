@@ -7,7 +7,7 @@ export const typeorm = TypeOrmModule.forRootAsync({
     type: "better-sqlite3",
     database: "storage/database.db",
     entities: [...entities],
-    logging: true,
+    logging: ["info", "warn", "error", "migration", "schema"],
     namingStrategy: new SnakeNamingStrategy(),
     synchronize: true,
   }),

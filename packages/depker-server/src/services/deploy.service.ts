@@ -5,7 +5,7 @@ import { StorageService } from "./storage.service";
 import { PassThrough } from "stream";
 import { createInterface } from "readline";
 import { DEPKER_CERT, DEPKER_NETWORK, DOCKER_IMAGE, LINUX_DIR, ROOT_DIR } from "../constants/depker.constant";
-import { ContainerCreateOptions } from "dockerode";
+import { ContainerCreateOptions, ContainerInfo } from "dockerode";
 import path from "path";
 import { DeployLogRepository } from "../repositories/deploy-log.repository";
 import { DeployRepository } from "../repositories/deploy.repository";
@@ -21,6 +21,7 @@ export class DeployService implements OnModuleInit {
 
   public async deploy(deploy: Deploy) {
     await this.build(deploy);
+    await this.start(deploy);
   }
 
   public async build(deploy: Deploy) {
@@ -147,12 +148,13 @@ export class DeployService implements OnModuleInit {
       options.HostConfig.ExtraHosts = app.hosts.map((h) => `${h.name}:${h.value}`);
     }
     if (app.healthcheck.cmd) {
+      const h = app.healthcheck;
       options.Healthcheck = {
-        Test: app.healthcheck.cmd,
-        Retries: app.healthcheck.retries,
-        Interval: app.healthcheck.interval,
-        StartPeriod: app.healthcheck.start,
-        Timeout: app.healthcheck.timeout,
+        Test: h.cmd,
+        Retries: h.retries ?? 0,
+        Interval: (h.interval ?? 0) * 1000 * 1000000,
+        StartPeriod: (h.start ?? 0) * 1000 * 1000000,
+        Timeout: (h.timeout ?? 0) * 1000 * 1000000,
       };
     }
 
@@ -202,9 +204,12 @@ export class DeployService implements OnModuleInit {
       const src = expose.src;
       const dst = expose.dst;
       const labels = options.Labels as Record<string, string>;
-      labels[`traefik.${protocol}.services.${name}-${protocol}-${src}.loadbalancer.server.port`] = String(dst);
+      if (protocol === "tcp") {
+        labels[`traefik.${protocol}.routers.${name}-${protocol}-${src}.rule`] = "HostSNI(`*`)";
+      }
       labels[`traefik.${protocol}.routers.${name}-${protocol}-${src}.entrypoints`] = `${protocol}${src}`;
       labels[`traefik.${protocol}.routers.${name}-${protocol}-${src}.service`] = `${name}-${protocol}-${src}`;
+      labels[`traefik.${protocol}.services.${name}-${protocol}-${src}.loadbalancer.server.port`] = String(dst);
     }
 
     // volumes
@@ -226,50 +231,53 @@ export class DeployService implements OnModuleInit {
     }
 
     try {
-      // if not rolling deployment, remove old containers
-      if (!app.rolling) {
-        await this.purge(deploy);
-      }
-
-      // start new container
+      // start
       await container.start();
 
-      // TODO: check container is up
-
-      // if rolling deployment, remove old containers
-      if (app.rolling) {
-        await this.purge(deploy);
+      // wait healthcheck, max timeout 1h
+      await this.logRepository.log(deploy, `Waiting container ${app.name} to finished.`);
+      for (let i = 1; i <= 1200; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const info = await container.inspect();
+        const status = info.State.Status.toLowerCase();
+        const health = info.State.Health?.Status?.toLowerCase();
+        if (status !== "created" && health !== "starting") {
+          if (status === "running" && (!health || health === "healthy")) {
+            break;
+          } else {
+            throw new Error(`Deployment container ${app.name} is unhealthy.`);
+          }
+        }
+        if (i % 10 === 0) {
+          await this.logRepository.log(deploy, `Waiting... ${i * 3}s`);
+        }
       }
+
+      // purge containers
+      await this.purge(deploy);
+
       await this.logRepository.succeed(deploy, `Deployment container ${app.name} successful.`);
       return true;
-    } catch (e) {
-      await this.logRepository.failed(deploy, `Deployment container ${app.name} failure.`);
+    } catch (e: any) {
+      await this.logRepository.failed(deploy, `Deployment container ${app.name} failure.`, e);
       return false;
     }
   }
 
   public async purge(deploy: Deploy) {
-    await this.logRepository.log(deploy, `Purge old ${deploy.app.name} containers.`);
-    process.nextTick(async () => {
-      // wait timeout
-      await new Promise((resolve) => setTimeout(resolve, 60000));
-      // remove all not used
-      const containerInfos = await this.dockerService.listContainers({ all: true });
-      // prettier-ignore
-      // eslint-disable-next-line max-len
-      const appInfos = containerInfos.filter((c) => c.Labels["depker.name"] === deploy.app.name).filter((c) => c.Labels["depker.id"] !== String(deploy.id));
-      const apps = appInfos.map((c) => this.dockerService.getContainer(c.Id));
-      for (const app of apps) {
-        try {
-          await app.remove({ force: true });
-        } catch (e: any) {
-          if (e.statusCode === 404) {
-            return;
-          }
-          await this.logRepository.failed(deploy, `Purge container ${app.id} failed. ${e}`);
-        }
+    await this.logRepository.step(deploy, `Purge ${deploy.app.name} containers started.`);
+    let infos: ContainerInfo[];
+    infos = await this.dockerService.listContainers({ all: true });
+    infos = infos.filter((c) => c.Labels["depker.name"] === deploy.app.name);
+    infos = infos.filter((c) => c.Labels["depker.id"] !== String(deploy.id));
+    for (const info of infos) {
+      const container = this.dockerService.getContainer(info.Id);
+      try {
+        await container.remove({ force: true });
+      } catch (e: any) {
+        await this.logRepository.failed(deploy, `Purge container ${container.id} failed.`, e);
       }
-    });
+    }
   }
 
   async onModuleInit() {

@@ -23,9 +23,6 @@ export class App {
   @Column({ nullable: false, default: true })
   pull: boolean;
 
-  @Column({ nullable: false, default: true })
-  rolling: boolean;
-
   @Column({ nullable: false, default: "{}", type: "simple-json" })
   extension: Record<string, any>;
 

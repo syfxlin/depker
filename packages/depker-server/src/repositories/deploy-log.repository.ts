@@ -14,7 +14,7 @@ export class DeployLogRepository extends Repository<DeployLog> {
   public async upload(deploy: Deploy, level: DeployLog["level"], line: string) {
     const time = new Date();
     this.logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${deploy.app.name}:${deploy.id} : ${line}`);
-    return this.insert({ deploy, time, line });
+    return this.insert({ deploy, time, level, line });
   }
 
   public async debug(deploy: Deploy, line: string) {
@@ -33,7 +33,10 @@ export class DeployLogRepository extends Repository<DeployLog> {
     return this.upload(deploy, "succeed", line);
   }
 
-  public async failed(deploy: Deploy, line: string) {
+  public async failed(deploy: Deploy, line: string, error?: Error) {
+    if (error) {
+      line += `[ERROR] ${error.name}: ${error.message}, ${error.stack}`;
+    }
     return this.upload(deploy, "failed", line);
   }
 }

@@ -217,7 +217,7 @@ export class TraefikTask implements OnModuleInit {
           this.logger.log(`Recreating logrotate with force reload.`);
           const container = await this.dockerService.getContainer(logrotate.Id);
           await container.remove({ force: true });
-        } else if (logrotate.Status.includes("Exited")) {
+        } else if (logrotate.State.toLowerCase() !== "running") {
           // if logrotate container is exited, remove
           this.logger.log(`Recreating logrotate with exited.`);
           const container = await this.dockerService.getContainer(logrotate.Id);
