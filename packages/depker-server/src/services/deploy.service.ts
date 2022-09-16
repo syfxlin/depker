@@ -9,6 +9,7 @@ import { ContainerCreateOptions, ContainerInfo } from "dockerode";
 import path from "path";
 import { DeployLogRepository } from "../repositories/deploy-log.repository";
 import { DeployRepository } from "../repositories/deploy.repository";
+import { SettingRepository } from "../repositories/setting.repository";
 
 @Injectable()
 export class DeployService implements OnModuleInit {
@@ -16,12 +17,24 @@ export class DeployService implements OnModuleInit {
     private readonly dockerService: DockerService,
     private readonly deployRepository: DeployRepository,
     private readonly logRepository: DeployLogRepository,
+    private readonly settingRepository: SettingRepository,
     private readonly storageService: StorageService
   ) {}
 
   public async deploy(deploy: Deploy) {
-    await this.build(deploy);
-    await this.start(deploy);
+    await this.logRepository.step(deploy, `Deployment app ${deploy.app.name} started.`);
+    const status1 = await this.build(deploy);
+    if (!status1) {
+      await this.logRepository.failed(deploy, `Deployment app ${deploy.app.name} failure.`);
+      return false;
+    }
+    const status2 = await this.start(deploy);
+    if (!status2) {
+      await this.logRepository.failed(deploy, `Deployment app ${deploy.app.name} failure.`);
+      return false;
+    }
+    await this.logRepository.failed(deploy, `Deployment app ${deploy.app.name} successful.`);
+    return true;
   }
 
   public async build(deploy: Deploy) {
@@ -86,7 +99,7 @@ export class DeployService implements OnModuleInit {
     const app = deploy.app;
 
     // logger
-    await this.logRepository.step(deploy, `Deployment container ${app.name} started.`);
+    await this.logRepository.step(deploy, `Start container ${app.name} started.`);
 
     // parameters
     const id = String(deploy.id);
@@ -245,7 +258,7 @@ export class DeployService implements OnModuleInit {
           if (status === "running" && (!health || health === "healthy")) {
             break;
           } else {
-            throw new Error(`Deployment container ${app.name} is unhealthy.`);
+            throw new Error(`Start container ${app.name} is unhealthy.`);
           }
         }
         if (i % 10 === 0) {
@@ -256,10 +269,10 @@ export class DeployService implements OnModuleInit {
       // purge containers
       await this.purge(deploy);
 
-      await this.logRepository.succeed(deploy, `Deployment container ${app.name} successful.`);
+      await this.logRepository.succeed(deploy, `Start container ${app.name} successful.`);
       return true;
     } catch (e: any) {
-      await this.logRepository.failed(deploy, `Deployment container ${app.name} failure.`, e);
+      await this.logRepository.failed(deploy, `Start container ${app.name} failure.`, e);
       return false;
     }
   }
@@ -278,6 +291,12 @@ export class DeployService implements OnModuleInit {
         await this.logRepository.failed(deploy, `Purge container ${container.id} failed.`, e);
       }
     }
+    process.nextTick(async () => {
+      const setting = await this.settingRepository.get();
+      if (setting.purge) {
+        await Promise.all([this.dockerService.pruneImages(), this.dockerService.pruneVolumes()]);
+      }
+    });
   }
 
   async onModuleInit() {

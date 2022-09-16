@@ -12,7 +12,6 @@ import {
   ROOT_DIR,
   TRAEFIK_IMAGE,
 } from "../constants/depker.constant";
-import deepmerge from "deepmerge";
 import { SettingRepository } from "../repositories/setting.repository";
 
 @Injectable()
@@ -69,92 +68,86 @@ export class TraefikTask implements OnModuleInit {
       const envs = Object.entries(setting.tls.env ?? {}).map(([k, v]) => `${k}=${v}`);
 
       // write config
-      const traefikYaml = deepmerge(
-        {
-          log: {
-            level: "INFO",
-            filePath: "/var/traefik/traefik.log",
-          },
-          accessLog: {
-            filePath: "/var/traefik/traefik-access.log",
-            bufferingSize: 100,
-          },
-          api: {
-            dashboard: true,
-          },
-          entryPoints: {
-            http: {
-              address: ":80",
-            },
-            https: {
-              address: ":443",
-            },
-            ...ports.reduce(
-              (a, p) => ({
-                ...a,
-                [`tcp${p}`]: { address: `:${p}/tcp` },
-                [`udp${p}`]: { address: `:${p}/udp` },
-              }),
-              {}
-            ),
-          },
-          providers: {
-            file: {
-              directory: "/var/traefik/conf.d",
-              watch: true,
-            },
-            docker: {
-              endpoint: "unix:///var/run/docker.sock",
-              exposedByDefault: false,
-            },
-          },
-          certificatesResolvers: {
-            [DEPKER_CERT]: {
-              acme: {
-                email: setting.email,
-                storage: "/var/traefik/acme.json",
-                ...(setting.tls.type === "http"
-                  ? {
-                      httpChallenge: {
-                        entryPoint: "http",
-                      },
-                    }
-                  : {
-                      dnsChallenge: {
-                        provider: setting.tls,
-                      },
-                    }),
-              },
-            },
-          },
+      const traefikYaml = {
+        log: {
+          level: "INFO",
+          filePath: "/var/traefik/traefik.log",
         },
-        setting.extension.traefik ?? {}
-      );
-      const dashboardYaml = deepmerge(
-        {
+        accessLog: {
+          filePath: "/var/traefik/traefik-access.log",
+          bufferingSize: 100,
+        },
+        api: {
+          dashboard: true,
+        },
+        entryPoints: {
           http: {
-            routers: {
-              traefik: {
-                entryPoints: "https",
-                rule: `Host(\`${setting.dashboard}\`)`,
-                service: "api@internal",
-                middlewares: ["traefik-auth"],
-                tls: {
-                  certResolver: DEPKER_CERT,
-                },
+            address: ":80",
+          },
+          https: {
+            address: ":443",
+          },
+          ...ports.reduce(
+            (a, p) => ({
+              ...a,
+              [`tcp${p}`]: { address: `:${p}/tcp` },
+              [`udp${p}`]: { address: `:${p}/udp` },
+            }),
+            {}
+          ),
+        },
+        providers: {
+          file: {
+            directory: "/var/traefik/conf.d",
+            watch: true,
+          },
+          docker: {
+            endpoint: "unix:///var/run/docker.sock",
+            exposedByDefault: false,
+          },
+        },
+        certificatesResolvers: {
+          [DEPKER_CERT]: {
+            acme: {
+              email: setting.email,
+              storage: "/var/traefik/acme.json",
+              ...(setting.tls.type === "http"
+                ? {
+                    httpChallenge: {
+                      entryPoint: "http",
+                    },
+                  }
+                : {
+                    dnsChallenge: {
+                      provider: setting.tls,
+                    },
+                  }),
+            },
+          },
+        },
+      };
+      const dashboardYaml = {
+        http: {
+          routers: {
+            traefik: {
+              entryPoints: "https",
+              rule: `Host(\`${setting.dashboard}\`)`,
+              service: "api@internal",
+              middlewares: ["traefik-auth"],
+              tls: {
+                certResolver: DEPKER_CERT,
               },
             },
-            middlewares: {
-              "traefik-auth": {
-                basicAuth: {
-                  users: [`${setting.username}:${setting.password}`],
-                },
+          },
+          middlewares: {
+            "traefik-auth": {
+              basicAuth: {
+                users: [`${setting.username}:${setting.password}`],
               },
             },
           },
         },
-        setting.extension.dashboard ?? {}
-      );
+      };
       fs.outputFileSync(path.posix.join(dir, "traefik.yml"), YAML.stringify(traefikYaml));
       if (setting.dashboard) {
         fs.outputFileSync(path.posix.join(dir, "conf.d", "dashboard.yml"), YAML.stringify(dashboardYaml));

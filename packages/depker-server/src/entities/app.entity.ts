@@ -23,9 +23,6 @@ export class App {
   @Column({ nullable: false, default: true })
   pull: boolean;
 
-  @Column({ nullable: false, default: "{}", type: "simple-json" })
-  extension: Record<string, any>;
-
   // web
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   domain: string[];
@@ -103,6 +100,9 @@ export class App {
     onbuild: boolean;
   }[];
 
+  @Column({ nullable: false, default: "{}", type: "simple-json" })
+  parameters: Record<string, any>;
+
   // relations
   @OneToMany(() => Volume, (volume) => volume.app)
   volumes: Relation<Volume[]>;
@@ -110,6 +110,7 @@ export class App {
   @OneToMany(() => Expose, (expose) => expose.app)
   exposes: Relation<Expose[]>;
 
+  // deploy
   @OneToMany(() => Deploy, (deploy) => deploy.app, {
     orphanedRowAction: "delete",
   })

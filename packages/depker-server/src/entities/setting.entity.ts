@@ -20,11 +20,11 @@ export class Setting {
   @Column({ nullable: false, default: false })
   debug: boolean;
 
-  @Column({ nullable: false, default: 1 })
-  concurrency: number;
-
   @Column({ nullable: false, default: true })
   upgrade: boolean;
+
+  @Column({ nullable: false, default: true })
+  purge: boolean;
 
   @Column({ nullable: false, default: `{"type": "http"}`, type: "simple-json" })
   tls: { type: string; env?: Record<string, string> };
@@ -34,13 +34,6 @@ export class Setting {
 
   @Column({ nullable: false, default: "[9000, 9100]", type: "simple-json" })
   ports: [number, number];
-
-  // extension
-  @Column({ nullable: false, default: "{}", type: "simple-json" })
-  extension: {
-    traefik?: any;
-    dashboard?: any;
-  };
 
   // date
   @CreateDateColumn({ nullable: false })
