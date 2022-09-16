@@ -1,4 +1,4 @@
 import { Controller } from "@nestjs/common";
 
-@Controller("/api/v1/deploy")
+@Controller("/deploy")
 export class DeployController {}

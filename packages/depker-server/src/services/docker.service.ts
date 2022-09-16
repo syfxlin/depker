@@ -1,14 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import Docker from "dockerode";
-import { ConfigService } from "@nestjs/config";
-import { DEPKER_NETWORK, IN_DOCKER } from "../constants/depker.constant";
+import { IS_DOCKER, NAMES } from "../constants/depker.constant";
 
 @Injectable()
 export class DockerService extends Docker {
   private readonly logger = new Logger(DockerService.name);
 
-  constructor(config: ConfigService) {
-    if (!IN_DOCKER) {
+  constructor() {
+    if (!IS_DOCKER) {
       super({
         protocol: "http",
         host: "127.0.0.1",
@@ -36,11 +35,11 @@ export class DockerService extends Docker {
   }
 
   public async depkerNetwork() {
-    return await this.initNetwork(DEPKER_NETWORK);
+    return await this.initNetwork(NAMES.NETWORK);
   }
 
   public async pullImage(tag: string, force?: boolean) {
-    if (force || (await this.listImages()).find((i) => i.RepoTags?.includes(tag))) {
+    if (force || !(await this.listImages()).find((i) => i.RepoTags?.includes(tag))) {
       this.logger.log(`Pulling image ${tag}.`);
       await new Promise<void>((resolve, reject) => {
         this.pull(tag, {}, (error, output: NodeJS.ReadableStream) => {

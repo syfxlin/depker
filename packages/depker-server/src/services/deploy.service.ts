@@ -1,48 +1,183 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { DockerService } from "./docker.service";
 import { Deploy } from "../entities/deploy.entity";
 import { StorageService } from "./storage.service";
 import { PassThrough } from "stream";
 import { createInterface } from "readline";
-import { DEPKER_CERT, DEPKER_NETWORK, DOCKER_IMAGE, LINUX_DIR, ROOT_DIR } from "../constants/depker.constant";
+import { IMAGES, NAMES, PATHS } from "../constants/depker.constant";
 import { ContainerCreateOptions, ContainerInfo } from "dockerode";
 import path from "path";
-import { DeployLogRepository } from "../repositories/deploy-log.repository";
-import { DeployRepository } from "../repositories/deploy.repository";
-import { SettingRepository } from "../repositories/setting.repository";
+import { In, LessThan, Not } from "typeorm";
+import pAll from "p-all";
+import { PluginService } from "./plugin.service";
+import { PackContext } from "../plugins/plugin.context";
+import { HttpService } from "nestjs-http-promise";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { SchedulerRegistry } from "@nestjs/schedule";
+import { Setting } from "../entities/setting.entity";
+import { Token } from "../entities/token.entity";
+import { App } from "../entities/app.entity";
+import { Log } from "../entities/log.entity";
+import { Volume } from "../entities/volume.entity";
+import { Port } from "../entities/port.entity";
+import { VolumeBind } from "../entities/volume-bind.entity";
+import { PortBind } from "../entities/port-bind.entity";
 
 @Injectable()
-export class DeployService implements OnModuleInit {
+export class DeployService {
   constructor(
-    private readonly dockerService: DockerService,
-    private readonly deployRepository: DeployRepository,
-    private readonly logRepository: DeployLogRepository,
-    private readonly settingRepository: SettingRepository,
-    private readonly storageService: StorageService
+    private readonly docker: DockerService,
+    private readonly storages: StorageService,
+    private readonly plugins: PluginService,
+    private readonly http: HttpService,
+    private readonly events: EventEmitter2,
+    private readonly schedule: SchedulerRegistry
   ) {}
 
-  public async deploy(deploy: Deploy) {
-    await this.logRepository.step(deploy, `Deployment app ${deploy.app.name} started.`);
-    const status1 = await this.build(deploy);
-    if (!status1) {
-      await this.logRepository.failed(deploy, `Deployment app ${deploy.app.name} failure.`);
-      return false;
+  public async task() {
+    const setting = await Setting.read();
+    const deploys = await Deploy.find({
+      where: {
+        status: In(["queued", "running"]),
+      },
+      order: {
+        createdAt: "asc",
+      },
+      relations: {
+        app: {
+          volumes: {
+            bind: true,
+          },
+          ports: {
+            bind: true,
+          },
+        },
+      },
+    });
+
+    if (!deploys.length) {
+      return;
     }
-    const status2 = await this.start(deploy);
-    if (!status2) {
-      await this.logRepository.failed(deploy, `Deployment app ${deploy.app.name} failure.`);
-      return false;
-    }
-    await this.logRepository.failed(deploy, `Deployment app ${deploy.app.name} successful.`);
-    return true;
+
+    const actions = deploys.map((deploy) => async () => {
+      try {
+        // if status equal running, explain that deploy is interrupted during execution, restart
+        if (deploy.status === "running") {
+          await Log.step(deploy, `Building halted, restarting...`);
+        }
+
+        // stop old deploys
+        if (setting.concurrency === 1) {
+          await Deploy.update(
+            {
+              app: {
+                name: Not(deploy.app.name),
+              },
+              id: Not(deploy.id),
+              status: In(["queued", "running"]),
+              createdAt: LessThan(new Date(Date.now() - 10 * 1000)),
+            },
+            {
+              status: "failed",
+            }
+          );
+        }
+
+        // log started
+        await Log.step(deploy, `Deployment app ${deploy.app.name} started.`);
+
+        // update status to running
+        await Deploy.update(deploy.id, { status: "running" });
+
+        // init project
+        const project = await this.project(deploy);
+        if (!project) {
+          throw new Error(`init project`);
+        }
+
+        // build image
+        const image = await this.build(deploy, project);
+        if (!image) {
+          throw new Error(`build image`);
+        }
+
+        // start container
+        const container = await this.start(deploy, image);
+        if (!container) {
+          throw new Error(`start container`);
+        }
+
+        // purge containers
+        await this.purge(deploy);
+
+        // update status to succeed
+        await Deploy.update(deploy.id, { status: "succeed" });
+
+        // log successful
+        await Log.succeed(deploy, `Deployment app ${deploy.app.name} successful.`);
+      } catch (e: any) {
+        // update status to failed
+        await Deploy.update(
+          {
+            id: deploy.id,
+            status: In(["queued", "running"]),
+          },
+          {
+            status: "failed",
+          }
+        );
+
+        // save failed logs
+        await Log.failed(deploy, `Deployment app ${deploy.app.name} failure. Caused by ${e}.`);
+      }
+    });
+
+    await pAll(actions, { concurrency: setting.concurrency });
   }
 
-  public async build(deploy: Deploy) {
+  public async project(deploy: Deploy) {
+    const packs = await this.plugins.buildpacks();
+    const pack = packs.find((p) => p.name === deploy.app.buildpack.name);
+
+    if (!pack || !pack.buildpack?.handler) {
+      await Log.failed(
+        deploy,
+        `Init project ${deploy.app.name} failure. Caused by not found buildpack ${deploy.app.buildpack.name}`
+      );
+      return null;
+    }
+
+    const dir = await this.storages.project(deploy);
+    await pack.buildpack.handler(
+      new PackContext({
+        name: pack.name,
+        deploy: deploy,
+        project: dir,
+        http: this.http,
+        events: this.events,
+        docker: this.docker,
+        schedule: this.schedule,
+        entities: {
+          Setting: Setting,
+          Token: Token,
+          App: App,
+          Log: Log,
+          Volume: Volume,
+          Port: Port,
+          VolumeBind: VolumeBind,
+          PortBind: PortBind,
+        },
+      })
+    );
+    return dir;
+  }
+
+  public async build(deploy: Deploy, dir: string) {
     const app = deploy.app;
     const tag = `depker-${app.name}:${deploy.id}`;
 
     // logger
-    await this.logRepository.step(deploy, `Building image ${tag} started.`);
+    await Log.step(deploy, `Building image ${tag} started.`);
 
     // commands
     const commands: string[] = [`DOCKER_BUILDKIT=1`, `docker`, `build`, `--tag=${tag}`];
@@ -64,42 +199,41 @@ export class DeployService implements OnModuleInit {
     commands.push(`--secret=id=secrets,src=/sec`);
     commands.push(`.`);
 
-    // checkout code
+    // secrets
     // prettier-ignore
     const secrets = app.secrets.filter(s => s.onbuild).map(s => `${s.name}=${s.value}`).join("\n");
-    const dir = await this.storageService.project(deploy);
-    const sec = await this.storageService.file(deploy, "secret", `${secrets}\n`);
+    const sec = await this.storages.file(deploy, "secret", `${secrets}\n`);
 
     // output
     const through = new PassThrough({ encoding: "utf-8" });
     const readline = createInterface({ input: through });
     readline.on("line", (line) => {
-      this.logRepository.log(deploy, line);
+      Log.log(deploy, line);
     });
 
     // build image
-    await this.dockerService.pullImage(DOCKER_IMAGE);
-    const [result] = await this.dockerService.run(DOCKER_IMAGE, [`sh`, `-c`, commands.join(" ")], through, {
+    await this.docker.pullImage(IMAGES.DOCKER);
+    const [result] = await this.docker.run(IMAGES.DOCKER, [`sh`, `-c`, commands.join(" ")], through, {
       WorkingDir: "/app",
       HostConfig: {
         AutoRemove: true,
-        Binds: [`${LINUX_DIR(sec)}:/sec`, `${LINUX_DIR(dir)}:/app`, `/var/run/docker.sock:/var/run/docker.sock`],
+        Binds: [`${PATHS.LINUX(sec)}:/sec`, `${PATHS.LINUX(dir)}:/app`, `/var/run/docker.sock:/var/run/docker.sock`],
       },
     });
     if (result.StatusCode === 0) {
-      await this.logRepository.succeed(deploy, `Building image ${tag} successful.`);
-      return true;
+      await Log.succeed(deploy, `Building image ${tag} successful.`);
+      return tag;
     } else {
-      await this.logRepository.failed(deploy, `Building image ${tag} failure.`);
-      return false;
+      await Log.failed(deploy, `Building image ${tag} failure.`);
+      return null;
     }
   }
 
-  public async start(deploy: Deploy) {
+  public async start(deploy: Deploy, image: string) {
     const app = deploy.app;
 
     // logger
-    await this.logRepository.step(deploy, `Start container ${app.name} started.`);
+    await Log.step(deploy, `Start container ${app.name} started.`);
 
     // parameters
     const id = String(deploy.id);
@@ -109,7 +243,7 @@ export class DeployService implements OnModuleInit {
     // create options
     const options: ContainerCreateOptions = {
       name: `${name}-${id}-${Date.now()}`,
-      Image: `depker-${name}:${id}`,
+      Image: image,
       Env: Object.entries({
         ...app.secrets.reduce((a, v) => ({ ...a, [v.name]: v.value }), {}),
         DEPKER_NAME: name,
@@ -122,7 +256,7 @@ export class DeployService implements OnModuleInit {
         "depker.id": id,
         "depker.commit": commit,
         "traefik.enable": "true",
-        "traefik.docker.network": DEPKER_NETWORK,
+        "traefik.docker.network": NAMES.NETWORK,
       },
       HostConfig: {
         Binds: [],
@@ -189,7 +323,7 @@ export class DeployService implements OnModuleInit {
         // https
         labels[`traefik.http.routers.${name}.rule`] = rule;
         labels[`traefik.http.routers.${name}.entrypoints`] = "https";
-        labels[`traefik.http.routers.${name}.tls.certresolver`] = DEPKER_CERT;
+        labels[`traefik.http.routers.${name}.tls.certresolver`] = NAMES.CERTIFICATE;
         // http
         labels[`traefik.http.routers.${name}-http.rule`] = rule;
         labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
@@ -212,34 +346,40 @@ export class DeployService implements OnModuleInit {
     }
 
     // ports
-    for (const expose of app.exposes) {
-      const protocol = expose.protocol;
-      const src = expose.src;
-      const dst = expose.dst;
+    for (const port of app.ports) {
+      const proto = port.bind.proto;
+      const hport = port.bind.port;
+      const cport = port.port;
       const labels = options.Labels as Record<string, string>;
-      if (protocol === "tcp") {
-        labels[`traefik.${protocol}.routers.${name}-${protocol}-${src}.rule`] = "HostSNI(`*`)";
+      if (proto === "tcp") {
+        labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
       }
-      labels[`traefik.${protocol}.routers.${name}-${protocol}-${src}.entrypoints`] = `${protocol}${src}`;
-      labels[`traefik.${protocol}.routers.${name}-${protocol}-${src}.service`] = `${name}-${protocol}-${src}`;
-      labels[`traefik.${protocol}.services.${name}-${protocol}-${src}.loadbalancer.server.port`] = String(dst);
+      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.entrypoints`] = `${proto}${cport}`;
+      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.service`] = `${name}-${proto}-${cport}`;
+      labels[`traefik.${proto}.services.${name}-${proto}-${cport}.loadbalancer.server.port`] = String(hport);
     }
 
     // volumes
     for (const volume of app.volumes) {
       const binds = options.HostConfig?.Binds as string[];
-      const value = `${volume.src}:${volume.dst}:${volume.readonly ? "ro" : "rw"}`;
-      binds.push(value.startsWith("@/") ? path.posix.join(ROOT_DIR, value.substring(2)) : value);
+      const hpath = volume.bind.path;
+      const cpath = volume.path;
+      const ro = volume.readonly ? "ro" : "rw";
+      if (volume.bind.global) {
+        binds.push(`${hpath}:${cpath}:${ro}`);
+      } else {
+        binds.push(`${path.join(PATHS.VOLUMES, volume.bind.name, hpath)}:${cpath}:${ro}`);
+      }
     }
 
     // create container
-    const container = await this.dockerService.createContainer(options);
+    const container = await this.docker.createContainer(options);
 
     // networks
-    const dn = await this.dockerService.depkerNetwork();
+    const dn = await this.docker.depkerNetwork();
     await dn.connect({ Container: container.id });
     for (const network in app.networks) {
-      const dn = await this.dockerService.initNetwork(network);
+      const dn = await this.docker.initNetwork(network);
       await dn.connect({ Container: container.id });
     }
 
@@ -248,7 +388,7 @@ export class DeployService implements OnModuleInit {
       await container.start();
 
       // wait healthcheck, max timeout 1h
-      await this.logRepository.log(deploy, `Waiting container ${app.name} to finished.`);
+      await Log.log(deploy, `Waiting container ${app.name} to finished.`);
       for (let i = 1; i <= 1200; i++) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const info = await container.inspect();
@@ -262,58 +402,37 @@ export class DeployService implements OnModuleInit {
           }
         }
         if (i % 10 === 0) {
-          await this.logRepository.log(deploy, `Waiting... ${i * 3}s`);
+          await Log.log(deploy, `Waiting... ${i * 3}s`);
         }
       }
 
-      // purge containers
-      await this.purge(deploy);
-
-      await this.logRepository.succeed(deploy, `Start container ${app.name} successful.`);
-      return true;
+      await Log.succeed(deploy, `Start container ${app.name} successful.`);
+      return container.id;
     } catch (e: any) {
-      await this.logRepository.failed(deploy, `Start container ${app.name} failure.`, e);
-      return false;
+      await Log.failed(deploy, `Start container ${app.name} failure.`, e);
+      return null;
     }
   }
 
   public async purge(deploy: Deploy) {
-    await this.logRepository.step(deploy, `Purge ${deploy.app.name} containers started.`);
+    await Log.step(deploy, `Purge ${deploy.app.name} containers started.`);
     let infos: ContainerInfo[];
-    infos = await this.dockerService.listContainers({ all: true });
+    infos = await this.docker.listContainers({ all: true });
     infos = infos.filter((c) => c.Labels["depker.name"] === deploy.app.name);
     infos = infos.filter((c) => c.Labels["depker.id"] !== String(deploy.id));
     for (const info of infos) {
-      const container = this.dockerService.getContainer(info.Id);
+      const container = this.docker.getContainer(info.Id);
       try {
         await container.remove({ force: true });
       } catch (e: any) {
-        await this.logRepository.failed(deploy, `Purge container ${container.id} failed.`, e);
+        await Log.failed(deploy, `Purge container ${container.id} failed.`, e);
       }
     }
     process.nextTick(async () => {
-      const setting = await this.settingRepository.get();
+      const setting = await Setting.read();
       if (setting.purge) {
-        await Promise.all([this.dockerService.pruneImages(), this.dockerService.pruneVolumes()]);
+        await Promise.all([this.docker.pruneImages(), this.docker.pruneVolumes()]);
       }
     });
-  }
-
-  async onModuleInit() {
-    const build = await this.deployRepository.findOne({
-      where: {
-        id: 1,
-      },
-      relations: {
-        app: {
-          volumes: true,
-          exposes: true,
-        },
-      },
-    });
-    if (!build) {
-      return;
-    }
-    await this.deploy(build);
   }
 }

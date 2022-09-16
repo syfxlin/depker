@@ -1,0 +1,54 @@
+{
+  "name": "@syfxlin/depker-ui",
+  "version": "3.0.0",
+  "description": "docker-based cloud deployment tool.",
+  "keywords": [
+    "depker",
+    "docker"
+  ],
+  "author": "Otstar Lin <i@ixk.me> (https://ixk.me)",
+  "license": "Apache-2.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@mantine/core": "^5.3.3",
+    "@mantine/dates": "^5.3.3",
+    "@mantine/form": "^5.3.3",
+    "@mantine/hooks": "^5.3.3",
+    "@mantine/modals": "^5.3.3",
+    "@mantine/notifications": "^5.3.3",
+    "@mantine/spotlight": "^5.3.3",
+    "@syfxlin/depker-client": "workspace:*",
+    "@syfxlin/ustyled": "^2.2.0",
+    "@tabler/icons": "^1.96.0",
+    "anser": "^2.1.1",
+    "axios": "^0.27.2",
+    "classnames": "^2.3.2",
+    "dayjs": "^1.11.5",
+    "dequal": "^2.0.3",
+    "history": "^5.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.4.0",
+    "react-use": "^17.4.0",
+    "react-virtualized-auto-sizer": "^1.0.7",
+    "react-window": "^1.8.7",
+    "swr": "^1.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.19",
+    "@types/react-dom": "^18.0.6",
+    "@types/react-virtualized-auto-sizer": "^1.0.1",
+    "@types/react-window": "^1.8.5",
+    "@vitejs/plugin-react": "^2.1.0",
+    "typescript": "^4.6.4",
+    "vite": "^3.1.0",
+    "vite-plugin-checker": "^0.5.1"
+  }
+}

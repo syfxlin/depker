@@ -1,37 +1,33 @@
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
   Index,
-  ManyToOne,
-  PrimaryGeneratedColumn,
+  OneToMany,
+  PrimaryColumn,
   Relation,
   Unique,
   UpdateDateColumn,
 } from "typeorm";
-import { App } from "./app.entity";
+import { VolumeBind } from "./volume-bind.entity";
 
 @Entity()
-@Index(["name"], { unique: true })
-@Unique(["name"])
-export class Volume {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ length: 128, nullable: false })
+@Index(["path"])
+@Index(["global"])
+@Unique(["global", "path"])
+export class Volume extends BaseEntity {
+  @PrimaryColumn({ length: 128, nullable: false })
   name: string;
 
   @Column({ type: "text", nullable: false })
-  src: string;
-
-  @Column({ type: "text", nullable: false })
-  dst: string;
+  path: string;
 
   @Column({ nullable: false, default: false })
-  readonly: boolean;
+  global: boolean;
 
-  @ManyToOne(() => App, (app) => app.volumes)
-  app: Relation<App>;
+  @OneToMany(() => VolumeBind, (bind) => bind.bind)
+  binds: Relation<VolumeBind[]>;
 
   // date
   @CreateDateColumn({ nullable: false })

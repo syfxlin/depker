@@ -1,35 +1,30 @@
 import { Controller, Logger, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { FetchData, Git, PushData } from "node-git-server";
-import path from "path";
 import { HttpAdapterHost } from "@nestjs/core";
 import { compareSync } from "bcrypt";
 import { Express } from "express";
-import { AppRepository } from "../repositories/app.repository";
-import { ROOT_DIR } from "../constants/depker.constant";
-import { SettingRepository } from "../repositories/setting.repository";
+import { PATHS } from "../constants/depker.constant";
+import { Setting } from "../entities/setting.entity";
+import { App } from "../entities/app.entity";
 
 @Controller()
 export class GitController {
   private readonly logger = new Logger(GitController.name);
   private readonly git: Git;
 
-  constructor(
-    private readonly adapter: HttpAdapterHost,
-    private readonly settingRepository: SettingRepository,
-    private readonly appRepository: AppRepository
-  ) {
-    this.git = new Git(path.join(ROOT_DIR, "repos"), {
+  constructor(private readonly adapter: HttpAdapterHost) {
+    this.git = new Git(PATHS.REPOS, {
       autoCreate: true,
       authenticate: (options, next) => {
         options.user(async (username, password) => {
           try {
-            const setting = await settingRepository.get();
+            const setting = await Setting.read();
             if (!username || !password || username !== setting.username || !compareSync(password, setting.password)) {
               next(new UnauthorizedException("Username or password do not match, please try again."));
               return;
             }
 
-            const app = await appRepository.findByName(options.repo);
+            const app = await App.find({ where: { name: options.repo } });
             if (!app) {
               next(new NotFoundException("Application not found, should be create before push."));
               return;

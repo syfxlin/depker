@@ -17,9 +17,10 @@ module.exports = {
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-inferrable-types": "off",
     "react/prop-types": "off",
     "react/display-name": "warn",
-    "react/no-unknown-property": "warn",
+    "react/no-unknown-property": "off",
     "max-len": ["error", { code: 120, ignoreUrls: true }],
   },
 };

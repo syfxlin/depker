@@ -1,0 +1,35 @@
+{
+  "name": "@syfxlin/depker-client",
+  "version": "3.0.0",
+  "description": "docker-based cloud deployment tool.",
+  "keywords": [
+    "depker",
+    "docker"
+  ],
+  "author": {
+    "name": "Otstar Lin",
+    "email": "i@ixk.me",
+    "url": "https://ixk.me"
+  },
+  "license": "Apache-2.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "devDependencies": {
+    "@types/qs": "^6.9.7",
+    "tsup": "^6.2.3",
+    "typescript": "^4.8.3"
+  },
+  "dependencies": {
+    "@syfxlin/depker-types": "workspace:*",
+    "axios": "^0.27.2",
+    "axios-retry": "^3.3.1",
+    "qs": "^6.11.0"
+  }
+}

@@ -1,15 +1,27 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Relation, UpdateDateColumn } from "typeorm";
-import { Volume } from "./volume.entity";
-import { Expose } from "./expose.entity";
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryColumn,
+  Relation,
+  UpdateDateColumn,
+} from "typeorm";
 import { Deploy } from "./deploy.entity";
+import { PortBind } from "./port-bind.entity";
+import { VolumeBind } from "./volume-bind.entity";
 
 @Entity()
-export class App {
+export class App extends BaseEntity {
   @PrimaryColumn({ length: 128, nullable: false, unique: true })
   name: string;
 
-  @Column({ length: 128, nullable: false })
-  buildpark: string;
+  @Column({ nullable: false, type: "simple-json" })
+  buildpack: {
+    name: string;
+    values: Record<string, any>;
+  };
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   commands: string[];
@@ -40,11 +52,11 @@ export class App {
   tls: boolean;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  middlewares: {
+  middlewares: Array<{
     name: string;
     type: string;
     options: Record<string, string>;
-  }[];
+  }>;
 
   // healthcheck
   @Column({ nullable: false, default: "{}", type: "simple-json" })
@@ -80,35 +92,32 @@ export class App {
   networks: Record<string, string>;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  labels: {
+  labels: Array<{
     name: string;
     value: string;
     onbuild: boolean;
-  }[];
+  }>;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  secrets: {
+  secrets: Array<{
     name: string;
     value: string;
     onbuild: boolean;
-  }[];
+  }>;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  hosts: {
+  hosts: Array<{
     name: string;
     value: string;
     onbuild: boolean;
-  }[];
-
-  @Column({ nullable: false, default: "{}", type: "simple-json" })
-  parameters: Record<string, any>;
+  }>;
 
   // relations
-  @OneToMany(() => Volume, (volume) => volume.app)
-  volumes: Relation<Volume[]>;
+  @OneToMany(() => PortBind, (bind) => bind.app)
+  ports: Relation<PortBind[]>;
 
-  @OneToMany(() => Expose, (expose) => expose.app)
-  exposes: Relation<Expose[]>;
+  @OneToMany(() => VolumeBind, (bind) => bind.app)
+  volumes: Relation<VolumeBind[]>;
 
   // deploy
   @OneToMany(() => Deploy, (deploy) => deploy.app, {

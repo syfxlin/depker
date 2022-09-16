@@ -4,7 +4,7 @@ import os from "os";
 import { simpleGit } from "simple-git";
 import { Deploy } from "../entities/deploy.entity";
 import fs from "fs-extra";
-import { ROOT_DIR } from "../constants/depker.constant";
+import { PATHS } from "../constants/depker.constant";
 
 @Injectable()
 export class StorageService {
@@ -12,7 +12,7 @@ export class StorageService {
     const app = deploy.app;
     const name = app.name;
     const commit = deploy.commit;
-    const src = path.join(ROOT_DIR, `repos`, `${name}.git`);
+    const src = path.join(PATHS.REPOS, `${name}.git`);
     const dst = path.join(os.tmpdir(), `${name}-${deploy.id}`, `project`);
 
     fs.removeSync(dst);

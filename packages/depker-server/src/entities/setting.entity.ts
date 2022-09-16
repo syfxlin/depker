@@ -1,7 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { hashSync } from "bcrypt";
+import deepmerge from "deepmerge";
 
 @Entity()
-export class Setting {
+export class Setting extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -14,9 +16,6 @@ export class Setting {
   @Column({ nullable: false })
   password: string;
 
-  @Column({ nullable: false })
-  domain: string;
-
   @Column({ nullable: false, default: false })
   debug: boolean;
 
@@ -25,6 +24,9 @@ export class Setting {
 
   @Column({ nullable: false, default: true })
   purge: boolean;
+
+  @Column({ nullable: false, default: 1 })
+  concurrency: number;
 
   @Column({ nullable: false, default: `{"type": "http"}`, type: "simple-json" })
   tls: { type: string; env?: Record<string, string> };
@@ -35,10 +37,39 @@ export class Setting {
   @Column({ nullable: false, default: "[9000, 9100]", type: "simple-json" })
   ports: [number, number];
 
+  // plugins extension config
+  @Column({ nullable: false, default: "{}", type: "simple-json" })
+  plugins: Record<string, Record<string, any>>;
+
   // date
   @CreateDateColumn({ nullable: false })
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: false })
   updatedAt: Date;
+
+  // repository
+  public static async read() {
+    let setting = await this.findOne({
+      where: {},
+      order: { id: "asc" },
+    });
+    if (!setting) {
+      await this.insert({
+        email: "admin@example.com",
+        username: "admin",
+        password: hashSync("password", 10),
+      });
+      setting = await this.findOne({
+        where: {},
+        order: { id: "asc" },
+      });
+    }
+    return setting as Setting;
+  }
+
+  public static async write(setting: Partial<Setting>) {
+    const config = await this.read();
+    await this.update(config.id, deepmerge(config, setting));
+  }
 }

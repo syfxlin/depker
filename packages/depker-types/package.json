@@ -2,7 +2,10 @@
   "name": "@syfxlin/depker-types",
   "version": "3.0.0",
   "description": "docker-based cloud deployment tool.",
-  "keywords": ["depker", "docker"],
+  "keywords": [
+    "depker",
+    "docker"
+  ],
   "author": {
     "name": "Otstar Lin",
     "email": "i@ixk.me",
@@ -11,6 +14,12 @@
   "license": "Apache-2.0",
   "private": false,
   "type": "module",
-  "dependencies": {
+  "types": "./dist/src/types.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3"
   }
 }

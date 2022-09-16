@@ -120,5 +120,5 @@ dist
 .idea
 
 ### Projects
-packages/depker-server/storage/*
-!packages/depker-server/storage/.env.example
+packages/storage/*
+!packages/storage/.env.example

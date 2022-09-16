@@ -1,7 +1,9 @@
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -9,10 +11,12 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { App } from "./app.entity";
-import { DeployLog } from "./deploy-log.entity";
+import { Log } from "./log.entity";
 
 @Entity()
-export class Deploy {
+@Index(["status"])
+@Index(["trigger"])
+export class Deploy extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -31,10 +35,10 @@ export class Deploy {
   @ManyToOne(() => App, (app) => app.deploys, { nullable: false })
   app: Relation<App>;
 
-  @OneToMany(() => DeployLog, (log) => log.deploy, {
+  @OneToMany(() => Log, (log) => log.deploy, {
     orphanedRowAction: "delete",
   })
-  logs: Relation<DeployLog[]>;
+  logs: Relation<Log[]>;
 
   // date
   @CreateDateColumn({ nullable: false })
