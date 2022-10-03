@@ -71,19 +71,20 @@ export class PluginContext {
     this.entities = options.entities;
   }
 
-  public async config(name: string, value?: any) {
-    // TODO: fix
-    // const setting = await this.repositories.setting.get();
-    // const options = setting.plugins[this.name] ?? {};
-    // if (value === undefined) {
-    //   return options?.[name];
-    // } else if (value === null) {
-    //   delete options[name];
-    // } else {
-    //   options[name] = value;
-    // }
-    // setting.plugins[this.name] = options;
-    // await this.repositories.setting.set(setting);
+  public async options(name?: string, value?: any) {
+    const setting = await Setting.read();
+    const options = setting.plugins[this.name] ?? {};
+    if (!name) {
+      return options;
+    } else if (value === undefined) {
+      return options[name];
+    } else if (value === null) {
+      delete options[name];
+    } else {
+      options[name] = value;
+    }
+    setting.plugins[this.name] = options;
+    await Setting.write(setting);
   }
 }
 
@@ -113,6 +114,21 @@ export class PackContext extends PluginContext {
 
   public write(file: string, data: string) {
     fs.outputFileSync(path.join(this.project, file), data, "utf-8");
+  }
+
+  public async values(name?: string, value?: any) {
+    const values = this.deploy.app.buildpack.values ?? {};
+    if (!name) {
+      return values;
+    } else if (value === undefined) {
+      return values[name];
+    } else if (value === null) {
+      delete values[name];
+    } else {
+      values[name] = value;
+    }
+    this.deploy.app.buildpack.values = values;
+    await App.save(this.deploy.app);
   }
 }
 

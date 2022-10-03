@@ -120,9 +120,7 @@ export class App extends BaseEntity {
   volumes: Relation<VolumeBind[]>;
 
   // deploy
-  @OneToMany(() => Deploy, (deploy) => deploy.app, {
-    orphanedRowAction: "delete",
-  })
+  @OneToMany(() => Deploy, (deploy) => deploy.app)
   deploys: Relation<Deploy[]>;
 
   // date

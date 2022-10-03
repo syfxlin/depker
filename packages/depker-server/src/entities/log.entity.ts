@@ -13,7 +13,11 @@ export class Log extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Deploy, (deploy) => deploy.logs, { nullable: false })
+  @ManyToOne(() => Deploy, (deploy) => deploy.logs, {
+    nullable: false,
+    onDelete: "CASCADE",
+    orphanedRowAction: "delete",
+  })
   deploy: Relation<Deploy>;
 
   @Column({ nullable: false })

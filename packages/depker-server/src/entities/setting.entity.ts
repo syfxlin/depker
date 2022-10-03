@@ -1,6 +1,5 @@
 import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { hashSync } from "bcrypt";
-import deepmerge from "deepmerge";
 
 @Entity()
 export class Setting extends BaseEntity {
@@ -70,6 +69,6 @@ export class Setting extends BaseEntity {
 
   public static async write(setting: Partial<Setting>) {
     const config = await this.read();
-    await this.update(config.id, deepmerge(config, setting));
+    await this.update(config.id, setting);
   }
 }

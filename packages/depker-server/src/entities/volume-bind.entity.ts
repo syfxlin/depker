@@ -1,22 +1,33 @@
-import { BaseEntity, Column, Entity, ManyToOne, PrimaryGeneratedColumn, Relation, Unique } from "typeorm";
+import { BaseEntity, Column, Entity, ManyToOne, PrimaryColumn, Relation, Unique } from "typeorm";
 import { App } from "./app.entity";
 import { Volume } from "./volume.entity";
 
 @Entity()
 @Unique(["app", "bind", "path"])
 export class VolumeBind extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn({ name: "app_name" })
+  appName: string;
+
+  @PrimaryColumn({ name: "bind_name" })
+  bindName: string;
+
+  @ManyToOne(() => App, (app) => app.volumes, {
+    nullable: false,
+    onDelete: "CASCADE",
+    orphanedRowAction: "delete",
+  })
+  app: Relation<App>;
+
+  @ManyToOne(() => Volume, (port) => port.binds, {
+    nullable: false,
+    onDelete: "CASCADE",
+    orphanedRowAction: "delete",
+  })
+  bind: Relation<Volume>;
 
   @Column({ type: "text", nullable: false })
   path: string;
 
   @Column({ nullable: false, default: false })
   readonly: boolean;
-
-  @ManyToOne(() => App, (app) => app.volumes, { nullable: false })
-  app: Relation<App>;
-
-  @ManyToOne(() => Volume, (port) => port.binds, { nullable: false })
-  bind: Relation<Volume>;
 }

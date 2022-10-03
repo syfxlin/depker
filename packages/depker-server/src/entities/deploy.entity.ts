@@ -32,12 +32,14 @@ export class Deploy extends BaseEntity {
   @Column({ nullable: false, default: false })
   force: boolean;
 
-  @ManyToOne(() => App, (app) => app.deploys, { nullable: false })
-  app: Relation<App>;
-
-  @OneToMany(() => Log, (log) => log.deploy, {
+  @ManyToOne(() => App, (app) => app.deploys, {
+    nullable: false,
+    onDelete: "CASCADE",
     orphanedRowAction: "delete",
   })
+  app: Relation<App>;
+
+  @OneToMany(() => Log, (log) => log.deploy)
   logs: Relation<Log[]>;
 
   // date

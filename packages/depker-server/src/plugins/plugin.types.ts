@@ -92,7 +92,7 @@ export interface DepkerPlugin {
   destroy?: (ctx: PluginContext) => Promise<void>;
   routes?: (ctx: RouteContext) => Promise<any>;
   buildpack?: {
-    options?: DepkerPluginOption[];
-    handler?: (ctx: PackContext) => Promise<void>;
+    options: DepkerPluginOption[];
+    handler: (ctx: PackContext) => Promise<void> | void;
   };
 }

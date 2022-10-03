@@ -21,17 +21,28 @@ import { ObjectEach, objectEach } from "../validation/object-each.validation";
 import { ArrayEach } from "../validation/array-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
 
-export type AppStatusResponse = {
-  status: "stopping" | "running" | "restarting" | "exited";
-};
-
-export class GetAppRequest {
+export class StatusAppRequest {
+  @IsString()
   @IsNotEmpty()
   @Length(1, 128)
   name: string;
 }
 
-export type GetAppResponse = Omit<App, "buildpack" | "ports" | "volumes" | "deploys"> & {
+export type StatusAppResponse = {
+  status: "stopped" | "running" | "restarting" | "exited";
+};
+
+export class GetAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  name: string;
+}
+
+export type GetAppResponse = Omit<
+  App,
+  "buildpack" | "ports" | "volumes" | "deploys" | "hasId" | "save" | "remove" | "softRemove" | "reload" | "recover"
+> & {
   buildpack: {
     name: string;
     values: Record<string, any>;
@@ -53,28 +64,33 @@ export type GetAppResponse = Omit<App, "buildpack" | "ports" | "volumes" | "depl
 };
 
 export class ListAppRequest {
+  @IsString()
   @IsOptional()
   @IsNotEmpty()
   search?: string;
 
+  @IsNumber()
   @IsOptional()
   @Min(0)
   offset?: number;
 
+  @IsNumber()
   @IsOptional()
   @Min(0)
   limit?: number;
 }
 
-export type ListAppResponse = Array<{
-  name: string;
-  buildpack: string;
-  url: string;
-  status: AppStatusResponse["status"];
-  createdAt: Date;
-  updatedAt: Date;
-  deploydAt: Date;
-}>;
+export type ListAppResponse = {
+  total: number;
+  items: Array<{
+    name: string;
+    buildpack: string;
+    domain: string[];
+    status: StatusAppResponse["status"];
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+};
 
 export class UpsertAppRequest {
   @IsString()
@@ -259,6 +275,7 @@ export class UpsertAppRequest {
 export type UpsertAppResponse = GetAppResponse;
 
 export class DeleteAppRequest {
+  @IsString()
   @IsNotEmpty()
   @Length(1, 128)
   name: string;
