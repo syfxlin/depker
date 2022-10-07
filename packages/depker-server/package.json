@@ -49,6 +49,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.5.6",
     "simple-git": "^3.14.0",
+    "simple-icons": "^7.14.0",
     "systeminformation": "^5.12.6",
     "tar-fs": "^2.1.1",
     "typeorm": "^0.3.9",

@@ -110,11 +110,11 @@ export class DeployService {
         // purge containers
         await this.purge(deploy);
 
-        // update status to succeed
-        await Deploy.update(deploy.id, { status: "succeed" });
+        // update status to success
+        await Deploy.update(deploy.id, { status: "success" });
 
         // log successful
-        await Log.succeed(deploy, `Deployment app ${deploy.app.name} successful.`);
+        await Log.success(deploy, `Deployment app ${deploy.app.name} successful.`);
       } catch (e: any) {
         // update status to failed
         await Deploy.update(
@@ -136,8 +136,7 @@ export class DeployService {
   }
 
   public async project(deploy: Deploy) {
-    const packs = await this.plugins.buildpacks();
-    const pack = packs.find((p) => p.name === deploy.app.buildpack.name);
+    const pack = await this.plugins.plugin(deploy.app.buildpack.name);
 
     if (!pack || !pack.buildpack?.handler) {
       await Log.failed(
@@ -221,7 +220,7 @@ export class DeployService {
       },
     });
     if (result.StatusCode === 0) {
-      await Log.succeed(deploy, `Building image ${tag} successful.`);
+      await Log.success(deploy, `Building image ${tag} successful.`);
       return tag;
     } else {
       await Log.failed(deploy, `Building image ${tag} failure.`);
@@ -406,7 +405,7 @@ export class DeployService {
         }
       }
 
-      await Log.succeed(deploy, `Start container ${app.name} successful.`);
+      await Log.success(deploy, `Start container ${app.name} successful.`);
       return container.id;
     } catch (e: any) {
       await Log.failed(deploy, `Start container ${app.name} failure.`, e);

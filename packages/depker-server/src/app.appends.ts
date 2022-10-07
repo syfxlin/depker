@@ -10,18 +10,26 @@ import { TraefikTask } from "./tasks/traefik.task";
 import { Deploy } from "./entities/deploy.entity";
 import { GitController } from "./controllers/git.controller";
 import { Log } from "./entities/log.entity";
-import { HealthController } from "./controllers/health.controller";
 import { DeployTask } from "./tasks/deploy.task";
-import { InfoController } from "./controllers/info.controller";
+import { SystemController } from "./controllers/system.controller";
 import { Token } from "./entities/token.entity";
 import { AppController } from "./controllers/app.controller";
 import { PortBind } from "./entities/port-bind.entity";
 import { VolumeBind } from "./entities/volume-bind.entity";
+import { StatusController } from "./controllers/status.controller";
+import { AssetController } from "./controllers/asset.controller";
 
 // entity
 export const entities = [Setting, Token, App, Deploy, Log, Volume, Port, PortBind, VolumeBind];
 
 // controller & service & task
-export const controllers = [HealthController, InfoController, GitController, DeployController, AppController];
+export const controllers = [
+  SystemController,
+  AssetController,
+  GitController,
+  DeployController,
+  AppController,
+  StatusController,
+];
 export const services = [DeployService, DockerService, StorageService];
 export const tasks = [TraefikTask, DeployTask];

@@ -5,7 +5,6 @@ import { IconBrightness, IconLogout, IconSettings } from "@tabler/icons";
 import { css } from "@emotion/react";
 import { useU } from "@syfxlin/ustyled";
 import { showNotification } from "@mantine/notifications";
-import { AxiosError } from "axios";
 import { logout } from "../api/client";
 
 export const Nav: React.FC<PropsWithChildren> = ({ children }) => {
@@ -23,17 +22,17 @@ export const Nav: React.FC<PropsWithChildren> = ({ children }) => {
     >
       <Center>{/*<MantineLogo type="mark" size={30} />*/}</Center>
       <Navbar.Section grow mt={50}>
-        <Stack justify="center" spacing={0}>
+        <Stack justify="center" spacing={u.sp(1)}>
           {children}
         </Stack>
       </Navbar.Section>
       <Navbar.Section>
-        <Stack justify="center" spacing={0}>
+        <Stack justify="center" spacing={u.sp(1)}>
           <NavLink
             icon={IconBrightness}
-            label={`当前模式：${mode}`}
+            label={`Color Mode：${mode}`}
             action={() => {
-              setMode((p) => {
+              setMode((p: string) => {
                 if (p === "auto") {
                   return "light";
                 }
@@ -47,25 +46,17 @@ export const Nav: React.FC<PropsWithChildren> = ({ children }) => {
               });
             }}
           />
-          <NavLink icon={IconSettings} label="设置" action="/settings" />
+          <NavLink icon={IconSettings} label="Settings" action="/settings" />
           <NavLink
             icon={IconLogout}
-            label="登出"
+            label="Logout"
             action={() => {
-              logout()
-                .then(() =>
-                  showNotification({
-                    title: "登出成功",
-                    message: "正在跳转。。。",
-                    color: "green",
-                  })
-                )
-                .catch((e: AxiosError) =>
-                  showNotification({
-                    title: "登出失败",
-                    message: e.message,
-                  })
-                );
+              logout();
+              showNotification({
+                title: "Logout successful",
+                message: "Redirecting...",
+                color: "green",
+              });
             }}
           />
         </Stack>

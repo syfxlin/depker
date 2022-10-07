@@ -129,4 +129,14 @@ export class App extends BaseEntity {
 
   @UpdateDateColumn({ nullable: false })
   updatedAt: Date;
+
+  // repository
+  public static async listDeploydAt(names: string[]) {
+    const items = await Deploy.createQueryBuilder()
+      .select(["app_name AS appName", "MAX(updated_at) AS updatedAt"])
+      .where(`status = 'success' AND app_name IN (${names.map((i) => `'${i}'`).join(",")})`)
+      .groupBy("app_name")
+      .getRawMany<{ appName: string; updatedAt: string }>();
+    return new Map<string, Date>(items.map((i) => [i.appName, new Date(i.updatedAt)]));
+  }
 }

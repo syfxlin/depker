@@ -25,7 +25,7 @@ export const NavLink: React.FC<NavLinkProps> = ({ icon: Icon, label, action }) =
     props.to = action;
   }
   return (
-    <Tooltip label={label} position="right" withArrow={true} transition="pop" transitionDuration={300} zIndex={998}>
+    <Tooltip label={label} position="right" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
       <UnstyledButton
         {...props}
         css={css`

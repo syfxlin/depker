@@ -11,14 +11,18 @@ client.client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response.status === 401) {
-      token.set(null);
-      history.push("/login");
+      logout();
     }
     return Promise.reject(error);
   }
 );
 
-export const logout = async () => {
-  token.set(null);
+export const login = (value: string) => {
+  token.set(value);
   history.push("/");
+};
+
+export const logout = () => {
+  token.set(null);
+  history.push("/login");
 };

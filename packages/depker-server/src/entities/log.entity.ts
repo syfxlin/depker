@@ -24,7 +24,7 @@ export class Log extends BaseEntity {
   time: Date;
 
   @Column({ nullable: false })
-  level: "debug" | "log" | "step" | "succeed" | "failed";
+  level: "debug" | "log" | "step" | "success" | "failed";
 
   @Column({ nullable: false, type: "text" })
   line: string;
@@ -48,8 +48,8 @@ export class Log extends BaseEntity {
     return Log.upload(deploy, "step", line);
   }
 
-  public static async succeed(deploy: Deploy, line: string) {
-    return Log.upload(deploy, "succeed", line);
+  public static async success(deploy: Deploy, line: string) {
+    return Log.upload(deploy, "success", line);
   }
 
   public static async failed(deploy: Deploy, line: string, error?: Error) {
@@ -64,7 +64,7 @@ export class Log extends BaseEntity {
       debug: (line: string) => Log.debug(deploy, line),
       log: (line: string) => Log.log(deploy, line),
       step: (line: string) => Log.step(deploy, line),
-      succeed: (line: string) => Log.succeed(deploy, line),
+      success: (line: string) => Log.success(deploy, line),
       failed: (line: string, error?: Error) => Log.failed(deploy, line, error),
     };
   }

@@ -1,7 +1,7 @@
 import { registerDecorator, ValidationArguments, ValidationOptions } from "class-validator";
 
 export const IsValidate = (
-  fn: (value: any, object: any, args: ValidationArguments) => boolean | Promise<boolean>,
+  fn: (value: any, object: any, args?: ValidationArguments) => boolean | Promise<boolean>,
   options?: ValidationOptions
 ) => {
   return (object: any, property: string) => {

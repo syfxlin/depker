@@ -31,7 +31,7 @@ export const ObjectEach = (rules: Record<string, Array<EachValidRule>>, options?
           return await objectEach(rules)(value);
         },
         defaultMessage(args?: ValidationArguments) {
-          return `${args.property} is not validated`;
+          return `${args?.property} is not validated`;
         },
       },
     });

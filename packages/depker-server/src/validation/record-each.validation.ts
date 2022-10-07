@@ -41,7 +41,7 @@ export const RecordEach = (keys?: Array<EachValidRule>, values?: Array<EachValid
           return await recordEach(keys, values)(value);
         },
         defaultMessage(args?: ValidationArguments) {
-          return `${args.property} is not validated`;
+          return `${args?.property} is not validated`;
         },
       },
     });

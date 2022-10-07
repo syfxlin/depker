@@ -10,6 +10,7 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "strictPropertyInitialization": false,
+    "strictNullChecks": true,
     "strict": true,
     "sourceMap": true,
     "resolveJsonModule": true,

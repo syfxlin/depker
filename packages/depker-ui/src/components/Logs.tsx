@@ -1,4 +1,4 @@
-import { ActionIcon, Box, Group, Input, Text } from "@mantine/core";
+import { ActionIcon, Box, Center, Group, Input, Text, Tooltip } from "@mantine/core";
 import React, {
   ChangeEvent,
   CSSProperties,
@@ -14,7 +14,7 @@ import { css } from "@emotion/react";
 import Anser from "anser";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
-import { IconArrowDown, IconArrowUp, IconSearch } from "@tabler/icons";
+import { IconArrowDown, IconArrowUp, IconList, IconSearch } from "@tabler/icons";
 import { useDebounce } from "react-use";
 
 export interface LineProps {
@@ -225,9 +225,15 @@ export const Logs: React.FC<LogsProps> = (props) => {
   const { u } = useU();
   const ref = useRef<FixedSizeList | null>();
   const lines = useMemo(() => props.data.map((i) => Anser.ansiToText(i).toUpperCase()), [props.data]);
+
+  // search
   const [index, setIndex] = useState<number>(0);
   const [search, setSearch] = useState<string>("");
   const [result, setResult] = useState<number[]>([]);
+  // follow
+  const [follow, setFollow] = useState<boolean>(true);
+
+  // effects
   useDebounce(
     () => {
       setIndex(0);
@@ -244,6 +250,13 @@ export const Logs: React.FC<LogsProps> = (props) => {
       ref.current?.scrollToItem(result[index], "center");
     }
   }, [index, result, ref]);
+  useEffect(() => {
+    if (ref.current && follow && !search) {
+      ref.current?.scrollToItem(lines.length, "end");
+    }
+  }, [search, lines, ref, follow]);
+
+  // render
   return (
     <Box
       css={css`
@@ -299,7 +312,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
         >
           <Input
             icon={<IconSearch size={u.fs("default")} color="#8c959f" />}
-            placeholder="搜索日志"
+            placeholder="Search logs"
             variant="unstyled"
             value={search}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.currentTarget.value)}
@@ -326,30 +339,49 @@ export const Logs: React.FC<LogsProps> = (props) => {
           >
             {Math.min(result.length, index + 1)} / {result.length}
           </Text>
-          <ActionIcon
-            onClick={() => setIndex((v) => Math.max(0, v - 1))}
-            css={css`
-              color: #8c959f;
+          <Tooltip label="Prev" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
+            <ActionIcon
+              onClick={() => setIndex((v) => Math.max(0, v - 1))}
+              css={css`
+                color: #8c959f;
 
-              &:hover {
-                background-color: rgba(255, 255, 255, 0.125);
-              }
-            `}
-          >
-            <IconArrowUp size={u.fs("default")} />
-          </ActionIcon>
-          <ActionIcon
-            onClick={() => setIndex((v) => Math.min(result.length - 1, v + 1))}
-            css={css`
-              color: #8c959f;
+                &:hover {
+                  background-color: rgba(255, 255, 255, 0.125);
+                }
+              `}
+            >
+              <IconArrowUp size={u.fs("default")} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Next" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
+            <ActionIcon
+              onClick={() => setIndex((v) => Math.min(result.length - 1, v + 1))}
+              css={css`
+                color: #8c959f;
 
-              &:hover {
-                background-color: rgba(255, 255, 255, 0.125);
-              }
-            `}
-          >
-            <IconArrowDown size={u.fs("default")} />
-          </ActionIcon>
+                &:hover {
+                  background-color: rgba(255, 255, 255, 0.125);
+                }
+              `}
+            >
+              <IconArrowDown size={u.fs("default")} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Follow" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
+            <ActionIcon
+              onClick={() => setFollow((v) => !v)}
+              css={css`
+                color: #8c959f;
+                background-color: ${follow ? "rgba(255, 255, 255, 0.125)" : "transparent"};
+
+                &:hover {
+                  background-color: rgba(255, 255, 255, 0.125);
+                }
+              `}
+            >
+              <IconList size={u.fs("default")} />
+            </ActionIcon>
+          </Tooltip>
         </Group>
       </Box>
       <Box
@@ -359,24 +391,42 @@ export const Logs: React.FC<LogsProps> = (props) => {
         `}
       >
         <AutoSizer>
-          {(size) => (
-            <FixedSizeList
-              width={size.width}
-              height={size.height}
-              itemSize={12 * 1.7}
-              itemCount={props.data.length}
-              ref={(i) => (ref.current = i)}
-            >
-              {(p) => (
-                <Line
-                  style={p.style}
-                  index={props.index + p.index}
-                  data={props.data[p.index]}
-                  highlight={result.length > index && result[index] === p.index}
-                />
-              )}
-            </FixedSizeList>
-          )}
+          {(size) =>
+            props.data.length ? (
+              <FixedSizeList
+                width={size.width}
+                height={size.height}
+                itemSize={12 * 1.7}
+                itemCount={props.data.length}
+                ref={(i) => (ref.current = i)}
+              >
+                {(p) => (
+                  <Line
+                    style={p.style}
+                    index={props.index + p.index}
+                    data={props.data[p.index]}
+                    highlight={result.length > index && result[index] === p.index}
+                  />
+                )}
+              </FixedSizeList>
+            ) : (
+              <Center
+                css={css`
+                  width: ${size.width}px;
+                  height: ${size.height}px;
+                  line-height: 1.7;
+                  font-weight: 400;
+                  font-size: 12px;
+                  font-family: ${u.f("mono")};
+                  white-space: pre;
+                  color: #d0d7de;
+                  background-color: #24292f;
+                `}
+              >
+                No logs
+              </Center>
+            )
+          }
         </AutoSizer>
       </Box>
     </Box>

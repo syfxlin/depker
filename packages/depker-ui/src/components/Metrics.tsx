@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import useSWR from "swr";
 import { CardStats, PercStats, TextStats } from "./Stats";
 import {
   IconActivity,
@@ -15,62 +14,62 @@ import { Grid, List, LoadingOverlay, Text, Tooltip } from "@mantine/core";
 import { css } from "@emotion/react";
 import { day } from "../utils/day";
 import { useU } from "@syfxlin/ustyled";
-import { client } from "../api/client";
+import { useMetrics } from "../api/use-metrics";
 
-export const ServerStatus: React.FC = () => {
+export const Metrics: React.FC = () => {
   const { u } = useU();
   const [disk, setDisk] = useState(0);
-  const response = useSWR("/api/infos/metrics", () => client.info.metrics(), { refreshInterval: 5000 });
+  const query = useMetrics();
 
   const time = useMemo(
-    () => response.data?.time ?? { current: day().valueOf(), timezone: day.tz?.guess(), uptime: 0 },
-    [response.data?.time]
+    () => query.data?.time ?? { current: day().valueOf(), timezone: day.tz?.guess(), uptime: 0 },
+    [query.data?.time]
   );
 
-  const cpu = useMemo(() => response.data?.cpu ?? { used: 0, total: 1 }, [response.data?.cpu]);
-  const memory = useMemo(() => response.data?.memory ?? { used: 0, total: 1 }, [response.data?.memory]);
-  const swap = useMemo(() => response.data?.swap ?? { used: 0, total: 1 }, [response.data?.swap]);
+  const cpu = useMemo(() => query.data?.cpu ?? { used: 0, total: 1 }, [query.data?.cpu]);
+  const memory = useMemo(() => query.data?.memory ?? { used: 0, total: 1 }, [query.data?.memory]);
+  const swap = useMemo(() => query.data?.swap ?? { used: 0, total: 1 }, [query.data?.swap]);
 
   const disks = useMemo(() => {
-    const items = response.data?.disk ?? [{ name: "U", type: "Unknown", used: 0, total: 1 }];
+    const items = query.data?.disk ?? [{ name: "U", type: "Unknown", used: 0, total: 1 }];
     return items[disk % items.length];
-  }, [disk, response.data?.disk]);
+  }, [disk, query.data?.disk]);
 
   const requests = useMemo(() => {
-    const items = Object.entries(response.data?.traefik?.requests ?? {}) as [string, number][];
+    const items = Object.entries(query.data?.traefik?.requests ?? {}) as [string, number][];
     const success = items.filter(([c]) => parseInt(c) < 400);
     const failure4 = items.filter(([c]) => parseInt(c) >= 400 && parseInt(c) < 500);
     const failure5 = items.filter(([c]) => parseInt(c) >= 500);
     return { success, failure4, failure5 };
-  }, [response.data?.traefik?.requests]);
+  }, [query.data?.traefik?.requests]);
 
   const certs = useMemo(() => {
     const now = day();
-    const items = Object.entries(response.data?.traefik?.certs ?? {}) as [string, number][];
+    const items = Object.entries(query.data?.traefik?.certs ?? {}) as [string, number][];
     const expired = items.filter(([, i]) => day(i).isBefore(now));
     const expiring = items.filter(([, i]) => day(i).isAfter(now) && day(i).subtract(30, "days").isBefore(now));
     const normal = items.filter(([, i]) => day(i).subtract(30, "days").isAfter(now));
     return { expired, expiring, normal };
-  }, [response.data?.traefik?.certs]);
+  }, [query.data?.traefik?.certs]);
 
   const connections = useMemo(() => {
-    const items = Object.entries(response.data?.traefik?.connections ?? {}) as [string, number][];
+    const items = Object.entries(query.data?.traefik?.connections ?? {}) as [string, number][];
     return items
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([n, c]) => ({ name: n.toUpperCase(), value: c }));
-  }, [response.data?.traefik?.connections]);
+  }, [query.data?.traefik?.connections]);
 
   const reload = useMemo(() => {
     return (
-      response.data?.traefik?.reload ?? {
+      query.data?.traefik?.reload ?? {
         last_success: day().valueOf(),
         last_failure: 0,
         total_success: 0,
         total_failure: 0,
       }
     );
-  }, [response.data?.traefik?.reload]);
+  }, [query.data?.traefik?.reload]);
 
   return (
     <Grid
@@ -78,7 +77,7 @@ export const ServerStatus: React.FC = () => {
         position: relative;
       `}
     >
-      <LoadingOverlay visible={!response.error && !response.data} overlayBlur={4} />
+      <LoadingOverlay visible={!query.error && !query.data} overlayBlur={4} />
       <Grid.Col span={12} md={4}>
         <TextStats title="Server Uptime" icon={IconActivity} value={(time.uptime / HOUR).toFixed(2) + "H"} />
       </Grid.Col>
@@ -116,7 +115,13 @@ export const ServerStatus: React.FC = () => {
       <Grid.Col span={12} md={3}>
         <PercStats
           title={
-            <Tooltip label="点击切换其他磁盘" withArrow={true} transition="pop" transitionDuration={300} zIndex={998}>
+            <Tooltip
+              label="Switch to Another Disk"
+              withArrow={true}
+              transition="pop"
+              transitionDuration={300}
+              zIndex={1998}
+            >
               <Text
                 onClick={() => setDisk((v) => v + 1)}
                 css={css`
@@ -141,7 +146,7 @@ export const ServerStatus: React.FC = () => {
           title="Requests"
           value={[
             {
-              name: "成功请求",
+              name: "Success",
               value: requests.success.reduce((a, [, i]) => a + i, 0),
               tooltip: requests.success.length && (
                 <List
@@ -159,7 +164,7 @@ export const ServerStatus: React.FC = () => {
               ),
             },
             {
-              name: "失败请求（4xx）",
+              name: "Failed（4xx）",
               value: requests.failure4.reduce((a, [, i]) => a + i, 0),
               tooltip: requests.failure4.length && (
                 <List
@@ -177,7 +182,7 @@ export const ServerStatus: React.FC = () => {
               ),
             },
             {
-              name: "失败请求（5xx）",
+              name: "Failed（5xx）",
               value: requests.failure5.reduce((a, [, i]) => a + i, 0),
               tooltip: requests.failure5.length && (
                 <List
@@ -202,7 +207,7 @@ export const ServerStatus: React.FC = () => {
           title="Certificates"
           value={[
             {
-              name: "即将过期",
+              name: "Expiring",
               value: certs.expiring.length,
               tooltip: certs.expiring.length && (
                 <List
@@ -218,7 +223,7 @@ export const ServerStatus: React.FC = () => {
               ),
             },
             {
-              name: "已经过期",
+              name: "Expired",
               value: certs.expired.length,
               tooltip: certs.expired.length && (
                 <List
@@ -234,7 +239,7 @@ export const ServerStatus: React.FC = () => {
               ),
             },
             {
-              name: "暂未过期",
+              name: "Normal",
               value: certs.normal.length,
               tooltip: certs.normal.length && (
                 <List
@@ -260,14 +265,14 @@ export const ServerStatus: React.FC = () => {
           title="Traefik Reloads"
           value={[
             {
-              name: "重载失败",
+              name: "Failed",
               value: reload.total_failure,
-              tooltip: `上次重载时间：${day(reload.last_failure).format("YYYY-MM-DD HH:mm")}`,
+              tooltip: `Last failed: ${day(reload.last_failure).format("YYYY-MM-DD HH:mm")}`,
             },
             {
-              name: "重载成功",
+              name: "Success",
               value: reload.total_success,
-              tooltip: `上次重载时间：${day(reload.last_success).format("YYYY-MM-DD HH:mm")}`,
+              tooltip: `Last success: ${day(reload.last_success).format("YYYY-MM-DD HH:mm")}`,
             },
           ]}
         />

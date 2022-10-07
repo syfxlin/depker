@@ -98,6 +98,7 @@ importers:
       rimraf: ^3.0.2
       rxjs: ^7.5.6
       simple-git: ^3.14.0
+      simple-icons: ^7.14.0
       systeminformation: ^5.12.6
       tar-fs: ^2.1.1
       typeorm: ^0.3.9
@@ -136,6 +137,7 @@ importers:
       rimraf: 3.0.2
       rxjs: 7.5.6
       simple-git: 3.14.0
+      simple-icons: 7.14.0
       systeminformation: 5.12.6
       tar-fs: 2.1.1
       typeorm: 0.3.9_better-sqlite3@7.6.2
@@ -8000,6 +8002,11 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /simple-icons/7.14.0:
+    resolution: {integrity: sha512-peojKZtdmNlM4ofTERoJWwP5p/R3mRBtFf9ERTaEmnepXQxdealNZOyjPQie9M1gKQYuy0xD5ckwUWvNFK/fNQ==}
+    engines: {node: '>=0.12.18'}
     dev: false
 
   /sisteransi/1.0.5:

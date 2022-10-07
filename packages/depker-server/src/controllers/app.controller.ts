@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Body,
   Controller,
   Delete,
   Get,
@@ -17,8 +16,6 @@ import {
   GetAppResponse,
   ListAppRequest,
   ListAppResponse,
-  StatusAppRequest,
-  StatusAppResponse,
   UpsertAppRequest,
   UpsertAppResponse,
 } from "../views/app.view";
@@ -30,6 +27,7 @@ import { Volume } from "../entities/volume.entity";
 import { PortBind } from "../entities/port-bind.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PluginService } from "../services/plugin.service";
+import { Data } from "../decorators/data.decorator";
 
 @Controller("/apps")
 export class AppController {
@@ -37,7 +35,9 @@ export class AppController {
 
   @Get("/")
   public async list(@Query() request: ListAppRequest): Promise<ListAppResponse> {
-    const query = await App.findAndCount({
+    const { search = "", offset = 0, limit = 10, sort = "name:asc" } = request;
+    const [orderBy, orderAxis] = sort.split(":");
+    const [apps, count] = await App.findAndCount({
       select: {
         name: true,
         buildpack: {
@@ -48,78 +48,66 @@ export class AppController {
         updatedAt: true,
       },
       where: {
-        name: request.search ? Like(`%${request.search}%`) : undefined,
-        domain: request.search ? Like(`%${request.search}%`) : undefined,
+        name: search ? Like(`%${search}%`) : undefined,
+        domain: search ? Like(`%${search}%`) : undefined,
       },
       order: {
-        name: "asc",
+        [orderBy]: orderAxis ? orderAxis : "asc",
       },
-      skip: request.offset,
-      take: request.limit,
+      skip: offset,
+      take: limit,
     });
 
-    const total: ListAppResponse["total"] = query[1];
-    const items: ListAppResponse["items"] = [];
+    const plugins = await this.plugins.plugins();
+    const deploys = await App.listDeploydAt(apps.map((i) => i.name));
 
-    for (const app of query[0]) {
-      let status: StatusAppResponse["status"] = "stopped";
-      try {
-        const info = await this.docker.getContainer(app.name).inspect();
-        if (info.State.Status === "running") {
-          status = "running";
-        } else if (info.State.Status === "restarting") {
-          status = "restarting";
-        } else if (info.State.Status === "exited") {
-          status = "exited";
-        }
-      } catch (e) {
-        status = "stopped";
-      }
-      items.push({
-        name: app.name,
-        buildpack: app.buildpack.name,
-        domain: app.domain,
-        createdAt: app.createdAt,
-        updatedAt: app.updatedAt,
-        status: status,
-      });
-    }
+    const total: ListAppResponse["total"] = count;
+    const items: ListAppResponse["items"] = apps.map((i) => ({
+      name: i.name,
+      icon: plugins.get(i.buildpack.name)?.buildpack?.icon ?? "",
+      buildpack: i.buildpack.name,
+      domain: i.domain,
+      createdAt: i.createdAt,
+      updatedAt: i.updatedAt,
+      deploydAt: deploys.get(i.name) ?? new Date(0),
+    }));
 
     return { total, items };
   }
 
-  @Post("/")
-  @Put("/")
-  public async upsert(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
+  @Post("/:name")
+  @Put("/:name")
+  public async upsert(@Data() request: UpsertAppRequest): Promise<UpsertAppResponse> {
     const app = new App();
     app.name = request.name;
     app.buildpack = request.buildpack;
     // web
-    app.domain = request.domain;
-    app.rule = request.rule;
-    app.port = request.port;
-    app.scheme = request.scheme;
-    app.tls = request.tls;
-    app.middlewares = request.middlewares
-      ?.filter((v) => v.name && v.type)
-      ?.map((v) => ({ name: v.name, type: v.type, options: v.options ?? {} }));
+    app.domain = request.domain!;
+    app.rule = request.rule!;
+    app.port = request.port!;
+    app.scheme = request.scheme!;
+    app.tls = request.tls!;
+    app.middlewares =
+      request.middlewares
+        ?.filter((v) => v.name && v.type)
+        ?.map((v) => ({ name: v.name, type: v.type, options: v.options ?? {} })) ?? [];
     // extensions
-    app.commands = request.commands;
-    app.entrypoints = request.entrypoints;
-    app.restart = request.restart;
-    app.pull = request.pull;
-    app.healthcheck = request.healthcheck;
-    app.init = request.init;
-    app.rm = request.rm;
-    app.privileged = request.privileged;
-    app.user = request.user;
-    app.workdir = request.workdir;
+    app.commands = request.commands!;
+    app.entrypoints = request.entrypoints!;
+    app.restart = request.restart!;
+    app.pull = request.pull!;
+    app.healthcheck = request.healthcheck!;
+    app.init = request.init!;
+    app.rm = request.rm!;
+    app.privileged = request.privileged!;
+    app.user = request.user!;
+    app.workdir = request.workdir!;
     // values
-    app.buildArgs = request.buildArgs;
-    app.networks = request.networks;
-    app.labels = request.labels;
-    app.secrets = request.secrets;
-    app.hosts = request.hosts;
+    app.buildArgs = request.buildArgs!;
+    app.networks = request.networks!;
+    app.labels = request.labels!;
+    app.secrets = request.secrets!;
+    app.hosts = request.hosts!;
     // ports
     const ports: PortBind[] = [];
     if (request.ports && request.ports.length) {
@@ -132,13 +120,13 @@ export class AppController {
       for (const port of request.ports) {
         const bind = new PortBind();
         bind.port = port.port;
-        bind.bind = maps.get(port.name);
+        bind.bind = maps.get(port.name) as Port;
         ports.push(bind);
       }
     }
     // volumes
     const volumes: VolumeBind[] = [];
-    if (request.volumes && request.ports.length) {
+    if (request.volumes && request.volumes.length) {
       const names = request.volumes.map((v) => v.name);
       const items = await Volume.find({ where: { name: In(names) } });
       if (names.length !== items.length) {
@@ -149,7 +137,7 @@ export class AppController {
         const bind = new VolumeBind();
         bind.path = volume.path;
         bind.readonly = volume.readonly;
-        bind.bind = maps.get(volume.name);
+        bind.bind = maps.get(volume.name) as Volume;
         volumes.push(bind);
       }
     }
@@ -173,7 +161,7 @@ export class AppController {
     if (ports.length) {
       await PortBind.upsert(
         ports.map((v) => {
-          v.app = savedApp;
+          v.app = savedApp!;
           return v;
         }),
         ["app", "bind", "port"]
@@ -182,13 +170,13 @@ export class AppController {
     if (volumes.length) {
       await VolumeBind.upsert(
         volumes.map((v) => {
-          v.app = savedApp;
+          v.app = savedApp!;
           return v;
         }),
         ["app", "bind", "path"]
       );
     }
-    return await this.wrapApp(savedApp);
+    return await this.wrap(savedApp!);
   }
 
   @Get("/:name")
@@ -209,7 +197,7 @@ export class AppController {
     if (!app) {
       throw new NotFoundException(`Not found application of ${request.name}`);
     }
-    return await this.wrapApp(app);
+    return await this.wrap(app);
   }
 
   @Delete("/:name")
@@ -221,32 +209,14 @@ export class AppController {
     return { status: "successful" };
   }
 
-  @Get("/:name/status")
-  public async status(@Param() request: StatusAppRequest): Promise<StatusAppResponse> {
-    let status: StatusAppResponse["status"] = "stopped";
-    try {
-      const info = await this.docker.getContainer(request.name).inspect();
-      if (info.State.Status === "running") {
-        status = "running";
-      } else if (info.State.Status === "restarting") {
-        status = "restarting";
-      } else if (info.State.Status === "exited") {
-        status = "exited";
-      }
-    } catch (e) {
-      status = "stopped";
-    }
-    return { status };
-  }
-
-  private async wrapApp(app: App): Promise<GetAppResponse> {
-    const plugins = await this.plugins.buildpacks();
-    const plugin = plugins.find((p) => app.buildpack.name === p.name);
+  private async wrap(app: App): Promise<GetAppResponse> {
+    const plugin = await this.plugins.plugin(app.buildpack.name);
     return {
       name: app.name,
       buildpack: {
         name: app.buildpack.name,
-        values: app.buildpack.values,
+        values: app.buildpack.values ?? {},
+        icon: plugin?.buildpack?.icon ?? "",
         options: plugin?.buildpack?.options ?? [],
       },
       commands: app.commands,

@@ -21,7 +21,7 @@ export const Root: React.FC = () => {
           <GlobalStyles />
           <MantineAdapter>
             <ModalsProvider>
-              <NotificationsProvider position="top-center" limit={5} zIndex={999}>
+              <NotificationsProvider position="top-center" limit={5} zIndex={1999}>
                 <App />
               </NotificationsProvider>
             </ModalsProvider>

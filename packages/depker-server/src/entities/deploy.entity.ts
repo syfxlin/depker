@@ -24,7 +24,7 @@ export class Deploy extends BaseEntity {
   commit: string;
 
   @Column({ nullable: false, default: "queued" })
-  status: "queued" | "running" | "failed" | "succeed";
+  status: "queued" | "running" | "failed" | "success";
 
   @Column({ nullable: false })
   trigger: "manual" | "depker" | "git";

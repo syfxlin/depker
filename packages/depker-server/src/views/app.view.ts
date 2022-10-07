@@ -21,21 +21,11 @@ import { ObjectEach, objectEach } from "../validation/object-each.validation";
 import { ArrayEach } from "../validation/array-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
 
-export class StatusAppRequest {
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 128)
-  name: string;
-}
-
-export type StatusAppResponse = {
-  status: "stopped" | "running" | "restarting" | "exited";
-};
-
 export class GetAppRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
   name: string;
 }
 
@@ -45,6 +35,7 @@ export type GetAppResponse = Omit<
 > & {
   buildpack: {
     name: string;
+    icon: string;
     values: Record<string, any>;
     options: DepkerPluginOption[];
   };
@@ -78,17 +69,23 @@ export class ListAppRequest {
   @IsOptional()
   @Min(0)
   limit?: number;
+
+  @IsString()
+  @IsOptional()
+  @Matches(/\w+:(asc|desc)/)
+  sort?: string;
 }
 
 export type ListAppResponse = {
   total: number;
   items: Array<{
     name: string;
+    icon: string;
     buildpack: string;
     domain: string[];
-    status: StatusAppResponse["status"];
     createdAt: Date;
     updatedAt: Date;
+    deploydAt: Date;
   }>;
 };
 
@@ -96,6 +93,7 @@ export class UpsertAppRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
   name: string;
 
   @ObjectEach({
@@ -239,7 +237,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  hosts: Array<{
+  hosts?: Array<{
     name: string;
     value: string;
     onbuild: boolean;
@@ -278,6 +276,7 @@ export class DeleteAppRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
   name: string;
 }
 

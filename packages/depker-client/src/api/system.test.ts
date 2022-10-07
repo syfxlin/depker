@@ -11,7 +11,7 @@ const create = async () => {
 
 it("should metrics", async () => {
   const client = await create();
-  const metrics = await client.info.metrics();
+  const metrics = await client.system.metrics();
 
   console.log(metrics);
   expect(metrics).not.toBeNull();
@@ -19,7 +19,7 @@ it("should metrics", async () => {
 
 it("should version", async () => {
   const client = await create();
-  const version = await client.info.version();
+  const version = await client.system.version();
 
   console.log(version);
   expect(version).not.toBeNull();
@@ -27,7 +27,7 @@ it("should version", async () => {
 
 it("should logs", async () => {
   const client = await create();
-  const logs = await client.info.logs();
+  const logs = await client.system.logs();
 
   console.log(logs);
   expect(logs).not.toBeNull();

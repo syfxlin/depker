@@ -22,7 +22,8 @@ import { PortBind } from "../entities/port-bind.entity";
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private _loaded = false;
-  private readonly plugins: DepkerPlugin[] = [example as DepkerPlugin];
+  private readonly _internal: DepkerPlugin[] = [example as DepkerPlugin];
+  private readonly _plugins: Map<string, DepkerPlugin> = new Map<string, DepkerPlugin>();
 
   constructor(
     private readonly http: HttpService,
@@ -33,7 +34,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
 
   public async load() {
     if (!this._loaded) {
-      const plugins: DepkerPlugin[] = [];
+      const plugins: DepkerPlugin[] = [...this._internal];
       const pjson = fs.readJsonSync(path.join(PATHS.PLUGINS, "package.json"));
       const names = Object.keys(pjson.dependencies || {});
       for (const name of names) {
@@ -43,25 +44,26 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
           plugins.push(mod);
         }
       }
-      this.plugins.push(...plugins);
+      for (const plugin of plugins) {
+        this._plugins.set(plugin.name, plugin);
+      }
       this._loaded = true;
     }
-    return this.plugins as DepkerPlugin[];
+    return this._plugins;
   }
 
-  public async buildpacks() {
-    const plugins = await this.load();
-    return plugins.filter((p) => p.buildpack);
+  public async plugins() {
+    return await this.load();
   }
 
-  public async routes() {
+  public async plugin(name: string) {
     const plugins = await this.load();
-    return plugins.filter((p) => p.routes);
+    return plugins.get(name);
   }
 
   public async onModuleInit() {
     const plugins = await this.load();
-    for (const plugin of plugins) {
+    for (const plugin of plugins.values()) {
       await plugin?.init?.(
         new PluginContext({
           name: plugin.name,
@@ -86,7 +88,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
 
   public async onModuleDestroy() {
     const plugins = await this.load();
-    for (const plugin of plugins) {
+    for (const plugin of plugins.values()) {
       await plugin?.destroy?.(
         new PluginContext({
           name: plugin.name,

@@ -31,7 +31,7 @@ export const ArrayEach = (rules: Array<EachValidRule>, options?: ValidationOptio
           return await arrayEach(rules)(value);
         },
         defaultMessage(args?: ValidationArguments) {
-          return `${args.property} is not validated`;
+          return `${args?.property} is not validated`;
         },
       },
     });

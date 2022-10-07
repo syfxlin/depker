@@ -8,15 +8,26 @@ import parser from "parse-prometheus-text-format";
 import path from "path";
 import fs from "fs-extra";
 import { readLastLinesEnc } from "read-last-lines-ts";
-import { LogsRequest, LogsResponse, MetricsResponse, VersionResponse } from "../views/info.view";
+import { LogsRequest, LogsResponse, MetricsResponse, VersionResponse } from "../views/system.view";
+import { HealthCheck, HealthCheckService, TypeOrmHealthIndicator } from "@nestjs/terminus";
 import TimeData = Systeminformation.TimeData;
 import MemData = Systeminformation.MemData;
 import CurrentLoadData = Systeminformation.CurrentLoadData;
 import FsSizeData = Systeminformation.FsSizeData;
 
-@Controller("/infos")
-export class InfoController {
-  constructor(private readonly http: HttpService) {}
+@Controller("/system")
+export class SystemController {
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly database: TypeOrmHealthIndicator,
+    private readonly http: HttpService
+  ) {}
+
+  @Get("/healthcheck")
+  @HealthCheck()
+  public healthcheck() {
+    return this.health.check([() => this.database.pingCheck("database")]);
+  }
 
   @Get("/version")
   public version(): VersionResponse {

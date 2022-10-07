@@ -59,7 +59,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
         `}
       >
         <Tooltip
-          label={`实时状态：${
+          label={`Real-time Status: ${
             typeof value === "number"
               ? value.toFixed(2) + unit
               : value.used.toFixed(2) + unit + " / " + value.total.toFixed(2) + unit
@@ -67,7 +67,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
           withArrow={true}
           transition="pop"
           transitionDuration={300}
-          zIndex={998}
+          zIndex={1998}
         >
           <Text
             css={css`
@@ -85,11 +85,11 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
         </Tooltip>
         {diff !== 0 && (
           <Tooltip
-            label={`状态变化幅度：${diff.toFixed(2)}%`}
+            label={`Percentage Change: ${diff.toFixed(2)}%`}
             withArrow={true}
             transition="pop"
             transitionDuration={300}
-            zIndex={998}
+            zIndex={1998}
           >
             <Text
               color={diff > 0 ? "red" : "teal"}
@@ -127,7 +127,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
           font-size: ${u.fs("xs")};
         `}
       >
-        比例：{perc.toFixed(2)}%
+        Percentage：{perc.toFixed(2)}%
       </Text>
     </Paper>
   );
@@ -232,7 +232,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
             withArrow={true}
             transition="pop"
             transitionDuration={300}
-            zIndex={998}
+            zIndex={1998}
           >
             <Box>
               <Text
@@ -262,7 +262,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
                 withArrow={true}
                 transition="pop"
                 transitionDuration={300}
-                zIndex={998}
+                zIndex={1998}
               >
                 <Box>
                   <Text
