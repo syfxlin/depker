@@ -34,6 +34,9 @@ export class AppApi extends Api {
   }
 
   public async status(request: AppStatusRequest) {
+    if (!request.names || !request.names.length) {
+      return {};
+    }
     const response = await this.client.get<AppStatusResponse>(`/api/status/apps`, { params: request });
     return response.data;
   }

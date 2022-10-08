@@ -2,9 +2,9 @@ import {
   IsBoolean,
   isBoolean,
   isFQDN,
+  IsInt,
   isNotEmpty,
   IsNotEmpty,
-  IsNumber,
   isNumber,
   IsObject,
   IsOptional,
@@ -60,12 +60,12 @@ export class ListAppRequest {
   @IsNotEmpty()
   search?: string;
 
-  @IsNumber()
+  @IsInt()
   @IsOptional()
   @Min(0)
   offset?: number;
 
-  @IsNumber()
+  @IsInt()
   @IsOptional()
   @Min(0)
   limit?: number;
@@ -131,7 +131,7 @@ export class UpsertAppRequest {
   rule?: string;
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(1)
   @Max(65535)
   port?: number;

@@ -15,13 +15,20 @@ export const useApps = () => {
     return client.app.list({
       offset: (page - 1) * size,
       limit: size,
-      sort: sort ? sort.join(":") : undefined,
+      sort: sort[0] ? sort.join(":") : undefined,
       search: search ? search : undefined,
+    });
+  });
+
+  const status = useSWR(["client.app.status", query.data?.items?.map((i) => i.name)], (key, names) => {
+    return client.app.status({
+      names: names ?? [],
     });
   });
 
   return {
     ...query,
+    status: status.data ?? {},
     page,
     size,
     sort,

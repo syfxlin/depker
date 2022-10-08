@@ -15,7 +15,7 @@ export const destroy = async (ctx: PluginContext) => {
 };
 
 export const buildpack: DepkerPlugin["buildpack"] = {
-  icon: "/icons/nodedotjs",
+  icon: "/api/icons/nodedotjs",
   options: [
     {
       type: "string",

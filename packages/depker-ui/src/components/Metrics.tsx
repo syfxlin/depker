@@ -10,11 +10,12 @@ import {
   IconDatabaseExport,
 } from "@tabler/icons";
 import { GB, HOUR } from "../utils/constant";
-import { Grid, List, LoadingOverlay, Text, Tooltip } from "@mantine/core";
+import { Grid, List, Text, Tooltip } from "@mantine/core";
 import { css } from "@emotion/react";
 import { day } from "../utils/day";
 import { useU } from "@syfxlin/ustyled";
 import { useMetrics } from "../api/use-metrics";
+import { Async } from "./Async";
 
 export const Metrics: React.FC = () => {
   const { u } = useU();
@@ -77,9 +78,10 @@ export const Metrics: React.FC = () => {
         position: relative;
       `}
     >
-      <LoadingOverlay visible={!query.error && !query.data} overlayBlur={4} />
       <Grid.Col span={12} md={4}>
-        <TextStats title="Server Uptime" icon={IconActivity} value={(time.uptime / HOUR).toFixed(2) + "H"} />
+        <Async query={query}>
+          <TextStats title="Server Uptime" icon={IconActivity} value={(time.uptime / HOUR).toFixed(2) + "H"} />
+        </Async>
       </Grid.Col>
       <Grid.Col span={12} md={4}>
         <TextStats title="Server Time" icon={IconClock} value={day(time.current).format("YYYY-MM-DD HH:mm")} />

@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, Min } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, Min } from "class-validator";
 
 export type VersionResponse = {
   name: string;
@@ -55,7 +55,7 @@ export type MetricsResponse = {
 
 export class LogsRequest {
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(0)
   lines: number = 1000;
 

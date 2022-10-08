@@ -7,6 +7,8 @@ import { useU } from "@syfxlin/ustyled";
 import { showNotification } from "@mantine/notifications";
 import { logout } from "../api/client";
 
+export type NavProps = PropsWithChildren;
+
 export const Nav: React.FC<PropsWithChildren> = ({ children }) => {
   const { u, mode, setMode } = useU();
   return (

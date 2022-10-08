@@ -10,6 +10,7 @@ export * from "./entities/port-bind.entity";
 export * from "./entities/volume-bind.entity";
 
 // views
+export * from "./views/common.view";
 export * from "./views/app.view";
 export * from "./views/auth.view";
 export * from "./views/status.view";
