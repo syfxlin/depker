@@ -5,14 +5,14 @@ import { client } from "./client";
 
 export const useApps = () => {
   const [page, setPage] = useState<number>(1);
-  const [size, setSize] = useState<number>(12);
+  const [size, setSize] = useState<number>(15);
   const [sort, setSort] = useState<[string, "asc" | "desc"]>(["", "asc"]);
 
   const [search, setSearch] = useState("");
   const [debounced] = useDebouncedValue(search, 1000);
 
-  const query = useSWR(["client.app.list", page, size, sort, debounced], (key, page, size, sort, search) => {
-    return client.app.list({
+  const query = useSWR(["client.app.list", page, size, sort, debounced], async (key, page, size, sort, search) => {
+    return await client.app.list({
       offset: (page - 1) * size,
       limit: size,
       sort: sort[0] ? sort.join(":") : undefined,
