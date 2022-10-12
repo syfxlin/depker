@@ -20,15 +20,8 @@ export const useApps = () => {
     });
   });
 
-  const status = useSWR(["client.app.status", query.data?.items?.map((i) => i.name)], (key, names) => {
-    return client.app.status({
-      names: names ?? [],
-    });
-  });
-
   return {
     ...query,
-    status: status.data ?? {},
     page,
     size,
     sort,

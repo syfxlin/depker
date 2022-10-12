@@ -9,7 +9,6 @@ import { HttpService } from "nestjs-http-promise";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DockerService } from "./docker.service";
 import { SchedulerRegistry } from "@nestjs/schedule";
-import * as example from "../plugins/example";
 import { Setting } from "../entities/setting.entity";
 import { Token } from "../entities/token.entity";
 import { App } from "../entities/app.entity";
@@ -18,11 +17,13 @@ import { Volume } from "../entities/volume.entity";
 import { Port } from "../entities/port.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PortBind } from "../entities/port-bind.entity";
+import * as example from "../plugins/example";
+import * as dockerfile from "../plugins/dockerfile";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private _loaded = false;
-  private readonly _internal: DepkerPlugin[] = [example as DepkerPlugin];
+  private readonly _internal: DepkerPlugin[] = [example as DepkerPlugin, dockerfile as DepkerPlugin];
   private readonly _plugins: Map<string, DepkerPlugin> = new Map<string, DepkerPlugin>();
 
   constructor(

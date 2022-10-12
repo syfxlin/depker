@@ -6,27 +6,24 @@ import { SWROutside } from "./utils/swr-outside";
 import { ModalsProvider } from "@mantine/modals";
 import { NotificationsProvider } from "@mantine/notifications";
 import { App } from "./App";
-import { UstyledProvider } from "@syfxlin/ustyled";
 import { NormalizeCSS } from "./theme/NormalizeCSS";
 import { GlobalStyles } from "./theme/GlobalStyles";
-import { MantineAdapter } from "./theme/MantineAdapter";
+import { MantineProvider } from "@mantine/core";
 
 export const Root: React.FC = () => {
   return (
     <React.StrictMode>
       <SWRConfig value={{ compare: dequal }}>
         <SWROutside />
-        <UstyledProvider>
+        <MantineProvider theme={{ primaryColor: "violet" }} withNormalizeCSS={false} withGlobalStyles={false}>
           <NormalizeCSS />
           <GlobalStyles />
-          <MantineAdapter>
-            <ModalsProvider>
-              <NotificationsProvider position="top-center" limit={5} zIndex={1999}>
-                <App />
-              </NotificationsProvider>
-            </ModalsProvider>
-          </MantineAdapter>
-        </UstyledProvider>
+          <ModalsProvider>
+            <NotificationsProvider position="top-center" limit={5} zIndex={1999}>
+              <App />
+            </NotificationsProvider>
+          </ModalsProvider>
+        </MantineProvider>
       </SWRConfig>
     </React.StrictMode>
   );

@@ -10,12 +10,15 @@ import {
   Query,
 } from "@nestjs/common";
 import {
+  BuildPacksAppResponse,
   DeleteAppRequest,
   DeleteAppResponse,
   GetAppRequest,
   GetAppResponse,
   ListAppRequest,
   ListAppResponse,
+  StatusAppRequest,
+  StatusAppResponse,
   UpsertAppRequest,
   UpsertAppResponse,
 } from "../views/app.view";
@@ -33,7 +36,7 @@ import { Data } from "../decorators/data.decorator";
 export class AppController {
   constructor(private readonly docker: DockerService, private readonly plugins: PluginService) {}
 
-  @Get("/")
+  @Get("/items")
   public async list(@Query() request: ListAppRequest): Promise<ListAppResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc" } = request;
     const [orderBy, orderAxis] = sort.split(":");
@@ -62,21 +65,29 @@ export class AppController {
     const deploys = await App.listDeploydAt(apps.map((i) => i.name));
 
     const total: ListAppResponse["total"] = count;
-    const items: ListAppResponse["items"] = apps.map((i) => ({
-      name: i.name,
-      icon: plugins.get(i.buildpack.name)?.buildpack?.icon ?? "",
-      buildpack: i.buildpack.name,
-      domain: i.domain,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
-      deploydAt: deploys.get(i.name) ?? new Date(0),
-    }));
+    const items: ListAppResponse["items"] = apps.map((i) => {
+      const plugin = plugins.get(i.buildpack.name);
+      const deploy = deploys.get(i.name);
+      return {
+        name: i.name,
+        buildpack: {
+          name: i.buildpack.name,
+          label: plugin?.label,
+          group: plugin?.group,
+          icon: plugin?.icon,
+        },
+        domain: i.domain,
+        createdAt: i.createdAt,
+        updatedAt: i.updatedAt,
+        deploydAt: deploy ?? new Date(0),
+      };
+    });
 
     return { total, items };
   }
 
-  @Post("/:name")
-  @Put("/:name")
+  @Post("/items/:name")
+  @Put("/items/:name")
   public async upsert(@Data() request: UpsertAppRequest): Promise<UpsertAppResponse> {
     const app = new App();
     app.name = request.name;
@@ -179,7 +190,7 @@ export class AppController {
     return await this.wrap(savedApp!);
   }
 
-  @Get("/:name")
+  @Get("/items/:name")
   public async get(@Param() request: GetAppRequest): Promise<GetAppResponse> {
     const app = await App.findOne({
       where: {
@@ -200,13 +211,51 @@ export class AppController {
     return await this.wrap(app);
   }
 
-  @Delete("/:name")
+  @Delete("/items/:name")
   public async delete(@Param() request: DeleteAppRequest): Promise<DeleteAppResponse> {
     const result = await App.delete(request.name);
     if (!result.affected) {
       throw new NotFoundException(`Not found application of ${request.name}`);
     }
     return { status: "successful" };
+  }
+
+  @Get("/status")
+  public async status(@Query() request: StatusAppRequest): Promise<StatusAppResponse> {
+    const results: StatusAppResponse = {};
+
+    for (const name of request.names) {
+      let status: StatusAppResponse[string] = "stopped";
+      try {
+        const info = await this.docker.getContainer(name).inspect();
+        if (info.State.Status === "running") {
+          status = "running";
+        } else if (info.State.Status === "restarting") {
+          status = "restarting";
+        } else if (info.State.Status === "exited") {
+          status = "exited";
+        }
+      } catch (e) {
+        status = "stopped";
+      }
+      results[name] = status;
+    }
+
+    return results;
+  }
+
+  @Get("/buildpacks")
+  public async buildpacks(): Promise<BuildPacksAppResponse> {
+    const plugins = Array.from((await this.plugins.plugins()).values());
+    return plugins
+      .filter((p) => p.buildpack)
+      .map((p) => ({
+        name: p.name,
+        label: p.label,
+        group: p.group,
+        icon: p.icon,
+        options: p.options?.buildpack,
+      }));
   }
 
   private async wrap(app: App): Promise<GetAppResponse> {
@@ -216,8 +265,10 @@ export class AppController {
       buildpack: {
         name: app.buildpack.name,
         values: app.buildpack.values ?? {},
-        icon: plugin?.buildpack?.icon ?? "",
-        options: plugin?.buildpack?.options ?? [],
+        label: plugin?.label,
+        group: plugin?.group,
+        icon: plugin?.icon,
+        options: plugin?.options?.buildpack,
       },
       commands: app.commands,
       entrypoints: app.entrypoints,

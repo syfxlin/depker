@@ -1,7 +1,6 @@
-import { Box, Pagination } from "@mantine/core";
+import { Box, Pagination, useMantineTheme } from "@mantine/core";
 import React, { ReactNode } from "react";
 import { css } from "@emotion/react";
-import { useU } from "@syfxlin/ustyled";
 
 export type PagesProps = {
   page: number;
@@ -12,7 +11,7 @@ export type PagesProps = {
 };
 
 export const Pages: React.FC<PagesProps> = ({ children, page, size, total, onChange }) => {
-  const { u } = useU();
+  const t = useMantineTheme();
   return (
     <>
       <Box
@@ -25,13 +24,13 @@ export const Pages: React.FC<PagesProps> = ({ children, page, size, total, onCha
       <Pagination
         page={page}
         total={Math.max(1, Math.ceil(total / size))}
-        withEdges={true}
-        withControls={true}
+        withEdges
+        withControls
         position="center"
         onChange={onChange}
         css={css`
-          margin-top: ${u.sp(4)};
-          margin-bottom: ${u.sp(4)};
+          margin-top: ${t.spacing.md}px;
+          margin-bottom: ${t.spacing.md}px;
         `}
       />
     </>

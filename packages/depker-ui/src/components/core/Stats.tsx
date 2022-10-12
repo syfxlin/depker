@@ -1,13 +1,13 @@
 import React, { ReactNode, useMemo } from "react";
-import { IconArrowDown, IconArrowUp, TablerIcon } from "@tabler/icons";
-import { Box, Card, Center, Group, Paper, Progress, RingProgress, Text, Tooltip } from "@mantine/core";
+import { Box, Card, Center, Group, Progress, RingProgress, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { css } from "@emotion/react";
-import { useU } from "@syfxlin/ustyled";
 import { usePrevious } from "react-use";
+import { IconType } from "react-icons";
+import { TbArrowDown, TbArrowUp } from "react-icons/all";
 
 export interface PercStatsProps {
   title: ReactNode;
-  icon: TablerIcon;
+  icon: IconType;
   value:
     | number
     | {
@@ -18,24 +18,24 @@ export interface PercStatsProps {
 }
 
 export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }) => {
-  const { u } = useU();
+  const t = useMantineTheme();
   const perc = typeof value === "number" ? value : (value.used / value.total) * 100;
   const unit = typeof value === "number" ? "%" : value.unit;
   const prev = usePrevious(perc);
   const diff = Math.round((prev ? (perc - prev) / prev : 0) * 100) / 100;
   return (
-    <Paper
+    <Card
       withBorder
       css={css`
-        padding: ${u.sp(4)};
-        border-radius: ${u.br(2)};
+        padding: ${t.spacing.md}px;
+        border-radius: ${t.radius.sm}px;
       `}
     >
       <Group position="apart">
         <Text
           css={css`
-            color: ${u.c("primary7", "primary3")};
-            font-size: ${u.fs("xs")};
+            color: ${t.fn.primaryColor()};
+            font-size: ${t.fontSizes.xs}px;
             font-weight: 700;
             text-transform: uppercase;
           `}
@@ -43,10 +43,8 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
           {title}
         </Text>
         <Icon
-          size={u.s(5)}
-          stroke={u.sp(0.3)}
           css={css`
-            color: ${u.c("primary7", "primary3")};
+            color: ${t.fn.primaryColor()};
           `}
         />
       </Group>
@@ -54,7 +52,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
         align="flex-end"
         spacing="xs"
         css={css`
-          margin-top: ${u.sp(4)};
+          margin-top: ${t.spacing.md}px;
           flex-wrap: nowrap;
         `}
       >
@@ -64,14 +62,14 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
               ? value.toFixed(2) + unit
               : value.used.toFixed(2) + unit + " / " + value.total.toFixed(2) + unit
           }`}
-          withArrow={true}
+          withArrow
           transition="pop"
           transitionDuration={300}
           zIndex={1998}
         >
           <Text
             css={css`
-              font-size: ${u.fs(1.7)};
+              font-size: ${t.fontSizes.md * 1.7}px;
               font-weight: 700;
               line-height: 1;
               text-overflow: ellipsis;
@@ -86,7 +84,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
         {diff !== 0 && (
           <Tooltip
             label={`Percentage Change: ${diff.toFixed(2)}%`}
-            withArrow={true}
+            withArrow
             transition="pop"
             transitionDuration={300}
             zIndex={1998}
@@ -97,15 +95,15 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
                 display: inline-flex;
                 align-items: center;
                 font-weight: 500;
-                font-size: ${u.fs("sm")};
+                font-size: ${t.fontSizes.sm}px;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 overflow: hidden;
               `}
             >
               {Math.abs(diff).toFixed(2) + "%"}
-              {diff > 0 && <IconArrowUp size={u.fs("sm")} stroke={1.5} />}
-              {diff < 0 && <IconArrowDown size={u.fs("sm")} stroke={1.5} />}
+              {diff > 0 && <TbArrowUp />}
+              {diff < 0 && <TbArrowDown />}
             </Text>
           </Tooltip>
         )}
@@ -113,40 +111,40 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
       <Progress
         value={perc}
         css={css`
-          margin-top: ${u.sp(4)};
+          margin-top: ${t.spacing.md}px;
 
           .mantine-Progress-label {
-            font-size: ${u.fs("sm")};
+            font-size: ${t.fontSizes.sm}px;
           }
         `}
       />
       <Text
         color="dimmed"
         css={css`
-          margin-top: ${u.sp(2)};
-          font-size: ${u.fs("xs")};
+          margin-top: ${t.spacing.xs}px;
+          font-size: ${t.fontSizes.xs}px;
         `}
       >
         Percentage：{perc.toFixed(2)}%
       </Text>
-    </Paper>
+    </Card>
   );
 };
 
 export interface TextStatsProps {
   title: ReactNode;
-  icon: TablerIcon;
+  icon: IconType;
   value: ReactNode;
 }
 
 export const TextStats: React.FC<TextStatsProps> = ({ title, icon: Icon, value }) => {
-  const { u } = useU();
+  const t = useMantineTheme();
   return (
-    <Paper
+    <Card
       withBorder
       css={css`
-        padding: ${u.sp(4)};
-        border-radius: ${u.br(2)};
+        padding: ${t.spacing.md}px;
+        border-radius: ${t.radius.sm}px;
       `}
     >
       <Group>
@@ -154,18 +152,18 @@ export const TextStats: React.FC<TextStatsProps> = ({ title, icon: Icon, value }
           size={80}
           roundCaps
           thickness={8}
-          sections={[{ value: 100, color: "violet" }]}
+          sections={[{ value: 100, color: t.primaryColor }]}
           label={
             <Center>
-              <Icon size={22} stroke={1.5} />
+              <Icon />
             </Center>
           }
         />
         <Box>
           <Text
             css={css`
-              color: ${u.c("primary7", "primary3")};
-              font-size: ${u.fs("xs")};
+              color: ${t.fn.primaryColor()};
+              font-size: ${t.fontSizes.xs}px;
               font-weight: 700;
               text-transform: uppercase;
             `}
@@ -174,7 +172,7 @@ export const TextStats: React.FC<TextStatsProps> = ({ title, icon: Icon, value }
           </Text>
           <Text
             css={css`
-              font-size: ${u.fs("xl")};
+              font-size: ${t.fontSizes.xl}px;
               font-weight: 700;
             `}
           >
@@ -182,7 +180,7 @@ export const TextStats: React.FC<TextStatsProps> = ({ title, icon: Icon, value }
           </Text>
         </Box>
       </Group>
-    </Paper>
+    </Card>
   );
 };
 
@@ -196,7 +194,7 @@ export interface CardStatsProps {
 }
 
 export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
-  const { u, ctx } = useU();
+  const t = useMantineTheme();
   const primary = useMemo(() => (value.length ? value[0] : { name: "Unknown", value: 0 }), [value]);
   const values = useMemo(() => value.slice(1), [value]);
   const total = useMemo(() => value.reduce((a, i) => a + i.value, 0) || 1, [value]);
@@ -204,15 +202,15 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
     <Card
       withBorder
       css={css`
-        padding: ${u.sp(4)};
-        border-radius: ${u.br(2)};
+        padding: ${t.spacing.md}px;
+        border-radius: ${t.radius.sm}px;
         overflow: visible;
       `}
     >
       <Text
         css={css`
-          color: ${u.c("primary7", "primary3")};
-          font-size: ${u.fs("xs")};
+          color: ${t.fn.primaryColor()};
+          font-size: ${t.fontSizes.xs}px;
           font-weight: 700;
           text-transform: uppercase;
         `}
@@ -229,7 +227,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
           <Tooltip
             disabled={!primary.tooltip}
             label={primary.tooltip}
-            withArrow={true}
+            withArrow
             transition="pop"
             transitionDuration={300}
             zIndex={1998}
@@ -237,7 +235,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
             <Box>
               <Text
                 css={css`
-                  font-size: ${u.fs(1.7)};
+                  font-size: ${t.fontSizes.md * 1.7}px;
                   font-weight: 700;
                 `}
               >
@@ -246,7 +244,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
               <Text
                 color="dimmed"
                 css={css`
-                  font-size: ${u.fs("xs")};
+                  font-size: ${t.fontSizes.xs}px;
                 `}
               >
                 {primary.name}
@@ -259,7 +257,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
                 key={`card-stats-${item.name}`}
                 disabled={!item.tooltip}
                 label={item.tooltip}
-                withArrow={true}
+                withArrow
                 transition="pop"
                 transitionDuration={300}
                 zIndex={1998}
@@ -267,7 +265,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
                 <Box>
                   <Text
                     css={css`
-                      font-size: ${u.fs("xl")};
+                      font-size: ${t.fontSizes.xl}px;
                       font-weight: 700;
                     `}
                   >
@@ -276,7 +274,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
                   <Text
                     color="dimmed"
                     css={css`
-                      font-size: ${u.fs("xs")};
+                      font-size: ${t.fontSizes.xs}px;
                     `}
                   >
                     {item.name}
@@ -290,7 +288,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
           roundCaps
           size={110}
           thickness={8}
-          sections={[{ value: (primary.value / total) * 100, color: ctx.primary }]}
+          sections={[{ value: (primary.value / total) * 100, color: t.primaryColor }]}
           label={
             <div>
               <Text align="center" size="lg">

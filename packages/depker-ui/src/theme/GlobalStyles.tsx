@@ -1,9 +1,9 @@
 import React from "react";
 import { css, Global } from "@emotion/react";
-import { useU } from "@syfxlin/ustyled";
+import { useMantineTheme } from "@mantine/core";
 
 export const GlobalStyles: React.FC = () => {
-  const { u, mode } = useU();
+  const t = useMantineTheme();
   return (
     <Global
       styles={css`
@@ -14,29 +14,31 @@ export const GlobalStyles: React.FC = () => {
         }
 
         html {
-          background-color: ${u.c("white", "dark7")};
+          background-color: ${t.colorScheme === "light" ? t.white : t.colors.dark[7]};
         }
 
         html,
         body {
-          --mode: ${mode};
-          font-family: ${u.f("sans")};
-          color: ${u.c("gray7", "dark0")};
-          font-size: ${u.fs(1)};
+          font-family: ${t.fontFamily};
+          color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
+          font-size: ${t.fontSizes.md}px;
           font-weight: 400;
           line-height: 1.5;
-          letter-spacing: ${u.ls("wide")};
           transition: color 0.3s, background-color 0.3s;
           scroll-behavior: smooth;
           word-break: break-word;
         }
 
-        .i-icon {
-          vertical-align: middle;
-          text-align: center;
-          display: inline-flex;
-          justify-content: center;
-          align-items: center;
+        .App {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          padding: 0;
+          margin: 0;
+        }
+
+        .icon {
+          font-size: ${t.fontSizes.md}px;
         }
 
         ::-webkit-scrollbar {
@@ -45,13 +47,13 @@ export const GlobalStyles: React.FC = () => {
         }
         ::-webkit-scrollbar-track {
           border-radius: 3px;
-          background: ${u.c("black,1", "white,1")};
-          box-shadow: inset 0 0 5px ${u.c("black,1", "white,1")};
+          background: ${t.colorScheme === "light" ? t.fn.rgba(t.black, 0.1) : t.fn.rgba(t.white, 0.1)};
+          box-shadow: inset 0 0 5px ${t.colorScheme === "light" ? t.fn.rgba(t.black, 0.1) : t.fn.rgba(t.white, 0.1)};
         }
         ::-webkit-scrollbar-thumb {
           border-radius: 3px;
-          background: ${u.c("black,2", "white,2")};
-          box-shadow: inset 0 0 10px ${u.c("black,2", "white,2")};
+          background: ${t.colorScheme === "light" ? t.fn.rgba(t.black, 0.2) : t.fn.rgba(t.white, 0.2)};
+          box-shadow: inset 0 0 20px ${t.colorScheme === "light" ? t.fn.rgba(t.black, 0.2) : t.fn.rgba(t.white, 0.2)};
         }
 
         * {

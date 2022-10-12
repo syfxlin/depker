@@ -175,8 +175,6 @@ importers:
       '@mantine/notifications': ^5.3.3
       '@mantine/spotlight': ^5.3.3
       '@syfxlin/depker-client': workspace:*
-      '@syfxlin/ustyled': ^2.2.0
-      '@tabler/icons': ^1.96.0
       '@types/react': ^18.0.19
       '@types/react-dom': ^18.0.6
       '@types/react-virtualized-auto-sizer': ^1.0.1
@@ -190,6 +188,7 @@ importers:
       history: ^5.3.0
       react: ^18.2.0
       react-dom: ^18.2.0
+      react-icons: ^4.4.0
       react-router-dom: ^6.4.0
       react-use: ^17.4.0
       react-virtualized-auto-sizer: ^1.0.7
@@ -208,8 +207,6 @@ importers:
       '@mantine/notifications': 5.3.3_kf3fyxgaphdbmkg3vjncjrjyhy
       '@mantine/spotlight': 5.3.3_kf3fyxgaphdbmkg3vjncjrjyhy
       '@syfxlin/depker-client': link:../depker-client
-      '@syfxlin/ustyled': 2.2.0_@types+react@18.0.20
-      '@tabler/icons': 1.96.0_biqbaboplfbrettd7655fr4n2y
       anser: 2.1.1
       axios: 0.27.2
       classnames: 2.3.2
@@ -218,6 +215,7 @@ importers:
       history: 5.3.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+      react-icons: 4.4.0_react@18.2.0
       react-router-dom: 6.4.0_biqbaboplfbrettd7655fr4n2y
       react-use: 17.4.0_biqbaboplfbrettd7655fr4n2y
       react-virtualized-auto-sizer: 1.0.7_biqbaboplfbrettd7655fr4n2y
@@ -2735,35 +2733,6 @@ packages:
     resolution: {integrity: sha512-O3uyB/JbkAEMZaP3YqyHH7TMnex7tWyCbCI4EfJdOCoN6HIhqdJBWTM6aCCiWQ/5f5wxjgU735QAIpJbjDvmzg==}
     dev: false
 
-  /@syfxlin/ustyled/2.2.0_@types+react@18.0.20:
-    resolution: {integrity: sha512-//VwzT35bUbyhcA/lDb6LJbO9dtQkg8RTiNTbwxY31fafJcOhgQyMuCPInu9iGIRkvQTJ8lYNzUfQiAGyxHHKQ==}
-    dependencies:
-      '@emotion/react': 11.10.4_w5j4k42lgipnm43s3brx6h3c34
-      '@emotion/serialize': 1.1.0
-      color-alpha: 1.1.3
-      deepmerge: 4.2.2
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/react'
-    dev: false
-
-  /@tabler/icons/1.96.0_biqbaboplfbrettd7655fr4n2y:
-    resolution: {integrity: sha512-ZAQ64CHi5sOFQE7COoBmZbhIBtTX+4XNuiVZsr8kcqJX1bmrw6dFU0W9ONJamt/2TO997uVfSqxr2o0WZqZr/g==}
-    peerDependencies:
-      react: ^16.x || 17.x || 18.x
-      react-dom: ^16.x || 17.x || 18.x
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-    dev: false
-
   /@types/babel__core/7.1.19:
     resolution: {integrity: sha512-WEOTgRsbYkvA/KCsDwVEGkd7WAr1e3g31VHQ8zy5gul/V1qKullU/BU5I68X5v7V3GnB9eotmom4v5a5gjxorw==}
     dependencies:
@@ -4107,12 +4076,6 @@ packages:
     resolution: {integrity: sha512-iBPtljfCNcTKNAto0KEtDfZ3qzjJvqE3aTGZsbhjSBlorqpXJlaWWtPO35D+ZImoC3KWejX64o+yPGxhWSTzfg==}
     dev: true
 
-  /color-alpha/1.1.3:
-    resolution: {integrity: sha512-krPYBO1RSO5LH4AGb/b6z70O1Ip2o0F0+0cVFN5FN99jfQtZFT08rQyg+9oOBNJYAn3SRwJIFC8jUEOKz7PisA==}
-    dependencies:
-      color-parse: 1.4.2
-    dev: false
-
   /color-convert/1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
     dependencies:
@@ -4129,12 +4092,6 @@ packages:
 
   /color-name/1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
-
-  /color-parse/1.4.2:
-    resolution: {integrity: sha512-RI7s49/8yqDj3fECFZjUI1Yi0z/Gq1py43oNJivAIIDSyJiOZLfYCRQEgn8HEVAj++PcRe8AnL2XF0fRJ3BTnA==}
-    dependencies:
-      color-name: 1.1.4
-    dev: false
 
   /color-support/1.1.3:
     resolution: {integrity: sha512-qiBjkpbMLO/HL68y+lh4q0/O1MZFj2RX6X/KmMa3+gJD3z+WwI1ZzDHysvqHGS3mP6mznPckpXmw1nI9cJjyRg==}
@@ -7509,6 +7466,14 @@ packages:
       loose-envify: 1.4.0
       react: 18.2.0
       scheduler: 0.23.0
+    dev: false
+
+  /react-icons/4.4.0_react@18.2.0:
+    resolution: {integrity: sha512-fSbvHeVYo/B5/L4VhB7sBA1i2tS8MkT0Hb9t2H1AVPkwGfVHLJCqyr2Py9dKMxsyM63Eng1GkdZfbWj+Fmv8Rg==}
+    peerDependencies:
+      react: '*'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /react-is/16.13.1:

@@ -1,23 +1,14 @@
 import React, { useMemo, useState } from "react";
-import { CardStats, PercStats, TextStats } from "./Stats";
-import {
-  IconActivity,
-  IconArchive,
-  IconCalendarStats,
-  IconClock,
-  IconCpu2,
-  IconDatabase,
-  IconDatabaseExport,
-} from "@tabler/icons";
+import { CardStats, PercStats, TextStats } from "./core/Stats";
 import { GB, HOUR } from "../utils/constant";
-import { Grid, List, Text, Tooltip } from "@mantine/core";
+import { Grid, List, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { css } from "@emotion/react";
 import { day } from "../utils/day";
-import { useU } from "@syfxlin/ustyled";
 import { useMetrics } from "../api/use-metrics";
+import { TbActivity, TbArchive, TbCalendarStats, TbClock, TbCpu2, TbDatabase, TbDatabaseExport } from "react-icons/all";
 
 export const Metrics: React.FC = () => {
-  const { u } = useU();
+  const t = useMantineTheme();
   const [disk, setDisk] = useState(0);
   const query = useMetrics();
 
@@ -78,21 +69,21 @@ export const Metrics: React.FC = () => {
       `}
     >
       <Grid.Col span={12} md={4}>
-        <TextStats title="Server Uptime" icon={IconActivity} value={(time.uptime / HOUR).toFixed(2) + "H"} />
+        <TextStats title="Server Uptime" icon={TbActivity} value={(time.uptime / HOUR).toFixed(2) + "H"} />
       </Grid.Col>
       <Grid.Col span={12} md={4}>
-        <TextStats title="Server Time" icon={IconClock} value={day(time.current).format("YYYY-MM-DD HH:mm")} />
+        <TextStats title="Server Time" icon={TbClock} value={day(time.current).format("YYYY-MM-DD HH:mm")} />
       </Grid.Col>
       <Grid.Col span={12} md={4}>
-        <TextStats title="Server TimeZone" icon={IconCalendarStats} value={time.timezone} />
+        <TextStats title="Server TimeZone" icon={TbCalendarStats} value={time.timezone} />
       </Grid.Col>
       <Grid.Col span={12} md={3}>
-        <PercStats title="CPU" icon={IconCpu2} value={(cpu.used / cpu.total) * 100} />
+        <PercStats title="CPU" icon={TbCpu2} value={(cpu.used / cpu.total) * 100} />
       </Grid.Col>
       <Grid.Col span={12} md={3}>
         <PercStats
           title="Memory"
-          icon={IconDatabase}
+          icon={TbDatabase}
           value={{
             used: memory.used / GB,
             total: memory.total / GB,
@@ -103,7 +94,7 @@ export const Metrics: React.FC = () => {
       <Grid.Col span={12} md={3}>
         <PercStats
           title="Swap"
-          icon={IconDatabaseExport}
+          icon={TbDatabaseExport}
           value={{
             used: swap.used / GB,
             total: swap.total / GB,
@@ -114,13 +105,7 @@ export const Metrics: React.FC = () => {
       <Grid.Col span={12} md={3}>
         <PercStats
           title={
-            <Tooltip
-              label="Switch to Another Disk"
-              withArrow={true}
-              transition="pop"
-              transitionDuration={300}
-              zIndex={1998}
-            >
+            <Tooltip label="Switch to Another Disk" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
               <Text
                 onClick={() => setDisk((v) => v + 1)}
                 css={css`
@@ -132,7 +117,7 @@ export const Metrics: React.FC = () => {
               </Text>
             </Tooltip>
           }
-          icon={IconArchive}
+          icon={TbArchive}
           value={{
             used: disks.used / GB,
             total: disks.total / GB,
@@ -150,8 +135,8 @@ export const Metrics: React.FC = () => {
               tooltip: requests.success.length && (
                 <List
                   css={css`
-                    color: ${u.c("white")};
-                    font-size: ${u.fs("xs")};
+                    color: ${t.white};
+                    font-size: ${t.fontSizes.xs}px;
                   `}
                 >
                   {requests.success.map(([i, c]) => (
@@ -168,8 +153,8 @@ export const Metrics: React.FC = () => {
               tooltip: requests.failure4.length && (
                 <List
                   css={css`
-                    color: ${u.c("white")};
-                    font-size: ${u.fs("xs")};
+                    color: ${t.white};
+                    font-size: ${t.fontSizes.xs}px;
                   `}
                 >
                   {requests.failure4.map(([i, c]) => (
@@ -186,8 +171,8 @@ export const Metrics: React.FC = () => {
               tooltip: requests.failure5.length && (
                 <List
                   css={css`
-                    color: ${u.c("white")};
-                    font-size: ${u.fs("xs")};
+                    color: ${t.white};
+                    font-size: ${t.fontSizes.xs}px;
                   `}
                 >
                   {requests.failure5.map(([i, c]) => (
@@ -211,8 +196,8 @@ export const Metrics: React.FC = () => {
               tooltip: certs.expiring.length && (
                 <List
                   css={css`
-                    color: ${u.c("white")};
-                    font-size: ${u.fs("xs")};
+                    color: ${t.white};
+                    font-size: ${t.fontSizes.xs}px;
                   `}
                 >
                   {certs.expiring.map(([i]) => (
@@ -227,8 +212,8 @@ export const Metrics: React.FC = () => {
               tooltip: certs.expired.length && (
                 <List
                   css={css`
-                    color: ${u.c("white")};
-                    font-size: ${u.fs("xs")};
+                    color: ${t.white};
+                    font-size: ${t.fontSizes.xs}px;
                   `}
                 >
                   {certs.expired.map(([i]) => (
@@ -243,8 +228,8 @@ export const Metrics: React.FC = () => {
               tooltip: certs.normal.length && (
                 <List
                   css={css`
-                    color: ${u.c("white")};
-                    font-size: ${u.fs("xs")};
+                    color: ${t.white};
+                    font-size: ${t.fontSizes.xs}px;
                   `}
                 >
                   {certs.normal.map(([i]) => (

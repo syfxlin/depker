@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   isBoolean,
   isFQDN,
@@ -35,9 +36,11 @@ export type GetAppResponse = Omit<
 > & {
   buildpack: {
     name: string;
-    icon: string;
-    values: Record<string, any>;
-    options: DepkerPluginOption[];
+    label?: string;
+    group?: string;
+    icon?: string;
+    options?: DepkerPluginOption[];
+    values?: Record<string, any>;
   };
   ports: Array<{
     name: string;
@@ -80,9 +83,13 @@ export type ListAppResponse = {
   total: number;
   items: Array<{
     name: string;
-    icon: string;
-    buildpack: string;
     domain: string[];
+    buildpack: {
+      name: string;
+      label?: string;
+      group?: string;
+      icon?: string;
+    };
     createdAt: Date;
     updatedAt: Date;
     deploydAt: Date;
@@ -283,3 +290,22 @@ export class DeleteAppRequest {
 export type DeleteAppResponse = {
   status: "successful" | "failure";
 };
+
+export class StatusAppRequest {
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  @Length(1, 128, { each: true })
+  @Matches(/^[a-zA-Z0-9._-]+$/, { each: true })
+  names: string[];
+}
+
+export type StatusAppResponse = Record<string, "stopped" | "running" | "restarting" | "exited">;
+
+export type BuildPacksAppResponse = Array<{
+  name: string;
+  label?: string;
+  group?: string;
+  icon?: string;
+  options?: DepkerPluginOption[];
+}>;

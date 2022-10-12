@@ -85,24 +85,20 @@ export class SystemController {
           total_success: parseInt(traefik.traefik_config_reloads_total?.[0]?.value ?? 0),
           total_failure: parseInt(traefik.traefik_config_reloads_failure_total?.[0]?.value ?? 0),
         },
-        connections: (traefik.traefik_entrypoint_open_connections ?? [])
-          .filter((i: any) => i.labels.entrypoint !== "traefik")
-          .reduce(
-            (a: any, i: any) => ({
-              ...a,
-              [i.labels.entrypoint]: (a[i.labels.entrypoint] ?? 0) + parseInt(i.value),
-            }),
-            {}
-          ),
-        requests: (traefik.traefik_entrypoint_requests_total ?? [])
-          .filter((i: any) => i.labels.entrypoint !== "traefik")
-          .reduce(
-            (a: any, i: any) => ({
-              ...a,
-              [i.labels.code]: (a[i.labels.code] ?? 0) + parseInt(i.value),
-            }),
-            {}
-          ),
+        connections: (traefik.traefik_entrypoint_open_connections ?? []).reduce(
+          (a: any, i: any) => ({
+            ...a,
+            [i.labels.entrypoint]: (a[i.labels.entrypoint] ?? 0) + parseInt(i.value),
+          }),
+          {}
+        ),
+        requests: (traefik.traefik_entrypoint_requests_total ?? []).reduce(
+          (a: any, i: any) => ({
+            ...a,
+            [i.labels.code]: (a[i.labels.code] ?? 0) + parseInt(i.value),
+          }),
+          {}
+        ),
         certs: (traefik.traefik_tls_certs_not_after ?? []).reduce(
           (a: any, i: any) => ({
             ...a,

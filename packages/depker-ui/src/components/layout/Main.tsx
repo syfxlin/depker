@@ -1,7 +1,6 @@
 import React, { ReactNode } from "react";
 import { css } from "@emotion/react";
-import { useU } from "@syfxlin/ustyled";
-import { Box, Title } from "@mantine/core";
+import { Box, Title, useMantineTheme } from "@mantine/core";
 
 export type MainProps = {
   title: ReactNode;
@@ -10,19 +9,19 @@ export type MainProps = {
 };
 
 export const Main: React.FC<MainProps> = ({ title, header, children }) => {
-  const { u } = useU();
+  const t = useMantineTheme();
   return (
     <Box
       css={css`
         display: flex;
         flex-direction: column;
-        margin-left: ${u.s(20)};
+        margin-left: 80px;
         min-height: 100vh;
       `}
     >
       <header
         css={css`
-          padding: ${u.sp(6)} ${u.sp(8)} ${u.sp(3)};
+          padding: ${t.spacing.lg}px ${t.spacing.xl}px ${t.spacing.xs}px;
           display: flex;
           flex-direction: row;
           align-items: center;
@@ -32,6 +31,7 @@ export const Main: React.FC<MainProps> = ({ title, header, children }) => {
         <Title
           order={2}
           css={css`
+            font-weight: 500;
             line-height: 1;
             vertical-align: middle;
           `}
@@ -45,7 +45,7 @@ export const Main: React.FC<MainProps> = ({ title, header, children }) => {
           flex: 1;
           display: flex;
           flex-direction: column;
-          padding: ${u.sp(4)};
+          padding: ${t.spacing.md}px;
         `}
       >
         {children}

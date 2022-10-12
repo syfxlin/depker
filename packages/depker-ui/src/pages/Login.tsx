@@ -1,15 +1,24 @@
 import React from "react";
-import { Button, Center, Container, Paper, PasswordInput, Text, TextInput, Title } from "@mantine/core";
+import {
+  Button,
+  Center,
+  Container,
+  Paper,
+  PasswordInput,
+  Text,
+  TextInput,
+  Title,
+  useMantineTheme,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import { AxiosError } from "axios";
-import { useU } from "@syfxlin/ustyled";
 import { css } from "@emotion/react";
 import { client, login } from "../api/client";
 import { AnonymousView } from "../router/AnonymousView";
 
 export const Login: React.FC = () => {
-  const { u } = useU();
+  const t = useMantineTheme();
   const form = useForm({
     initialValues: {
       username: "",
@@ -33,8 +42,8 @@ export const Login: React.FC = () => {
           css={css`
             width: 100%;
             max-width: 28rem;
-            margin-top: ${u.sp("md")};
-            margin-bottom: ${u.sp("md")};
+            margin-top: ${t.spacing.md}px;
+            margin-bottom: ${t.spacing.md}px;
           `}
         >
           <Title
@@ -49,8 +58,8 @@ export const Login: React.FC = () => {
             color="dimmed"
             css={css`
               text-align: center;
-              margin-top: ${u.sp(1)};
-              font-size: ${u.fs("sm")};
+              margin-top: ${t.spacing.xs}px;
+              font-size: ${t.fontSizes.sm}px;
             `}
           >
             Please login to continue.
@@ -58,10 +67,10 @@ export const Login: React.FC = () => {
           <Paper
             withBorder
             css={css`
-              margin-top: ${u.sp(7)};
-              padding: ${u.sp(7)};
-              border-radius: ${u.br(1)};
-              box-shadow: ${u.sh("sm")};
+              margin-top: ${t.spacing.xl}px;
+              padding: ${t.spacing.xl}px;
+              border-radius: ${t.radius.sm}px;
+              box-shadow: ${t.shadows.sm};
             `}
             component="form"
             onSubmit={form.onSubmit((values) =>

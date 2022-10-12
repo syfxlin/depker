@@ -138,7 +138,7 @@ export class DeployService {
   public async project(deploy: Deploy) {
     const pack = await this.plugins.plugin(deploy.app.buildpack.name);
 
-    if (!pack || !pack.buildpack?.handler) {
+    if (!pack || !pack.buildpack) {
       await Log.failed(
         deploy,
         `Init project ${deploy.app.name} failure. Caused by not found buildpack ${deploy.app.buildpack.name}`
@@ -147,7 +147,7 @@ export class DeployService {
     }
 
     const dir = await this.storages.project(deploy);
-    await pack.buildpack.handler(
+    await pack.buildpack(
       new PackContext({
         name: pack.name,
         deploy: deploy,
@@ -377,9 +377,14 @@ export class DeployService {
     // networks
     const dn = await this.docker.depkerNetwork();
     await dn.connect({ Container: container.id });
-    for (const network in app.networks) {
+    for (const [network, alias] of Object.entries(app.networks)) {
       const dn = await this.docker.initNetwork(network);
-      await dn.connect({ Container: container.id });
+      await dn.connect({
+        Container: container.id,
+        EndpointConfig: {
+          Aliases: [alias],
+        },
+      });
     }
 
     try {

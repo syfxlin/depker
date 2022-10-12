@@ -87,13 +87,15 @@ export type DepkerPluginOption =
 
 export interface DepkerPlugin {
   name: string;
-  options?: DepkerPluginOption[];
+  label?: string;
+  group?: string;
+  icon?: string;
+  options?: {
+    global?: DepkerPluginOption[];
+    buildpack?: DepkerPluginOption[];
+  };
   init?: (ctx: PluginContext) => Promise<void>;
   destroy?: (ctx: PluginContext) => Promise<void>;
   routes?: (ctx: RouteContext) => Promise<any>;
-  buildpack?: {
-    icon: string;
-    options: DepkerPluginOption[];
-    handler: (ctx: PackContext) => Promise<void> | void;
-  };
+  buildpack?: (ctx: PackContext) => Promise<void> | void;
 }

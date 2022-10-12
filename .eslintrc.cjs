@@ -20,8 +20,9 @@ module.exports = {
     "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "react/prop-types": "off",
-    "react/display-name": "warn",
+    "react/display-name": "off",
     "react/no-unknown-property": "off",
-    "max-len": ["error", { code: 120, ignoreUrls: true }],
+    "react-hooks/exhaustive-deps": "off",
+    "max-len": ["warn", { code: 120, ignoreUrls: true }],
   },
 };

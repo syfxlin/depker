@@ -1,7 +1,8 @@
-import { ActionIcon, Box, Center, Group, Input, Text, Tooltip } from "@mantine/core";
+import { ActionIcon, Box, Center, Group, Input, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import React, {
   ChangeEvent,
   CSSProperties,
+  forwardRef,
   KeyboardEvent,
   ReactNode,
   useEffect,
@@ -9,13 +10,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useU } from "@syfxlin/ustyled";
 import { css } from "@emotion/react";
 import Anser from "anser";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
-import { IconArrowDown, IconArrowUp, IconList, IconSearch } from "@tabler/icons";
 import { useDebounce } from "react-use";
+import { Flex, FlexProps } from "./Flex";
+import { TbArrowDown, TbArrowUp, TbList, TbSearch } from "react-icons/all";
 
 export interface LineProps {
   index: number;
@@ -25,7 +26,7 @@ export interface LineProps {
 }
 
 export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => {
-  const { u } = useU();
+  const t = useMantineTheme();
   const html = useMemo(() => Anser.ansiToHtml(Anser.escapeForHtml(data), { use_classes: true }), [data]);
   return (
     <Box
@@ -36,7 +37,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
         line-height: 1.7;
         font-weight: 400;
         font-size: 12px;
-        font-family: ${u.f("mono")};
+        font-family: ${t.fontFamilyMonospace};
         white-space: pre;
         color: #d0d7de;
         background-color: #24292f;
@@ -56,6 +57,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #24292c;
           }
           &-bg {
+            background-color: #24292c;
           }
         }
         .ansi-red {
@@ -63,6 +65,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #ff8182;
           }
           &-bg {
+            background-color: #ff8182;
           }
         }
         .ansi-green {
@@ -70,6 +73,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #4ac26b;
           }
           &-bg {
+            background-color: #4ac26b;
           }
         }
         .ansi-yellow {
@@ -77,6 +81,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #d4a72c;
           }
           &-bg {
+            background-color: #d4a72c;
           }
         }
         .ansi-blue {
@@ -84,6 +89,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #54aeff;
           }
           &-bg {
+            background-color: #54aeff;
           }
         }
         .ansi-magenta {
@@ -91,6 +97,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #c297ff;
           }
           &-bg {
+            background-color: #c297ff;
           }
         }
         .ansi-cyan {
@@ -98,6 +105,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #76e3ea;
           }
           &-bg {
+            background-color: #76e3ea;
           }
         }
         .ansi-white {
@@ -105,6 +113,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #d0d7de;
           }
           &-bg {
+            background-color: #d0d7de;
           }
         }
 
@@ -113,6 +122,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #32383f;
           }
           &-bg {
+            background-color: #32383f;
           }
         }
         .ansi-bright-red {
@@ -120,6 +130,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #ffaba8;
           }
           &-bg {
+            background-color: #ffaba8;
           }
         }
         .ansi-bright-green {
@@ -127,6 +138,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #6fdd8b;
           }
           &-bg {
+            background-color: #6fdd8b;
           }
         }
         .ansi-bright-yellow {
@@ -134,6 +146,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #eac54f;
           }
           &-bg {
+            background-color: #eac54f;
           }
         }
         .ansi-bright-blue {
@@ -141,6 +154,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #80ccff;
           }
           &-bg {
+            background-color: #80ccff;
           }
         }
         .ansi-bright-magenta {
@@ -148,12 +162,15 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #d8b9ff;
           }
           &-bg {
+            background-color: #d8b9ff;
           }
         }
         .ansi-bright-cyan {
           &-fg {
+            color: #b3f0ff;
           }
           &-bg {
+            background-color: #b3f0ff;
           }
         }
         .ansi-bright-white {
@@ -161,7 +178,7 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
             color: #d0d7de;
           }
           &-bg {
-            color: #b3f0ff;
+            background-color: #d0d7de;
           }
         }
 
@@ -215,16 +232,16 @@ export const Line: React.FC<LineProps> = ({ style, index, data, highlight }) => 
   );
 };
 
-export interface LogsProps {
+export type LogsProps = FlexProps & {
   title: ReactNode;
-  index: number;
+  line: number;
   data: string[];
-}
+};
 
-export const Logs: React.FC<LogsProps> = (props) => {
-  const { u } = useU();
-  const ref = useRef<FixedSizeList | null>();
-  const lines = useMemo(() => props.data.map((i) => Anser.ansiToText(i).toUpperCase()), [props.data]);
+export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, line, data, ...props }, ref) => {
+  const t = useMantineTheme();
+  const list = useRef<FixedSizeList | null>();
+  const lines = useMemo(() => data.map((i) => Anser.ansiToText(i).toUpperCase()), [data]);
 
   // search
   const [index, setIndex] = useState<number>(0);
@@ -246,36 +263,35 @@ export const Logs: React.FC<LogsProps> = (props) => {
     [search, lines]
   );
   useEffect(() => {
-    if (ref.current && result.length > index) {
-      ref.current?.scrollToItem(result[index], "center");
+    if (list.current && result.length > index) {
+      list.current?.scrollToItem(result[index], "center");
     }
-  }, [index, result, ref]);
+  }, [index, result, list]);
   useEffect(() => {
-    if (ref.current && follow && !search) {
-      ref.current?.scrollToItem(lines.length, "end");
+    if (list.current && follow && !search) {
+      list.current?.scrollToItem(lines.length, "end");
     }
-  }, [search, lines, ref, follow]);
+  }, [search, lines, list, follow]);
 
   // render
   return (
-    <Box
+    <Flex
+      {...props}
+      ref={ref}
       css={css`
         color: #d0d7de;
         background-color: #24292f;
-        padding: ${u.sp(3)};
-        border-radius: ${u.br(2)};
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: ${u.fs(10)};
+        padding: ${t.spacing.xs}px;
+        border-radius: ${t.radius.sm}px;
+        min-height: ${t.fontSizes.md * 10}px;
 
         *::-webkit-scrollbar-track {
-          background: ${u.c("white,1")};
-          box-shadow: inset 0 0 5px ${u.c("white,1")};
+          background: ${t.fn.rgba(t.white, 0.1)};
+          box-shadow: inset 0 0 5px ${t.fn.rgba(t.white, 0.1)};
         }
         *::-webkit-scrollbar-thumb {
-          background: ${u.c("white,2")};
-          box-shadow: inset 0 0 10px ${u.c("white,2")};
+          background: ${t.fn.rgba(t.white, 0.2)};
+          box-shadow: inset 0 0 10px ${t.fn.rgba(t.white, 0.2)};
         }
       `}
     >
@@ -293,29 +309,29 @@ export const Logs: React.FC<LogsProps> = (props) => {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-left: ${u.sp(4)};
+            padding-left: ${t.spacing.md}px;
           `}
         >
-          {props.title}
+          {title}
         </Text>
         <Group
           spacing="xs"
           css={css`
-            font-size: ${u.fs("sm")};
-            border-radius: ${u.br(1)};
+            font-size: ${t.spacing.sm}px;
+            border-radius: ${t.radius.sm}px;
             overflow: hidden;
             display: flex;
             color: #f6f8fa;
             background-color: #32383f;
-            padding: ${u.sp(1)};
+            padding: ${t.spacing.xs * 0.5}px;
           `}
         >
           <Input
-            icon={<IconSearch size={u.fs("default")} color="#8c959f" />}
+            icon={<TbSearch color="#8c959f" />}
             placeholder="Search logs"
             variant="unstyled"
             value={search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.currentTarget.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 setIndex((v) => (v + 1 >= result.length ? 0 : v + 1));
@@ -326,20 +342,20 @@ export const Logs: React.FC<LogsProps> = (props) => {
             css={css`
               .mantine-Input-input {
                 color: inherit;
-                height: ${u.fs("sm")};
-                font-size: ${u.fs("sm")};
+                height: ${t.fontSizes.sm}px;
+                font-size: ${t.fontSizes.sm}px;
               }
             `}
           />
           <Text
             css={css`
               color: #8c959f;
-              font-size: ${u.fs("xs")};
+              font-size: ${t.fontSizes.xs}px;
             `}
           >
             {Math.min(result.length, index + 1)} / {result.length}
           </Text>
-          <Tooltip label="Prev" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
+          <Tooltip label="Prev" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
             <ActionIcon
               onClick={() => setIndex((v) => Math.max(0, v - 1))}
               css={css`
@@ -350,10 +366,10 @@ export const Logs: React.FC<LogsProps> = (props) => {
                 }
               `}
             >
-              <IconArrowUp size={u.fs("default")} />
+              <TbArrowUp />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Next" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
+          <Tooltip label="Next" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
             <ActionIcon
               onClick={() => setIndex((v) => Math.min(result.length - 1, v + 1))}
               css={css`
@@ -364,10 +380,10 @@ export const Logs: React.FC<LogsProps> = (props) => {
                 }
               `}
             >
-              <IconArrowDown size={u.fs("default")} />
+              <TbArrowDown />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Follow" withArrow={true} transition="pop" transitionDuration={300} zIndex={1998}>
+          <Tooltip label="Follow" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
             <ActionIcon
               onClick={() => setFollow((v) => !v)}
               css={css`
@@ -379,7 +395,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                 }
               `}
             >
-              <IconList size={u.fs("default")} />
+              <TbList />
             </ActionIcon>
           </Tooltip>
         </Group>
@@ -387,24 +403,24 @@ export const Logs: React.FC<LogsProps> = (props) => {
       <Box
         css={css`
           flex: 1;
-          margin-top: ${u.sp(2)};
+          margin-top: ${t.spacing.xs}px;
         `}
       >
         <AutoSizer>
           {(size) =>
-            props.data.length ? (
+            data.length ? (
               <FixedSizeList
                 width={size.width}
                 height={size.height}
                 itemSize={12 * 1.7}
-                itemCount={props.data.length}
-                ref={(i) => (ref.current = i)}
+                itemCount={data.length}
+                ref={(i) => (list.current = i)}
               >
                 {(p) => (
                   <Line
                     style={p.style}
-                    index={props.index + p.index}
-                    data={props.data[p.index]}
+                    index={line + p.index}
+                    data={data[p.index]}
                     highlight={result.length > index && result[index] === p.index}
                   />
                 )}
@@ -417,7 +433,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                   line-height: 1.7;
                   font-weight: 400;
                   font-size: 12px;
-                  font-family: ${u.f("mono")};
+                  font-family: ${t.fontFamilyMonospace};
                   white-space: pre;
                   color: #d0d7de;
                   background-color: #24292f;
@@ -429,6 +445,6 @@ export const Logs: React.FC<LogsProps> = (props) => {
           }
         </AutoSizer>
       </Box>
-    </Box>
+    </Flex>
   );
-};
+});

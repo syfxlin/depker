@@ -1,40 +1,52 @@
-import React from "react";
-import { Main } from "../components/Main";
-import { ActionIcon, Avatar, Badge, Button, Card, Grid, Group, Input, Text, Tooltip } from "@mantine/core";
-import { IconApiApp, IconArrowUpRight, IconSearch, IconX } from "@tabler/icons";
+import React, { ChangeEvent } from "react";
+import { Main } from "../components/layout/Main";
+import {
+  ActionIcon,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Grid,
+  Group,
+  Input,
+  Text,
+  Tooltip,
+  useMantineTheme,
+} from "@mantine/core";
+import { TbApiApp, TbArrowUpRight, TbSearch, TbX } from "react-icons/all";
 import { css } from "@emotion/react";
-import { useU } from "@syfxlin/ustyled";
 import { Link } from "react-router-dom";
 import { useApps } from "../api/use-apps";
-import { Async } from "../components/Async";
+import { Async } from "../components/core/Async";
 import { day } from "../utils/day";
-import { Pages } from "../components/Pages";
+import { Pages } from "../components/layout/Pages";
+import { colors, useStatus } from "../api/use-status";
 
-export const Apps: React.FC = () => {
-  const { u } = useU();
+export const AppList: React.FC = () => {
+  const t = useMantineTheme();
   const query = useApps();
+  const status = useStatus(query.data?.items?.map((i) => i.name) ?? []);
   return (
     <Main
       title="Apps"
       header={
         <Group>
           <Input
-            size="xs"
             value={query.search}
-            onChange={(e: any) => query.setSearch(e.currentTarget.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => query.setSearch(e.target.value)}
             placeholder="Search apps"
-            icon={<IconSearch size={u.fs("default")} />}
+            icon={<TbSearch />}
             rightSection={
               query.search ? (
                 <ActionIcon onClick={() => query.setSearch("")}>
-                  <IconX size={u.fs("default")} />
+                  <TbX />
                 </ActionIcon>
               ) : (
                 <Text />
               )
             }
           />
-          <Button size="xs">New App</Button>
+          <Button>New App</Button>
         </Group>
       }
     >
@@ -47,51 +59,48 @@ export const Apps: React.FC = () => {
                   <Card
                     withBorder
                     css={css`
-                      padding: ${u.sp(4)} ${u.sp(5)};
-                      border-radius: ${u.br(2)};
+                      padding: ${t.spacing.md}px ${t.spacing.lg}px;
+                      border-radius: ${t.radius.sm}px;
                       overflow: visible;
                     `}
                   >
                     <Group>
-                      <Avatar src={`http://localhost:3000${item.icon}`}>
-                        <IconApiApp />
+                      <Avatar src={`http://localhost:3000${item.buildpack.icon}`}>
+                        <TbApiApp />
                       </Avatar>
                       <Link
                         to={`/apps/${item.name}`}
                         css={css`
                           flex: 1;
                           text-decoration: none;
+                          width: 100%;
+                          overflow: hidden;
+
+                          .mantine-Badge-root {
+                            text-transform: none;
+                            text-overflow: ellipsis;
+                            max-width: 100%;
+                          }
                         `}
                       >
                         <Text
                           css={css`
                             display: block;
-                            color: ${u.c("primary7", "primary3")};
-                            font-size: ${u.fs("xl")};
+                            color: ${t.fn.primaryColor()};
+                            font-size: ${t.fontSizes.xl}px;
                             font-weight: 500;
                             text-decoration: none;
-                            margin-bottom: ${u.sp(1)};
+                            margin-bottom: ${t.spacing.xs * 0.5}px;
                           `}
                         >
                           {item.name}
                         </Text>
-                        <Text
-                          color="dimmed"
-                          css={css`
-                            font-size: ${u.fs("xs")};
-                            width: max-content;
-                          `}
-                        >
-                          Buildpack: {item.buildpack}
+                        <Text size="xs" color="dimmed">
+                          Buildpack: {item.buildpack.label ?? item.buildpack.name}
+                          {item.buildpack.group ? " / " + item.buildpack.group : ""}
                         </Text>
                         {item.domain && item.domain.length && (
-                          <Text
-                            color="dimmed"
-                            css={css`
-                              font-size: ${u.fs("xs")};
-                              width: max-content;
-                            `}
-                          >
+                          <Text size="xs" color="dimmed">
                             Domain: {item.domain.join(", ")}
                           </Text>
                         )}
@@ -99,8 +108,8 @@ export const Apps: React.FC = () => {
                           label={
                             <Text
                               css={css`
-                                font-size: ${u.fs("xs")};
-                                font-family: ${u.f("mono")};
+                                font-size: ${t.fontSizes.xs}px;
+                                font-family: ${t.fontFamilyMonospace};
                               `}
                             >
                               Deployd At: {day(item.deploydAt).format("YYYY-MM-DD HH:mm")}
@@ -110,26 +119,26 @@ export const Apps: React.FC = () => {
                               Updated At: {day(item.updatedAt).format("YYYY-MM-DD HH:mm")}
                             </Text>
                           }
-                          withArrow={true}
+                          withArrow
                           transition="pop"
                           transitionDuration={300}
                           zIndex={1998}
                         >
-                          <Text
-                            color="dimmed"
-                            css={css`
-                              font-size: ${u.fs("xs")};
-                              width: max-content;
-                            `}
-                          >
+                          <Text size="xs" color="dimmed">
                             Uptime: {day(item.deploydAt).format("YYYY-MM-DD HH:mm")}
                           </Text>
                         </Tooltip>
                       </Link>
-                      <Badge color="green">{(query.status[item.name] ?? "stopped").toUpperCase()}</Badge>
+                      <Badge color={colors[status.get(item.name) ?? "stopped"]}>
+                        {status.get(item.name) ?? "stopped"}
+                      </Badge>
                       {item.domain && item.domain.length && (
-                        <ActionIcon color="green" size="lg" onClick={() => window.open(`http://${item.domain[0]}`)}>
-                          <IconArrowUpRight />
+                        <ActionIcon
+                          color={t.primaryColor}
+                          size="lg"
+                          onClick={() => window.open(`http://${item.domain[0]}`)}
+                        >
+                          <TbArrowUpRight />
                         </ActionIcon>
                       )}
                     </Group>

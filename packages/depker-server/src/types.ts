@@ -13,7 +13,6 @@ export * from "./entities/volume-bind.entity";
 export * from "./views/common.view";
 export * from "./views/app.view";
 export * from "./views/auth.view";
-export * from "./views/status.view";
 export * from "./views/system.view";
 
 // plugins
