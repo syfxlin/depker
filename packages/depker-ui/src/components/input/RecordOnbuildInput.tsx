@@ -1,4 +1,4 @@
-import React, { ChangeEvent, forwardRef, ReactNode, useEffect, useState } from "react";
+import React, { ChangeEvent, forwardRef, ReactNode } from "react";
 import {
   ActionIcon,
   Button,
@@ -8,31 +8,26 @@ import {
   InputWrapperProps,
   Select,
   Stack,
+  Tooltip,
   useMantineTheme,
 } from "@mantine/core";
 import { TbBox, TbCodeMinus, TbCodePlus, TbX } from "react-icons/all";
-import { dequal } from "dequal";
 import { css } from "@emotion/react";
+import { useFilterState } from "../../hooks/use-filter-state";
 
 export type RecordOnbuildInputProps = Omit<InputWrapperProps, "children" | "onChange"> & {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   leftPlaceholder?: string;
   rightPlaceholder?: string;
-  value: Array<[string, string, boolean]>;
-  onChange: (value: Array<[string, string, boolean]>) => void;
+  value?: Array<[string, string, boolean]>;
+  onChange?: (value: Array<[string, string, boolean]>) => void;
 };
 
 export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputProps>(
   ({ leftIcon, rightIcon, leftPlaceholder, rightPlaceholder, value, onChange, ...props }, ref) => {
     const t = useMantineTheme();
-    const [data, setData] = useState(value);
-    useEffect(() => {
-      const changed = data.filter(([k]) => k);
-      if (!dequal(changed, value)) {
-        onChange(changed);
-      }
-    }, [data, value, onChange]);
+    const [data, setData] = useFilterState(value ?? [], onChange ?? (() => {}), ([k]) => k);
     return (
       <Input.Wrapper {...props} ref={ref}>
         <Stack spacing="xs">
@@ -87,15 +82,17 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
                     setData(values);
                   }}
                   rightSection={
-                    <ActionIcon
-                      onClick={() => {
-                        const values = [...data];
-                        values.splice(index, 1);
-                        setData(values);
-                      }}
-                    >
-                      <TbX />
-                    </ActionIcon>
+                    <Tooltip label="Delete">
+                      <ActionIcon
+                        onClick={() => {
+                          const values = [...data];
+                          values.splice(index, 1);
+                          setData(values);
+                        }}
+                      >
+                        <TbX />
+                      </ActionIcon>
+                    </Tooltip>
                   }
                   css={css`
                     position: relative;

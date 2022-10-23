@@ -117,7 +117,7 @@ export class PackContext extends PluginContext {
   }
 
   public async values(name?: string, value?: any) {
-    const values = this.deploy.app.buildpack.values ?? {};
+    const values = this.deploy.app.extensions ?? {};
     if (!name) {
       return values;
     } else if (value === undefined) {
@@ -127,7 +127,7 @@ export class PackContext extends PluginContext {
     } else {
       values[name] = value;
     }
-    this.deploy.app.buildpack.values = values;
+    this.deploy.app.extensions = values;
     await App.save(this.deploy.app);
   }
 }

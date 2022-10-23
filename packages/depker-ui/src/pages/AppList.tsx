@@ -20,25 +20,24 @@ import { useApps } from "../api/use-apps";
 import { Async } from "../components/core/Async";
 import { day } from "../utils/day";
 import { Pages } from "../components/layout/Pages";
-import { colors, useStatus } from "../api/use-status";
+import { colors } from "../api/use-status";
 
 export const AppList: React.FC = () => {
   const t = useMantineTheme();
-  const query = useApps();
-  const status = useStatus(query.data?.items?.map((i) => i.name) ?? []);
+  const apps = useApps();
   return (
     <Main
       title="Apps"
       header={
         <Group>
           <Input
-            value={query.search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => query.setSearch(e.target.value)}
+            value={apps.search}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => apps.setSearch(e.target.value)}
             placeholder="Search apps"
             icon={<TbSearch />}
             rightSection={
-              query.search ? (
-                <ActionIcon onClick={() => query.setSearch("")}>
+              apps.search ? (
+                <ActionIcon onClick={() => apps.setSearch("")}>
                   <TbX />
                 </ActionIcon>
               ) : (
@@ -50,11 +49,11 @@ export const AppList: React.FC = () => {
         </Group>
       }
     >
-      <Async query={query}>
-        {query.data && (
-          <Pages page={query.page} size={query.size} total={query.data.total} onChange={query.setPage}>
+      <Async query={apps}>
+        {apps.data && (
+          <Pages page={apps.page} size={apps.size} total={apps.data.total} onChange={apps.setPage}>
             <Grid>
-              {query.data?.items?.map((item) => (
+              {apps.data?.items?.map((item) => (
                 <Grid.Col key={`apps-${item.name}`} span={4}>
                   <Card
                     withBorder
@@ -65,7 +64,7 @@ export const AppList: React.FC = () => {
                     `}
                   >
                     <Group>
-                      <Avatar src={`http://localhost:3000${item.buildpack.icon}`}>
+                      <Avatar src={`http://localhost:3000${item.icon}`}>
                         <TbApiApp />
                       </Avatar>
                       <Link
@@ -95,13 +94,14 @@ export const AppList: React.FC = () => {
                         >
                           {item.name}
                         </Text>
-                        <Text size="xs" color="dimmed">
-                          Buildpack: {item.buildpack.label ?? item.buildpack.name}
-                          {item.buildpack.group ? " / " + item.buildpack.group : ""}
-                        </Text>
-                        {item.domain && item.domain.length && (
+                        {item.buildpack && (
                           <Text size="xs" color="dimmed">
-                            Domain: {item.domain.join(", ")}
+                            Buildpack: {item.buildpack}
+                          </Text>
+                        )}
+                        {item.domain && (
+                          <Text size="xs" color="dimmed">
+                            Domain: {item.domain}
                           </Text>
                         )}
                         <Tooltip
@@ -119,24 +119,18 @@ export const AppList: React.FC = () => {
                               Updated At: {day(item.updatedAt).format("YYYY-MM-DD HH:mm")}
                             </Text>
                           }
-                          withArrow
-                          transition="pop"
-                          transitionDuration={300}
-                          zIndex={1998}
                         >
                           <Text size="xs" color="dimmed">
                             Uptime: {day(item.deploydAt).format("YYYY-MM-DD HH:mm")}
                           </Text>
                         </Tooltip>
                       </Link>
-                      <Badge color={colors[status.get(item.name) ?? "stopped"]}>
-                        {status.get(item.name) ?? "stopped"}
-                      </Badge>
+                      <Badge color={colors[item.status]}>{item.status}</Badge>
                       {item.domain && item.domain.length && (
                         <ActionIcon
                           color={t.primaryColor}
                           size="lg"
-                          onClick={() => window.open(`http://${item.domain[0]}`)}
+                          onClick={() => window.open(`http://${item.domain}`)}
                         >
                           <TbArrowUpRight />
                         </ActionIcon>

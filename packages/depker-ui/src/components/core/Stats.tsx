@@ -62,10 +62,6 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
               ? value.toFixed(2) + unit
               : value.used.toFixed(2) + unit + " / " + value.total.toFixed(2) + unit
           }`}
-          withArrow
-          transition="pop"
-          transitionDuration={300}
-          zIndex={1998}
         >
           <Text
             css={css`
@@ -82,13 +78,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
           </Text>
         </Tooltip>
         {diff !== 0 && (
-          <Tooltip
-            label={`Percentage Change: ${diff.toFixed(2)}%`}
-            withArrow
-            transition="pop"
-            transitionDuration={300}
-            zIndex={1998}
-          >
+          <Tooltip label={`Percentage Change: ${diff.toFixed(2)}%`}>
             <Text
               color={diff > 0 ? "red" : "teal"}
               css={css`
@@ -224,14 +214,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
         `}
       >
         <Box>
-          <Tooltip
-            disabled={!primary.tooltip}
-            label={primary.tooltip}
-            withArrow
-            transition="pop"
-            transitionDuration={300}
-            zIndex={1998}
-          >
+          <Tooltip disabled={!primary.tooltip} label={primary.tooltip}>
             <Box>
               <Text
                 css={css`
@@ -253,15 +236,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
           </Tooltip>
           <Group>
             {values.map((item) => (
-              <Tooltip
-                key={`card-stats-${item.name}`}
-                disabled={!item.tooltip}
-                label={item.tooltip}
-                withArrow
-                transition="pop"
-                transitionDuration={300}
-                zIndex={1998}
-              >
+              <Tooltip key={`card-stats-${item.name}`} disabled={!item.tooltip} label={item.tooltip}>
                 <Box>
                   <Text
                     css={css`

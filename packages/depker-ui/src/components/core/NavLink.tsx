@@ -4,7 +4,7 @@ import { NavLink as RLink } from "react-router-dom";
 import { css } from "@emotion/react";
 
 export type NavLinkProps = MLinkProps & {
-  action: string | (() => void) | [string, boolean];
+  action: string | (() => void);
 };
 
 export const NavLink = forwardRef<any, NavLinkProps>(({ action, ...props }, ref) => {
@@ -25,7 +25,7 @@ export const NavLink = forwardRef<any, NavLinkProps>(({ action, ...props }, ref)
       />
     );
   }
-  if (typeof action === "string" && /(^https?:|^#)/.test(action)) {
+  if (/(^https?:|^#)/.test(action)) {
     return (
       <MLink
         variant="light"
@@ -43,8 +43,8 @@ export const NavLink = forwardRef<any, NavLinkProps>(({ action, ...props }, ref)
   }
   return (
     <RLink
-      to={typeof action === "string" ? action : action[0]}
-      end={typeof action === "string" ? false : action[1]}
+      to={action.endsWith("/") ? action.substring(0, action.length - 1) : action}
+      end={action.endsWith("/")}
       css={css`
         text-decoration: none;
         .mantine-NavLink-root {

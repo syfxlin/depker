@@ -24,7 +24,7 @@ import * as dockerfile from "../plugins/dockerfile";
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private _loaded = false;
   private readonly _internal: DepkerPlugin[] = [example as DepkerPlugin, dockerfile as DepkerPlugin];
-  private readonly _plugins: Map<string, DepkerPlugin> = new Map<string, DepkerPlugin>();
+  private readonly _plugins: Record<string, DepkerPlugin> = {};
 
   constructor(
     private readonly http: HttpService,
@@ -46,7 +46,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
         }
       }
       for (const plugin of plugins) {
-        this._plugins.set(plugin.name, plugin);
+        this._plugins[plugin.name] = plugin;
       }
       this._loaded = true;
     }
@@ -59,12 +59,12 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
 
   public async plugin(name: string) {
     const plugins = await this.load();
-    return plugins.get(name);
+    return plugins[name];
   }
 
   public async onModuleInit() {
     const plugins = await this.load();
-    for (const plugin of plugins.values()) {
+    for (const plugin of Object.values(plugins)) {
       await plugin?.init?.(
         new PluginContext({
           name: plugin.name,
@@ -89,7 +89,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
 
   public async onModuleDestroy() {
     const plugins = await this.load();
-    for (const plugin of plugins.values()) {
+    for (const plugin of Object.values(plugins)) {
       await plugin?.destroy?.(
         new PluginContext({
           name: plugin.name,

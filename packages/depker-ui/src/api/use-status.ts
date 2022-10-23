@@ -1,7 +1,6 @@
 import useSWR from "swr";
 import { client } from "./client";
-import { useMemo } from "react";
-import { StatusAppResponse } from "@syfxlin/depker-client";
+import { useCallback, useMemo } from "react";
 
 export const colors = {
   stopped: "pink",
@@ -10,10 +9,18 @@ export const colors = {
   exited: "red",
 };
 
-export const useStatus = (names: string[]) => {
-  const query = useSWR(["client.app.status", names], (key, names) => {
-    return client.app.status({ names });
+export const useStatus = (name: string) => {
+  const query = useSWR(["client.app.status", name], (key, name) => {
+    return client.app.status({ name });
   });
 
-  return useMemo(() => new Map<string, StatusAppResponse[string]>(Object.entries(query.data ?? {})), [query.data]);
+  const data = useMemo(() => {
+    return query.data?.status ?? "stopped";
+  }, [query.data]);
+
+  const mutate = useCallback(() => {
+    return query.mutate();
+  }, [query.mutate]);
+
+  return { data, mutate };
 };

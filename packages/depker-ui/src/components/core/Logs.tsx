@@ -355,7 +355,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, line, data, 
           >
             {Math.min(result.length, index + 1)} / {result.length}
           </Text>
-          <Tooltip label="Prev" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
+          <Tooltip label="Prev">
             <ActionIcon
               onClick={() => setIndex((v) => Math.max(0, v - 1))}
               css={css`
@@ -369,7 +369,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, line, data, 
               <TbArrowUp />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Next" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
+          <Tooltip label="Next">
             <ActionIcon
               onClick={() => setIndex((v) => Math.min(result.length - 1, v + 1))}
               css={css`
@@ -383,7 +383,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, line, data, 
               <TbArrowDown />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Follow" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
+          <Tooltip label="Follow">
             <ActionIcon
               onClick={() => setFollow((v) => !v)}
               css={css`

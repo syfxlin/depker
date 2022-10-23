@@ -136,12 +136,12 @@ export class DeployService {
   }
 
   public async project(deploy: Deploy) {
-    const pack = await this.plugins.plugin(deploy.app.buildpack.name);
+    const pack = await this.plugins.plugin(deploy.app.buildpack);
 
     if (!pack || !pack.buildpack) {
       await Log.failed(
         deploy,
-        `Init project ${deploy.app.name} failure. Caused by not found buildpack ${deploy.app.buildpack.name}`
+        `Init project ${deploy.app.name} failure. Caused by not found buildpack ${deploy.app.buildpack}`
       );
       return null;
     }

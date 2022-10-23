@@ -105,7 +105,7 @@ export const Metrics: React.FC = () => {
       <Grid.Col span={12} md={3}>
         <PercStats
           title={
-            <Tooltip label="Switch to Another Disk" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
+            <Tooltip label="Switch to Another Disk">
               <Text
                 onClick={() => setDisk((v) => v + 1)}
                 css={css`

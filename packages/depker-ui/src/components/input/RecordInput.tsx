@@ -1,26 +1,31 @@
-import React, { ChangeEvent, forwardRef, ReactNode, useEffect, useState } from "react";
-import { ActionIcon, Button, Grid, Group, Input, InputWrapperProps, Stack, useMantineTheme } from "@mantine/core";
+import React, { ChangeEvent, forwardRef, ReactNode } from "react";
+import {
+  ActionIcon,
+  Button,
+  Grid,
+  Group,
+  Input,
+  InputWrapperProps,
+  Stack,
+  Tooltip,
+  useMantineTheme,
+} from "@mantine/core";
 import { TbCodeMinus, TbCodePlus, TbX } from "react-icons/all";
-import { dequal } from "dequal";
+import { useFilterState } from "../../hooks/use-filter-state";
 
 export type RecordInputProps = Omit<InputWrapperProps, "children" | "onChange"> & {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   leftPlaceholder?: string;
   rightPlaceholder?: string;
-  value: Array<[string, string]>;
-  onChange: (value: Array<[string, string]>) => void;
+  value?: Array<[string, string]>;
+  onChange?: (value: Array<[string, string]>) => void;
 };
 
 export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
   ({ leftIcon, rightIcon, leftPlaceholder, rightPlaceholder, value, onChange, ...props }, ref) => {
     const t = useMantineTheme();
-    const [data, setData] = useState(value);
-    useEffect(() => {
-      if (!dequal(data, value)) {
-        onChange(data);
-      }
-    }, [data, value, onChange]);
+    const [data, setData] = useFilterState(value ?? [], onChange ?? (() => {}), ([k]) => k);
     return (
       <Input.Wrapper {...props} ref={ref}>
         <Stack spacing="xs">
@@ -59,15 +64,17 @@ export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
                     setData(values);
                   }}
                   rightSection={
-                    <ActionIcon
-                      onClick={() => {
-                        const values = [...data];
-                        values.splice(index, 1);
-                        setData(values);
-                      }}
-                    >
-                      <TbX />
-                    </ActionIcon>
+                    <Tooltip label="Delete">
+                      <ActionIcon
+                        onClick={() => {
+                          const values = [...data];
+                          values.splice(index, 1);
+                          setData(values);
+                        }}
+                      >
+                        <TbX />
+                      </ActionIcon>
+                    </Tooltip>
                   }
                 />
               </Grid.Col>

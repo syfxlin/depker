@@ -4,6 +4,9 @@ import axiosRetry from "axios-retry";
 import { AuthApi } from "./api/auth.api";
 import { SystemApi } from "./api/system.api";
 import { AppApi } from "./api/app.api";
+import { BuildpackApi } from "./api/buildpack.api";
+import { PortApi } from "./api/port.api";
+import { VolumeApi } from "./api/volume.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -18,6 +21,9 @@ export class DepkerClient {
   public readonly auth: AuthApi;
   public readonly system: SystemApi;
   public readonly app: AppApi;
+  public readonly buildpack: BuildpackApi;
+  public readonly port: PortApi;
+  public readonly volume: VolumeApi;
 
   constructor(options: DepkerClientOptions) {
     this.client = options.client?.(options.endpoint) ?? axios.create({ baseURL: options.endpoint });
@@ -39,5 +45,8 @@ export class DepkerClient {
     this.auth = new AuthApi(this.client);
     this.system = new SystemApi(this.client);
     this.app = new AppApi(this.client);
+    this.buildpack = new BuildpackApi(this.client);
+    this.port = new PortApi(this.client);
+    this.volume = new VolumeApi(this.client);
   }
 }

@@ -3,13 +3,13 @@ import { Button, Stack } from "@mantine/core";
 import { closeAllModals } from "@mantine/modals";
 
 export type ObjectModalProps = {
-  value: Record<string, any>;
-  onChange: (value: Record<string, any>) => void;
+  value?: Record<string, any>;
+  onChange?: (value: Record<string, any>) => void;
   children: (value: Record<string, any>, setValue: (value: Record<string, any>) => void) => Array<ReactNode>;
 };
 
 export const ObjectModal: React.FC<ObjectModalProps> = (props) => {
-  const [value, setValue] = useState<Record<string, any>>(props.value);
+  const [value, setValue] = useState<Record<string, any>>(props.value ?? {});
   return (
     <Stack>
       {props.children(value, setValue)}
@@ -17,7 +17,7 @@ export const ObjectModal: React.FC<ObjectModalProps> = (props) => {
         mt="xs"
         fullWidth
         onClick={() => {
-          props.onChange(value);
+          props.onChange?.(value);
           closeAllModals();
         }}
       >

@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsBoolean,
   isBoolean,
   isFQDN,
@@ -17,8 +16,7 @@ import {
   Min,
 } from "class-validator";
 import { App } from "../entities/app.entity";
-import { DepkerPluginOption } from "../plugins/plugin.types";
-import { ObjectEach, objectEach } from "../validation/object-each.validation";
+import { objectEach } from "../validation/object-each.validation";
 import { ArrayEach } from "../validation/array-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
 
@@ -32,16 +30,8 @@ export class GetAppRequest {
 
 export type GetAppResponse = Omit<
   App,
-  "buildpack" | "ports" | "volumes" | "deploys" | "hasId" | "save" | "remove" | "softRemove" | "reload" | "recover"
+  "ports" | "volumes" | "deploys" | "hasId" | "save" | "remove" | "softRemove" | "reload" | "recover"
 > & {
-  buildpack: {
-    name: string;
-    label?: string;
-    group?: string;
-    icon?: string;
-    options?: DepkerPluginOption[];
-    values?: Record<string, any>;
-  };
   ports: Array<{
     name: string;
     proto: "tcp" | "udp";
@@ -83,13 +73,10 @@ export type ListAppResponse = {
   total: number;
   items: Array<{
     name: string;
-    domain: string[];
-    buildpack: {
-      name: string;
-      label?: string;
-      group?: string;
-      icon?: string;
-    };
+    buildpack: string;
+    icon: string;
+    domain: string;
+    status: StatusAppResponse["status"];
     createdAt: Date;
     updatedAt: Date;
     deploydAt: Date;
@@ -103,14 +90,9 @@ export class UpsertAppRequest {
   @Matches(/^[a-zA-Z0-9._-]+$/)
   name: string;
 
-  @ObjectEach({
-    name: [isString, isNotEmpty],
-    values: [recordEach([isString, isNotEmpty])],
-  })
-  buildpack: {
-    name: string;
-    values: Record<string, any>;
-  };
+  @IsString()
+  @IsNotEmpty()
+  buildpack: string;
 
   @IsOptional()
   @ArrayEach([isString, isNotEmpty])
@@ -275,6 +257,10 @@ export class UpsertAppRequest {
     path: string;
     readonly: boolean;
   }>;
+
+  @IsOptional()
+  @RecordEach([isString, isNotEmpty])
+  extensions?: Record<string, any>;
 }
 
 export type UpsertAppResponse = GetAppResponse;
@@ -292,20 +278,13 @@ export type DeleteAppResponse = {
 };
 
 export class StatusAppRequest {
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty({ each: true })
-  @Length(1, 128, { each: true })
-  @Matches(/^[a-zA-Z0-9._-]+$/, { each: true })
-  names: string[];
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
 }
 
-export type StatusAppResponse = Record<string, "stopped" | "running" | "restarting" | "exited">;
-
-export type BuildPacksAppResponse = Array<{
-  name: string;
-  label?: string;
-  group?: string;
-  icon?: string;
-  options?: DepkerPluginOption[];
-}>;
+export type StatusAppResponse = {
+  status: "stopped" | "running" | "restarting" | "exited";
+};

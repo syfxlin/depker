@@ -17,11 +17,8 @@ export class App extends BaseEntity {
   @PrimaryColumn({ length: 128, nullable: false, unique: true })
   name: string;
 
-  @Column({ nullable: false, type: "simple-json" })
-  buildpack: {
-    name: string;
-    values: Record<string, any>;
-  };
+  @Column({ length: 128, nullable: false })
+  buildpack: string;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   commands: string[];
@@ -112,6 +109,10 @@ export class App extends BaseEntity {
     onbuild: boolean;
   }>;
 
+  // extensions
+  @Column({ nullable: false, default: "{}", type: "simple-json" })
+  extensions: Record<string, any>;
+
   // relations
   @OneToMany(() => PortBind, (bind) => bind.app)
   ports: Relation<PortBind[]>;
@@ -131,12 +132,12 @@ export class App extends BaseEntity {
   updatedAt: Date;
 
   // repository
-  public static async listDeploydAt(names: string[]) {
+  public static async listDeploydAt(names: string[]): Promise<Record<string, Date>> {
     const items = await Deploy.createQueryBuilder()
       .select(["app_name AS appName", "MAX(updated_at) AS updatedAt"])
       .where(`status = 'success' AND app_name IN (${names.map((i) => `'${i}'`).join(",")})`)
       .groupBy("app_name")
       .getRawMany<{ appName: string; updatedAt: string }>();
-    return new Map<string, Date>(items.map((i) => [i.appName, new Date(i.updatedAt)]));
+    return items.reduce((a, i) => ({ ...a, [i.appName]: new Date(i.updatedAt) }), {});
   }
 }

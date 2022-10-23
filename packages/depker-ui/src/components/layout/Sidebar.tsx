@@ -1,5 +1,5 @@
 import React from "react";
-import { Center, Navbar, Stack, useMantineTheme } from "@mantine/core";
+import { Center, Navbar, Stack, useMantineColorScheme, useMantineTheme } from "@mantine/core";
 import { css } from "@emotion/react";
 import { showNotification } from "@mantine/notifications";
 import { logout } from "../../api/client";
@@ -8,6 +8,7 @@ import { SidebarLink } from "../core/SidebarLink";
 
 export const Sidebar: React.FC = () => {
   const t = useMantineTheme();
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   return (
     <Navbar
       css={css`
@@ -28,7 +29,7 @@ export const Sidebar: React.FC = () => {
       </Navbar.Section>
       <Navbar.Section>
         <Stack justify="center" spacing="xs">
-          <SidebarLink icon={TbBrightness} label={`Color Mode：light`} action={() => {}} />
+          <SidebarLink icon={TbBrightness} label={`Color Mode：${colorScheme}`} action={() => toggleColorScheme()} />
           <SidebarLink icon={TbSettings} label="Settings" action="/settings" />
           <SidebarLink
             icon={TbLogout}

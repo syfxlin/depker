@@ -24,7 +24,7 @@ export const SidebarLink = forwardRef<any, SidebarProps>(({ icon: Icon, label, a
     props.to = action;
   }
   return (
-    <Tooltip label={label} position="right" withArrow transition="pop" transitionDuration={300} zIndex={1998}>
+    <Tooltip label={label} position="right">
       <UnstyledButton
         {...props}
         ref={ref}

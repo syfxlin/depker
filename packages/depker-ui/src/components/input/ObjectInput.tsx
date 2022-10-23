@@ -5,20 +5,20 @@ import { ObjectModal } from "./ObjectModal";
 
 export type ObjectInputProps = Omit<InputWrapperProps, "children" | "onChange"> & {
   icon?: ReactNode;
-  value: Record<string, any>;
-  onChange: (value: Record<string, any>) => void;
-  children: (value: Record<string, any>, setValue: (value: Record<string, any>) => void) => Array<ReactNode>;
+  value?: Record<string, any>;
+  onChange?: (value: Record<string, any>) => void;
+  modals: (value: Record<string, any>, setValue: (value: Record<string, any>) => void) => Array<ReactNode>;
 };
 
 export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
-  ({ icon, placeholder, value, onChange, children, ...props }, ref) => {
+  ({ icon, placeholder, value, onChange, modals, ...props }, ref) => {
     return (
       <Input.Wrapper {...props} ref={ref}>
         <Input
           readOnly
           icon={icon}
           placeholder={placeholder}
-          value={Object.entries(value)
+          value={Object.entries(value ?? {})
             .map(([k, v]) => `${k}: ${v}`)
             .join("; ")}
           onClick={() => {
@@ -26,7 +26,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
               title: <>Edit {props.label}</>,
               children: (
                 <ObjectModal value={value} onChange={onChange}>
-                  {children}
+                  {modals}
                 </ObjectModal>
               ),
             });

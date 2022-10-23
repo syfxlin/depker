@@ -17,11 +17,23 @@ import { AppController } from "./controllers/app.controller";
 import { PortBind } from "./entities/port-bind.entity";
 import { VolumeBind } from "./entities/volume-bind.entity";
 import { AssetController } from "./controllers/asset.controller";
+import { PortController } from "./controllers/port.controller";
+import { VolumeController } from "./controllers/volume.controller";
+import { BuildpackController } from "./controllers/buildpack.controller";
 
 // entity
 export const entities = [Setting, Token, App, Deploy, Log, Volume, Port, PortBind, VolumeBind];
 
 // controller & service & task
-export const controllers = [SystemController, AssetController, GitController, DeployController, AppController];
+export const controllers = [
+  SystemController,
+  AssetController,
+  GitController,
+  DeployController,
+  AppController,
+  PortController,
+  VolumeController,
+  BuildpackController,
+];
 export const services = [DeployService, DockerService, StorageService];
 export const tasks = [TraefikTask, DeployTask];

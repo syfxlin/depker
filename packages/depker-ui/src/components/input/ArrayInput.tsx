@@ -1,11 +1,11 @@
 import React, { ChangeEvent, forwardRef, ReactNode } from "react";
-import { ActionIcon, Button, Group, Input, InputWrapperProps, Stack, useMantineTheme } from "@mantine/core";
+import { ActionIcon, Button, Group, Input, InputWrapperProps, Stack, Tooltip, useMantineTheme } from "@mantine/core";
 import { TbCodeMinus, TbCodePlus, TbX } from "react-icons/all";
 
 export type ArrayInputProps = Omit<InputWrapperProps, "children" | "onChange"> & {
   icon?: ReactNode;
-  value: string[];
-  onChange: (value: string[]) => void;
+  value?: string[];
+  onChange?: (value: string[]) => void;
 };
 
 export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
@@ -14,8 +14,8 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
     return (
       <Input.Wrapper {...props} ref={ref}>
         <Stack spacing="xs">
-          {!value.length && <Input disabled icon={icon} placeholder={placeholder} />}
-          {value.map((item, index) => (
+          {!value?.length && <Input disabled icon={icon} placeholder={placeholder} />}
+          {value?.map((item, index) => (
             <Input
               key={`array-input-${index}`}
               value={item}
@@ -24,26 +24,42 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 const values = [...value];
                 values[index] = e.target.value;
-                onChange(values);
+                onChange?.(values);
               }}
               rightSection={
-                <ActionIcon
-                  onClick={() => {
-                    const values = [...value];
-                    values.splice(index, 1);
-                    onChange(values);
-                  }}
-                >
-                  <TbX />
-                </ActionIcon>
+                <Tooltip label="Delete">
+                  <ActionIcon
+                    onClick={() => {
+                      const values = [...value];
+                      values.splice(index, 1);
+                      onChange?.(values);
+                    }}
+                  >
+                    <TbX />
+                  </ActionIcon>
+                </Tooltip>
               }
             />
           ))}
           <Group spacing={t.spacing.xs}>
-            <Button size="xs" variant="light" leftIcon={<TbCodePlus />} onClick={() => onChange([...value, ""])}>
+            <Button
+              size="xs"
+              variant="light"
+              leftIcon={<TbCodePlus />}
+              onClick={() => {
+                onChange?.([...(value ?? []), ""]);
+              }}
+            >
               Add
             </Button>
-            <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => onChange([])}>
+            <Button
+              size="xs"
+              variant="light"
+              leftIcon={<TbCodeMinus />}
+              onClick={() => {
+                return onChange?.([]);
+              }}
+            >
               Clear
             </Button>
           </Group>

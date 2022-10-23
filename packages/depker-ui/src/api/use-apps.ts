@@ -1,34 +1,16 @@
-import { useState } from "react";
-import { useDebouncedValue } from "@mantine/hooks";
 import useSWR from "swr";
 import { client } from "./client";
+import { usePageState } from "../hooks/use-page-state";
 
 export const useApps = () => {
-  const [page, setPage] = useState<number>(1);
-  const [size, setSize] = useState<number>(15);
-  const [sort, setSort] = useState<[string, "asc" | "desc"]>(["", "asc"]);
+  const page = usePageState();
 
-  const [search, setSearch] = useState("");
-  const [debounced] = useDebouncedValue(search, 1000);
-
-  const query = useSWR(["client.app.list", page, size, sort, debounced], async (key, page, size, sort, search) => {
-    return await client.app.list({
-      offset: (page - 1) * size,
-      limit: size,
-      sort: sort[0] ? sort.join(":") : undefined,
-      search: search ? search : undefined,
-    });
+  const query = useSWR(["client.app.list", page.request], async (key, request) => {
+    return await client.app.list(request);
   });
 
   return {
     ...query,
-    page,
-    size,
-    sort,
-    search,
-    setPage,
-    setSize,
-    setSort,
-    setSearch,
+    ...page,
   };
 };
