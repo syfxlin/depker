@@ -4,9 +4,15 @@ import { ValidationPipe } from "@nestjs/common";
 
 (async () => {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe({ transform: true, transformOptions: { enableImplicitConversion: true } }));
   app.enableCors();
   app.enableShutdownHooks();
   app.setGlobalPrefix("api");
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+      validateCustomDecorators: true,
+    })
+  );
   await app.listen(3000, "0.0.0.0");
 })();

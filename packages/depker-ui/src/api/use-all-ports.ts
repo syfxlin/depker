@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { client } from "./client";
 import { useCallback, useMemo } from "react";
-import { ListPortResponse } from "@syfxlin/depker-client";
+import { ListPortResponse, UpsertPortRequest } from "@syfxlin/depker-client";
 
 export const useAllPorts = () => {
   const query = useSWR(["client.port.all"], async () => {
@@ -15,9 +15,18 @@ export const useAllPorts = () => {
     );
   }, [query.data]);
 
-  const mutate = useCallback(() => {
-    return query.mutate();
+  const mutate = useCallback(async () => {
+    return await query.mutate();
   }, [query.mutate]);
 
-  return { data, mutate };
+  const create = useCallback(
+    async (request: UpsertPortRequest) => {
+      const response = await client.port.upsert(request);
+      await query.mutate();
+      return response;
+    },
+    [query.mutate]
+  );
+
+  return { data, mutate, create };
 };

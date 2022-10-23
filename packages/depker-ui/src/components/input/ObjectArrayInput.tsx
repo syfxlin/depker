@@ -37,6 +37,7 @@ export const ObjectArrayInput = forwardRef<HTMLDivElement, ObjectArrayInputProps
                         const values = [...value];
                         values[index] = item;
                         onChange?.(values);
+                        return true;
                       }}
                     >
                       {modals}

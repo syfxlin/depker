@@ -25,7 +25,13 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
             openModal({
               title: <>Edit {props.label}</>,
               children: (
-                <ObjectModal value={value} onChange={onChange}>
+                <ObjectModal
+                  value={value}
+                  onChange={(value) => {
+                    onChange?.(value);
+                    return true;
+                  }}
+                >
                   {modals}
                 </ObjectModal>
               ),

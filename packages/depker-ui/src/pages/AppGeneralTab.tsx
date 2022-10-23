@@ -42,6 +42,7 @@ import { SelectArrayInput } from "../components/input/SelectArrayInput";
 import { useAllVolumes } from "../api/use-all-volumes";
 import { openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
+import { showNotification } from "@mantine/notifications";
 
 export const AppGeneralTab: React.FC = () => {
   const t = useMantineTheme();
@@ -516,7 +517,8 @@ export const AppGeneralTab: React.FC = () => {
           items={Object.values(ports.data).map((i) => ({
             value: i.name,
             label: i.name,
-            description: `${i.proto.toUpperCase()}:${i.port}. Used by ${i.binds.join(", ")}.`,
+            // prettier-ignore
+            description: `${i.proto.toUpperCase()}:${i.port}. ${i.binds.length ? `Used by ${i.binds.join(", ")}` : `No used`}.`,
           }))}
           select={(item, setItem) => ({
             value: item?.name,
@@ -536,15 +538,40 @@ export const AppGeneralTab: React.FC = () => {
                 title: <>Create Port {query}</>,
                 children: (
                   <ObjectModal
-                    value={{}}
-                    onChange={(value) => {
-                      // TODO: send add port request and reload
-                      setItem({
-                        name: value.name,
-                        proto: value.proto,
-                        hport: value.port,
-                        cport: item?.cport ?? 3000,
-                      });
+                    value={{ name: query }}
+                    onChange={async (value) => {
+                      if (!value.name || !value.proto || !value.port) {
+                        showNotification({
+                          title: "Create failure",
+                          message: "Name, Protocol, Port must be not empty.",
+                        });
+                        return false;
+                      }
+                      try {
+                        await ports.create({
+                          name: value.name,
+                          proto: value.proto,
+                          port: value.port,
+                        });
+                        setItem({
+                          name: value.name,
+                          proto: value.proto,
+                          hport: value.port,
+                          cport: item?.cport ?? 3000,
+                        });
+                        showNotification({
+                          title: "Create successful",
+                          message: "Close modals...",
+                          color: "green",
+                        });
+                        return true;
+                      } catch (e: any) {
+                        showNotification({
+                          title: "Create failure",
+                          message: (e.response?.data as any)?.message ?? e.message,
+                        });
+                        return false;
+                      }
                     }}
                   >
                     {(item, setItem) => [
@@ -626,7 +653,8 @@ export const AppGeneralTab: React.FC = () => {
           items={Object.values(volumes.data).map((i) => ({
             value: i.name,
             label: i.name,
-            description: `${!i.global ? "@" : ""}${i.path}. Used by ${i.binds.join(", ")}.`,
+            // prettier-ignore
+            description: `${!i.global ? "@" : ""}${i.path}. ${i.binds.length ? `Used by ${i.binds.join(", ")}` : `No used`}.`,
           }))}
           select={(item, setItem) => ({
             value: item?.name,
@@ -641,6 +669,88 @@ export const AppGeneralTab: React.FC = () => {
                   readonly: item?.readonly ?? false,
                 });
               }
+            },
+            onCreate: (query: string) => {
+              openModal({
+                title: <>Create Volume {query}</>,
+                children: (
+                  <ObjectModal
+                    value={{ name: query }}
+                    onChange={async (value) => {
+                      if (!value.name || !value.path || !value.global) {
+                        showNotification({
+                          title: "Create failure",
+                          message: "Name, Path, Global must be not empty.",
+                        });
+                        return false;
+                      }
+                      try {
+                        await volumes.create({
+                          name: value.name,
+                          path: value.path,
+                          global: value.global,
+                        });
+                        setItem({
+                          name: value.name,
+                          global: value.global,
+                          hpath: value.path,
+                          cpath: item?.cpath ?? "",
+                          readonly: item?.readonly ?? false,
+                        });
+                        showNotification({
+                          title: "Create successful",
+                          message: "Close modals...",
+                          color: "green",
+                        });
+                        return true;
+                      } catch (e: any) {
+                        showNotification({
+                          title: "Create failure",
+                          message: (e.response?.data as any)?.message ?? e.message,
+                        });
+                        return false;
+                      }
+                    }}
+                  >
+                    {(item, setItem) => [
+                      <TextInput
+                        key="name"
+                        required
+                        label="Host Volume Name"
+                        description="The name used by host volume."
+                        placeholder="Host Volume Name"
+                        icon={<TbSignature />}
+                        value={item.name}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
+                      />,
+                      <Select
+                        key="global"
+                        label="Host Volume Global."
+                        description="Whether it is a global volume, that is, no mapping."
+                        placeholder="Host Volume Global"
+                        icon={<TbCertificate />}
+                        value={item.global}
+                        onChange={(value) => setItem({ ...item, global: value === "true" })}
+                        data={[
+                          { label: "Yes", value: "true" },
+                          { label: "No", value: "false" },
+                        ]}
+                      />,
+                      <TextInput
+                        key="hpath"
+                        required
+                        label="Host Volume Path"
+                        description="The path used by host volume."
+                        placeholder="Host Volume Path"
+                        icon={<TbFolder />}
+                        value={item.path}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, path: e.target.value })}
+                      />,
+                    ]}
+                  </ObjectModal>
+                ),
+              });
+              return null;
             },
           })}
           modals={(item, setItem) => [

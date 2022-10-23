@@ -30,6 +30,7 @@ import { PortBind } from "../entities/port-bind.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PluginService } from "../services/plugin.service";
 import { Data } from "../decorators/data.decorator";
+import { diff } from "../utils/save.util";
 
 @Controller("/apps")
 export class AppController {
@@ -164,22 +165,34 @@ export class AppController {
       },
     });
     // save ports or volumes
-    if (ports.length) {
-      await PortBind.upsert(
-        ports.map((v) => {
-          v.app = savedApp!;
+    if (ports.length && savedApp) {
+      const value = diff([ports, savedApp.ports], (v) => v.bind.name);
+      await PortBind.save(
+        value.upsert.map((v) => {
+          v.app = savedApp;
           return v;
-        }),
-        ["app", "bind", "port"]
+        })
+      );
+      await PortBind.remove(
+        value.remove.map((v) => {
+          v.app = savedApp;
+          return v;
+        })
       );
     }
-    if (volumes.length) {
-      await VolumeBind.upsert(
-        volumes.map((v) => {
+    if (volumes.length && savedApp) {
+      const value = diff([volumes, savedApp.volumes], (v) => v.bind.name);
+      await VolumeBind.save(
+        value.upsert.map((v) => {
           v.app = savedApp!;
           return v;
-        }),
-        ["app", "bind", "path"]
+        })
+      );
+      await VolumeBind.save(
+        value.remove.map((v) => {
+          v.app = savedApp!;
+          return v;
+        })
       );
     }
     return await this._wrap(savedApp!);
@@ -212,7 +225,7 @@ export class AppController {
     if (!result.affected) {
       throw new NotFoundException(`Not found application of ${request.name}`);
     }
-    return { status: "successful" };
+    return { status: "success" };
   }
 
   @Get("/:name/status")

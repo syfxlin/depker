@@ -274,7 +274,7 @@ export class DeleteAppRequest {
 }
 
 export type DeleteAppResponse = {
-  status: "successful" | "failure";
+  status: "success" | "failure";
 };
 
 export class StatusAppRequest {
