@@ -179,6 +179,7 @@ export class AppController {
           return v;
         })
       );
+      savedApp.ports = ports;
     }
     if (volumes.length && savedApp) {
       const value = diff([volumes, savedApp.volumes], (v) => v.bind.name);
@@ -188,12 +189,13 @@ export class AppController {
           return v;
         })
       );
-      await VolumeBind.save(
+      await VolumeBind.remove(
         value.remove.map((v) => {
           v.app = savedApp!;
           return v;
         })
       );
+      savedApp.volumes = volumes;
     }
     return await this._wrap(savedApp!);
   }

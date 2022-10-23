@@ -103,6 +103,7 @@ export class UpsertAppRequest {
   entrypoints?: string[];
 
   @IsOptional()
+  @IsString()
   @Matches(/^(no|always|on-failure|on-failure:\d+)$/)
   restart?: "no" | "always" | "on-failure" | `on-failure:${number}`;
 
@@ -116,7 +117,7 @@ export class UpsertAppRequest {
   domain?: string[];
 
   @IsOptional()
-  @IsNotEmpty()
+  @IsString()
   rule?: string;
 
   @IsOptional()
@@ -126,7 +127,7 @@ export class UpsertAppRequest {
   port?: number;
 
   @IsOptional()
-  @IsNotEmpty()
+  @IsString()
   scheme?: string;
 
   @IsOptional()
@@ -173,12 +174,10 @@ export class UpsertAppRequest {
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   user?: string;
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   workdir?: string;
 
   // values

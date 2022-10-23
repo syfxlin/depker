@@ -1,6 +1,5 @@
 import React, { ChangeEvent, forwardRef, PropsWithChildren, useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
-import { useApp } from "../api/use-app";
+import { useOutletContext } from "react-router-dom";
 import { useAllBuildpacks } from "../api/use-all-buildpacks";
 import { Avatar, Grid, Group, NumberInput, Select, Stack, Text, TextInput, useMantineTheme } from "@mantine/core";
 import {
@@ -43,11 +42,12 @@ import { useAllVolumes } from "../api/use-all-volumes";
 import { openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
 import { showNotification } from "@mantine/notifications";
+import { AppSettingContext } from "./AppSetting";
+import { error } from "../utils/message";
 
 export const AppGeneralTab: React.FC = () => {
   const t = useMantineTheme();
-  const { name } = useParams<"name">();
-  const app = useApp(name!);
+  const { app } = useOutletContext<AppSettingContext>();
   const buildpacks = useAllBuildpacks();
   const ports = useAllPorts();
   const volumes = useAllVolumes();
@@ -568,7 +568,7 @@ export const AppGeneralTab: React.FC = () => {
                       } catch (e: any) {
                         showNotification({
                           title: "Create failure",
-                          message: (e.response?.data as any)?.message ?? e.message,
+                          message: error(e),
                         });
                         return false;
                       }
@@ -706,7 +706,7 @@ export const AppGeneralTab: React.FC = () => {
                       } catch (e: any) {
                         showNotification({
                           title: "Create failure",
-                          message: (e.response?.data as any)?.message ?? e.message,
+                          message: error(e),
                         });
                         return false;
                       }

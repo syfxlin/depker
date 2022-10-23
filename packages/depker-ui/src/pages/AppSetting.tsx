@@ -16,9 +16,19 @@ import {
 } from "react-icons/all";
 import { NavLink } from "../components/core/NavLink";
 import { colors, useStatus } from "../api/use-status";
+import { useApp } from "../api/use-app";
+import { showNotification } from "@mantine/notifications";
+import { error } from "../utils/message";
+
+export type AppSettingContext = {
+  name: string;
+  app: ReturnType<typeof useApp>;
+  status: ReturnType<typeof useStatus>;
+};
 
 export const AppSetting: React.FC = () => {
   const { name } = useParams<"name">();
+  const app = useApp(name!);
   const status = useStatus(name!);
 
   return (
@@ -32,7 +42,26 @@ export const AppSetting: React.FC = () => {
           <Button variant="light" leftIcon={<TbPlayerPlay />}>
             Deploy
           </Button>
-          <Button leftIcon={<TbDeviceFloppy />}>Save</Button>
+          <Button
+            leftIcon={<TbDeviceFloppy />}
+            onClick={async () => {
+              try {
+                await app.save();
+                showNotification({
+                  title: "Save successful",
+                  message: "Application save successful.",
+                  color: "green",
+                });
+              } catch (e: any) {
+                showNotification({
+                  title: "Save failure",
+                  message: error(e),
+                });
+              }
+            }}
+          >
+            Save
+          </Button>
         </Group>
       }
     >
@@ -50,7 +79,7 @@ export const AppSetting: React.FC = () => {
           </Stack>
         </Grid.Col>
         <Grid.Col span={12} md={9}>
-          <Outlet />
+          <Outlet context={{ name, app, status }} />
         </Grid.Col>
       </Grid>
     </Main>

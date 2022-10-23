@@ -12,10 +12,10 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
-import { AxiosError } from "axios";
 import { css } from "@emotion/react";
 import { client, login } from "../api/client";
 import { AnonymousView } from "../router/AnonymousView";
+import { error } from "../utils/message";
 
 export const Login: React.FC = () => {
   const t = useMantineTheme();
@@ -73,24 +73,22 @@ export const Login: React.FC = () => {
               box-shadow: ${t.shadows.sm};
             `}
             component="form"
-            onSubmit={form.onSubmit((values) =>
-              client.auth
-                .login(values)
-                .then((token) => {
-                  login(token);
-                  showNotification({
-                    title: "Login successful",
-                    message: "Redirecting...",
-                    color: "green",
-                  });
-                })
-                .catch((e: AxiosError) => {
-                  showNotification({
-                    title: "Login failure",
-                    message: (e.response?.data as any)?.message ?? e.message,
-                  });
-                })
-            )}
+            onSubmit={form.onSubmit(async (values) => {
+              try {
+                const token = await client.auth.login(values);
+                login(token);
+                showNotification({
+                  title: "Login successful",
+                  message: "Redirecting...",
+                  color: "green",
+                });
+              } catch (e: any) {
+                showNotification({
+                  title: "Login failure",
+                  message: error(e),
+                });
+              }
+            })}
           >
             <TextInput label="Username" placeholder="Your username" required {...form.getInputProps("username")} />
             <PasswordInput

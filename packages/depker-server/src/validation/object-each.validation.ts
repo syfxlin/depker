@@ -1,9 +1,9 @@
 import { EachValidRule } from "./common.validation";
-import { isObject, registerDecorator, ValidationArguments, ValidationOptions } from "class-validator";
+import { registerDecorator, ValidationArguments, ValidationOptions } from "class-validator";
 
 export const objectEach = (rules: Record<string, Array<EachValidRule>>) => {
   return async (value: any) => {
-    if (!isObject(value)) {
+    if (typeof value !== "object") {
       return false;
     }
     for (const [p, rs] of Object.entries(rules)) {

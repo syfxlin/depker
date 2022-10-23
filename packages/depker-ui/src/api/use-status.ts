@@ -10,9 +10,15 @@ export const colors = {
 };
 
 export const useStatus = (name: string) => {
-  const query = useSWR(["client.app.status", name], (key, name) => {
-    return client.app.status({ name });
-  });
+  const query = useSWR(
+    ["client.app.status", name],
+    (key, name) => {
+      return client.app.status({ name });
+    },
+    {
+      refreshInterval: 5000,
+    }
+  );
 
   const data = useMemo(() => {
     return query.data?.status ?? "stopped";
