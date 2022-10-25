@@ -2,34 +2,35 @@ import { Injectable } from "@nestjs/common";
 import path from "path";
 import os from "os";
 import { simpleGit } from "simple-git";
-import { Deploy } from "../entities/deploy.entity";
 import fs from "fs-extra";
 import { PATHS } from "../constants/depker.constant";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class StorageService {
-  public async project(deploy: Deploy): Promise<string> {
-    const app = deploy.app;
-    const name = app.name;
-    const commit = deploy.commit;
-    const src = path.join(PATHS.REPOS, `${name}.git`);
-    const dst = path.join(os.tmpdir(), `${name}-${deploy.id}`, `project`);
-
-    fs.removeSync(dst);
-    fs.ensureDirSync(dst);
-    const git = simpleGit(dst);
-    await git.clone(src, ".");
-    await git.checkout(commit);
-    return dst;
+  public async git(name: string) {
+    const target = path.join(PATHS.REPOS, `${name}.git`);
+    if (!fs.pathExistsSync(target)) {
+      return undefined;
+    }
+    return simpleGit(target);
   }
 
-  public async file(deploy: Deploy, key: string, data: string): Promise<string> {
-    const app = deploy.app;
-    const name = app.name;
-    const dst = path.join(os.tmpdir(), `${name}-${deploy.id}`, key);
+  public async project(name: string, ref: string) {
+    const source = path.join(PATHS.REPOS, `${name}.git`);
+    const target = path.join(os.tmpdir(), `${name}-${randomUUID()}`, `project`);
+    fs.removeSync(target);
+    fs.ensureDirSync(target);
+    const git = simpleGit(source);
+    await git.clone(source, ".");
+    await git.checkout(ref);
+    return target;
+  }
 
-    fs.removeSync(dst);
-    fs.outputFileSync(dst, data);
-    return dst;
+  public async file(name: string, file: string, data: string) {
+    const target = path.join(os.tmpdir(), `${name}-${randomUUID()}`, file);
+    fs.removeSync(target);
+    fs.outputFileSync(target, data);
+    return target;
   }
 }

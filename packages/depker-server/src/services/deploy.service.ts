@@ -146,7 +146,7 @@ export class DeployService {
       return null;
     }
 
-    const dir = await this.storages.project(deploy);
+    const dir = await this.storages.project(deploy.app.name, deploy.commit);
     await pack.buildpack(
       new PackContext({
         name: pack.name,
@@ -201,7 +201,7 @@ export class DeployService {
     // secrets
     // prettier-ignore
     const secrets = app.secrets.filter(s => s.onbuild).map(s => `${s.name}=${s.value}`).join("\n");
-    const sec = await this.storages.file(deploy, "secret", `${secrets}\n`);
+    const sec = await this.storages.file(deploy.app.name, "secret", `${secrets}\n`);
 
     // output
     const through = new PassThrough({ encoding: "utf-8" });

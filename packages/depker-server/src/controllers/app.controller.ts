@@ -216,7 +216,7 @@ export class AppController {
       },
     });
     if (!app) {
-      throw new NotFoundException(`Not found application of ${request.name}`);
+      throw new NotFoundException(`Not found application of ${request.name}.`);
     }
     return await this._wrap(app);
   }
@@ -225,7 +225,7 @@ export class AppController {
   public async delete(@Param() request: DeleteAppRequest): Promise<DeleteAppResponse> {
     const result = await App.delete(request.name);
     if (!result.affected) {
-      throw new NotFoundException(`Not found application of ${request.name}`);
+      throw new NotFoundException(`Not found application of ${request.name}.`);
     }
     return { status: "success" };
   }

@@ -84,7 +84,7 @@ export class PortController {
       },
     });
     if (!port) {
-      throw new NotFoundException(`Not found port of ${request.name}`);
+      throw new NotFoundException(`Not found port of ${request.name}.`);
     }
     return await this._wrap(port);
   }
@@ -93,7 +93,7 @@ export class PortController {
   public async delete(@Param() request: DeletePortRequest): Promise<DeletePortResponse> {
     const result = await Port.delete(request.name);
     if (!result.affected) {
-      throw new NotFoundException(`Not found port of ${request.name}`);
+      throw new NotFoundException(`Not found port of ${request.name}.`);
     }
     return { status: "success" };
   }
@@ -102,7 +102,7 @@ export class PortController {
   public async connect(@Data() request: ConnectPortRequest): Promise<ConnectPortResponse> {
     const count = await Port.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found port of ${request.name}`);
+      throw new NotFoundException(`Not found port of ${request.name}.`);
     }
     const bind = new PortBind();
     bind.bindName = request.name;
@@ -116,7 +116,7 @@ export class PortController {
   public async disconnect(@Data() request: DisconnectPortRequest): Promise<DisconnectPortResponse> {
     const count = await Port.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found port of ${request.name}`);
+      throw new NotFoundException(`Not found port of ${request.name}.`);
     }
     await PortBind.delete({
       bindName: request.name,

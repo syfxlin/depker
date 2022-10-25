@@ -84,7 +84,7 @@ export class VolumeController {
       },
     });
     if (!volume) {
-      throw new NotFoundException(`Not found volume of ${request.name}`);
+      throw new NotFoundException(`Not found volume of ${request.name}.`);
     }
     return await this._wrap(volume);
   }
@@ -93,7 +93,7 @@ export class VolumeController {
   public async delete(@Param() request: DeleteVolumeRequest): Promise<DeleteVolumeResponse> {
     const result = await Volume.delete(request.name);
     if (!result.affected) {
-      throw new NotFoundException(`Not found volume of ${request.name}`);
+      throw new NotFoundException(`Not found volume of ${request.name}.`);
     }
     return { status: "success" };
   }
@@ -102,7 +102,7 @@ export class VolumeController {
   public async connect(@Data() request: ConnectVolumeRequest): Promise<ConnectVolumeResponse> {
     const count = await Volume.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found volume of ${request.name}`);
+      throw new NotFoundException(`Not found volume of ${request.name}.`);
     }
     const bind = new VolumeBind();
     bind.bindName = request.name;
@@ -117,7 +117,7 @@ export class VolumeController {
   public async disconnect(@Data() request: DisconnectVolumeRequest): Promise<DisconnectVolumeResponse> {
     const count = await Volume.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found volume of ${request.name}`);
+      throw new NotFoundException(`Not found volume of ${request.name}.`);
     }
     await VolumeBind.delete({
       bindName: request.name,

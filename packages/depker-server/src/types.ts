@@ -14,6 +14,7 @@ export * from "./views/app.view";
 export * from "./views/auth.view";
 export * from "./views/buildpack.view";
 export * from "./views/common.view";
+export * from "./views/deploy.view";
 export * from "./views/port.view";
 export * from "./views/system.view";
 export * from "./views/volume.view";
