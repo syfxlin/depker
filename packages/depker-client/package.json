@@ -23,8 +23,8 @@
   "types": "./dist/index.d.ts",
   "devDependencies": {
     "@types/qs": "^6.9.7",
-    "tsup": "^6.2.3",
-    "typescript": "^4.8.3"
+    "tsup": "^6.3.0",
+    "typescript": "^4.8.4"
   },
   "dependencies": {
     "@syfxlin/depker-types": "workspace:*",

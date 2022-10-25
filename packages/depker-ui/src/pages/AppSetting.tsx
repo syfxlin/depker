@@ -19,6 +19,7 @@ import { colors, useStatus } from "../api/use-status";
 import { useApp } from "../api/use-app";
 import { showNotification } from "@mantine/notifications";
 import { error } from "../utils/message";
+import { useLoading } from "../hooks/use-loading";
 
 export type AppSettingContext = {
   name: string;
@@ -30,6 +31,7 @@ export const AppSetting: React.FC = () => {
   const { name } = useParams<"name">();
   const app = useApp(name!);
   const status = useStatus(name!);
+  const saving = useLoading();
 
   return (
     <Main
@@ -43,10 +45,11 @@ export const AppSetting: React.FC = () => {
             Deploy
           </Button>
           <Button
+            loading={saving.value}
             leftIcon={<TbDeviceFloppy />}
             onClick={async () => {
               try {
-                await app.save();
+                await saving.wrap(app.save());
                 showNotification({
                   title: "Save successful",
                   message: "Application save successful.",

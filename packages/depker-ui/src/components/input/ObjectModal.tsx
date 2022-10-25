@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from "react";
 import { Button, Stack } from "@mantine/core";
 import { closeAllModals } from "@mantine/modals";
+import { useLoading } from "../../hooks/use-loading";
 
 export type ObjectModalProps = {
   value?: Record<string, any>;
@@ -10,20 +11,20 @@ export type ObjectModalProps = {
 
 export const ObjectModal: React.FC<ObjectModalProps> = (props) => {
   const [value, setValue] = useState<Record<string, any>>(props.value ?? {});
-  const [loading, setLoading] = useState(false);
+  const loading = useLoading();
   return (
     <Stack>
       {props.children(value, setValue)}
       <Button
         mt="xs"
         fullWidth
-        loading={loading}
+        loading={loading.value}
         onClick={async () => {
-          setLoading(true);
+          loading.set(true);
           if (await props.onChange?.(value)) {
             closeAllModals();
           }
-          setLoading(false);
+          loading.set(false);
         }}
       >
         Save

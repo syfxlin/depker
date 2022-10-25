@@ -99,11 +99,9 @@ export const AppList: React.FC = () => {
                             Buildpack: {item.buildpack}
                           </Text>
                         )}
-                        {item.domain && (
-                          <Text size="xs" color="dimmed">
-                            Domain: {item.domain}
-                          </Text>
-                        )}
+                        <Text size="xs" color="dimmed">
+                          Domain: {item.domain || "No configuration"}
+                        </Text>
                         <Tooltip
                           label={
                             <Text
@@ -121,7 +119,10 @@ export const AppList: React.FC = () => {
                           }
                         >
                           <Text size="xs" color="dimmed">
-                            Uptime: {day(item.deploydAt).format("YYYY-MM-DD HH:mm")}
+                            Uptime:{" "}
+                            {day(item.deploydAt) === day(0)
+                              ? day(item.deploydAt).format("YYYY-MM-DD HH:mm")
+                              : "No deployment"}
                           </Text>
                         </Tooltip>
                       </Link>
