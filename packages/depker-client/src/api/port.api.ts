@@ -23,7 +23,7 @@ export class PortApi extends Api {
   }
 
   public async upsert(request: UpsertPortRequest) {
-    const response = await this.client.post<UpsertPortResponse>(`/api/ports/${request.name}`, request);
+    const response = await this.client.post<UpsertPortResponse>(`/api/ports`, request);
     return response.data;
   }
 

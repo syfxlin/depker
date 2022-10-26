@@ -19,7 +19,7 @@ export class AppApi extends Api {
   }
 
   public async upsert(request: UpsertAppRequest) {
-    const response = await this.client.post<UpsertAppResponse>(`/api/apps/${request.name}`, request);
+    const response = await this.client.post<UpsertAppResponse>(`/api/apps`, request);
     return response.data;
   }
 

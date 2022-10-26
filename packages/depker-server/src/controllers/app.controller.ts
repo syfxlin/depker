@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
@@ -29,7 +30,6 @@ import { Volume } from "../entities/volume.entity";
 import { PortBind } from "../entities/port-bind.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PluginService } from "../services/plugin.service";
-import { Data } from "../decorators/data.decorator";
 import { diff } from "../utils/save.util";
 
 @Controller("/apps")
@@ -82,9 +82,9 @@ export class AppController {
     return { total, items };
   }
 
-  @Post("/:name")
-  @Put("/:name")
-  public async upsert(@Data() request: UpsertAppRequest): Promise<UpsertAppResponse> {
+  @Post("/")
+  @Put("/")
+  public async upsert(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
     const app = new App();
     app.name = request.name;
     app.buildpack = request.buildpack;

@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from "@nestjs/common";
 import {
   ConnectPortRequest,
   ConnectPortResponse,
@@ -52,9 +52,9 @@ export class PortController {
     return { total, items };
   }
 
-  @Post("/:name")
-  @Put("/:name")
-  public async upsert(@Data() request: UpsertPortRequest): Promise<UpsertPortResponse> {
+  @Post("/")
+  @Put("/")
+  public async upsert(@Body() request: UpsertPortRequest): Promise<UpsertPortResponse> {
     const port = new Port();
     port.name = request.name;
     port.proto = request.proto;

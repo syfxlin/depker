@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from "@nestjs/common";
 import { Like } from "typeorm";
 import {
   ConnectVolumeRequest,
@@ -52,9 +52,9 @@ export class VolumeController {
     return { total, items };
   }
 
-  @Post("/:name")
-  @Put("/:name")
-  public async upsert(@Data() request: UpsertVolumeRequest): Promise<UpsertVolumeResponse> {
+  @Post("/")
+  @Put("/")
+  public async upsert(@Body() request: UpsertVolumeRequest): Promise<UpsertVolumeResponse> {
     const volume = new Volume();
     volume.name = request.name;
     volume.path = request.path;

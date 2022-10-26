@@ -201,7 +201,7 @@ export class DeployService {
     // secrets
     // prettier-ignore
     const secrets = app.secrets.filter(s => s.onbuild).map(s => `${s.name}=${s.value}`).join("\n");
-    const sec = await this.storages.file(deploy.app.name, "secret", `${secrets}\n`);
+    const sec = await this.storages.file(deploy.app.name, `${secrets}\n`);
 
     // output
     const through = new PassThrough({ encoding: "utf-8" });
