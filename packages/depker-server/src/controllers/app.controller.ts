@@ -73,9 +73,9 @@ export class AppController {
         icon: plugin?.icon ?? "",
         domain: i.domain.length ? i.domain[0] : "",
         status: status[i.name],
-        createdAt: i.createdAt,
-        updatedAt: i.updatedAt,
-        deploydAt: deploy ?? new Date(0),
+        createdAt: i.createdAt.getTime(),
+        updatedAt: i.updatedAt.getTime(),
+        deploydAt: deploy?.getTime() ?? 0,
       };
     });
 
@@ -275,8 +275,8 @@ export class AppController {
         cpath: i.path,
         readonly: i.readonly,
       })),
-      createdAt: app.createdAt,
-      updatedAt: app.updatedAt,
+      createdAt: app.createdAt.getTime(),
+      updatedAt: app.updatedAt.getTime(),
       extensions: app.extensions,
     };
   }

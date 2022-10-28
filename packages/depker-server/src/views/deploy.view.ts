@@ -1,4 +1,15 @@
-import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Length, Matches, Min } from "class-validator";
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  Min,
+} from "class-validator";
 
 export class ListDeployRequest {
   @IsString()
@@ -64,8 +75,8 @@ export type GetDeployResponse = {
   status: string;
   trigger: string;
   force: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
 };
 
 export class DispatchDeployRequest {
@@ -99,4 +110,27 @@ export class CancelDeployRequest {
 
 export type CancelDeployResponse = {
   status: "success" | "failure";
+};
+
+export class LogsDeployRequest {
+  @IsInt()
+  @Min(0)
+  id: number;
+
+  @IsNumber()
+  @IsOptional()
+  since?: number;
+
+  @IsNumber()
+  @IsOptional()
+  until?: number;
+
+  @IsInt()
+  @IsOptional()
+  tail?: number;
+}
+
+export type LogsDeployResponse = {
+  logs: Array<[number, "debug" | "log" | "step" | "success" | "failed", string]>;
+  time: number;
 };

@@ -14,8 +14,8 @@ export type GetPortResponse = {
   name: string;
   proto: "tcp" | "udp";
   port: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
   binds: Array<{
     name: string;
     port: number;
@@ -55,8 +55,8 @@ export type ListPortResponse = {
     proto: "tcp" | "udp";
     port: number;
     binds: string[];
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: number;
+    updatedAt: number;
   }>;
 };
 

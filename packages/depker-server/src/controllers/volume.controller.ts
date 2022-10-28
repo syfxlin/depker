@@ -45,8 +45,8 @@ export class VolumeController {
       global: i.global,
       path: i.path,
       binds: i.binds.map((b) => b.appName),
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
+      createdAt: i.createdAt.getTime(),
+      updatedAt: i.updatedAt.getTime(),
     }));
 
     return { total, items };
@@ -131,8 +131,8 @@ export class VolumeController {
       name: volume.name,
       path: volume.path,
       global: volume.global,
-      createdAt: volume.createdAt,
-      updatedAt: volume.updatedAt,
+      createdAt: volume.createdAt.getTime(),
+      updatedAt: volume.updatedAt.getTime(),
       binds: volume.binds.map((i) => ({
         name: i.appName,
         path: i.path,

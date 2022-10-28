@@ -18,9 +18,9 @@ import { css } from "@emotion/react";
 import { Link } from "react-router-dom";
 import { useApps } from "../api/use-apps";
 import { Async } from "../components/core/Async";
-import { day } from "../utils/day";
 import { Pages } from "../components/layout/Pages";
 import { colors } from "../api/use-status";
+import { DateTime } from "luxon";
 
 export const AppList: React.FC = () => {
   const t = useMantineTheme();
@@ -110,18 +110,18 @@ export const AppList: React.FC = () => {
                                 font-family: ${t.fontFamilyMonospace};
                               `}
                             >
-                              Deployd At: {day(item.deploydAt).format("YYYY-MM-DD HH:mm")}
+                              Deployd At: {DateTime.fromMillis(item.deploydAt).toLocaleString(DateTime.DATETIME_SHORT)}
                               <br />
-                              Created At: {day(item.createdAt).format("YYYY-MM-DD HH:mm")}
+                              Created At: {DateTime.fromMillis(item.createdAt).toLocaleString(DateTime.DATETIME_SHORT)}
                               <br />
-                              Updated At: {day(item.updatedAt).format("YYYY-MM-DD HH:mm")}
+                              Updated At: {DateTime.fromMillis(item.updatedAt).toLocaleString(DateTime.DATETIME_SHORT)}
                             </Text>
                           }
                         >
                           <Text size="xs" color="dimmed">
                             Uptime:{" "}
-                            {day(item.deploydAt) === day(0)
-                              ? day(item.deploydAt).format("YYYY-MM-DD HH:mm")
+                            {item.deploydAt === 0
+                              ? DateTime.fromMillis(item.deploydAt).toLocaleString(DateTime.DATETIME_SHORT)
                               : "No deployment"}
                           </Text>
                         </Tooltip>

@@ -15,7 +15,6 @@ import {
   Max,
   Min,
 } from "class-validator";
-import { App } from "../entities/app.entity";
 import { objectEach } from "../validation/object-each.validation";
 import { ArrayEach } from "../validation/array-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
@@ -28,10 +27,53 @@ export class GetAppRequest {
   name: string;
 }
 
-export type GetAppResponse = Omit<
-  App,
-  "ports" | "volumes" | "deploys" | "hasId" | "save" | "remove" | "softRemove" | "reload" | "recover"
-> & {
+export type GetAppResponse = {
+  name: string;
+  buildpack: string;
+  commands: string[];
+  entrypoints: string[];
+  restart: "no" | "always" | "on-failure" | `on-failure:${number}`;
+  pull: boolean;
+  domain: string[];
+  rule: string;
+  port: number;
+  scheme: string;
+  tls: boolean;
+  middlewares: Array<{
+    name: string;
+    type: string;
+    options: Record<string, string>;
+  }>;
+  healthcheck: {
+    cmd?: string[];
+    retries?: number;
+    interval?: number;
+    start?: number;
+    timeout?: number;
+  };
+  init: boolean;
+  rm: boolean;
+  privileged: boolean;
+  user: string;
+  workdir: string;
+  buildArgs: Record<string, string>;
+  networks: Record<string, string>;
+  labels: Array<{
+    name: string;
+    value: string;
+    onbuild: boolean;
+  }>;
+  secrets: Array<{
+    name: string;
+    value: string;
+    onbuild: boolean;
+  }>;
+  hosts: Array<{
+    name: string;
+    value: string;
+    onbuild: boolean;
+  }>;
+  extensions: Record<string, any>;
   ports: Array<{
     name: string;
     proto: "tcp" | "udp";
@@ -45,6 +87,8 @@ export type GetAppResponse = Omit<
     cpath: string;
     readonly: boolean;
   }>;
+  createdAt: number;
+  updatedAt: number;
 };
 
 export class ListAppRequest {
@@ -77,9 +121,9 @@ export type ListAppResponse = {
     icon: string;
     domain: string;
     status: StatusAppResponse["status"];
-    createdAt: Date;
-    updatedAt: Date;
-    deploydAt: Date;
+    createdAt: number;
+    updatedAt: number;
+    deploydAt: number;
   }>;
 };
 

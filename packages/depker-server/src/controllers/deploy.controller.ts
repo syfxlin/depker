@@ -8,11 +8,15 @@ import {
   GetDeployResponse,
   ListDeployRequest,
   ListDeployResponse,
+  LogsDeployRequest,
+  LogsDeployResponse,
 } from "../views/deploy.view";
 import { Deploy } from "../entities/deploy.entity";
 import { StorageService } from "../services/storage.service";
 import { App } from "../entities/app.entity";
 import { FindManyOptions, FindOptionsWhere, Like } from "typeorm";
+import { Data } from "../decorators/data.decorator";
+import { Log } from "../entities/log.entity";
 
 @Controller("/deploy")
 export class DeployController {
@@ -140,6 +144,28 @@ export class DeployController {
     return { status: "success" };
   }
 
+  @Get("/:id/logs")
+  public async logs(@Data() request: LogsDeployRequest): Promise<LogsDeployResponse> {
+    const deploy = await Deploy.findOne({ where: { id: request.id } });
+    if (!deploy) {
+      throw new NotFoundException(`Not found deploy of ${request.id}.`);
+    }
+    const where: FindOptionsWhere<Log> = {
+      deploy: { id: deploy.id },
+    };
+    const options: FindManyOptions<Log> = {
+      where: where,
+      take: request.tail ?? undefined,
+      order: { id: "desc" },
+    };
+
+    const lines = await Log.find(options);
+    const time: LogsDeployResponse["time"] = lines.length ? lines[0].time.getTime() + 1 : 0;
+    const logs: LogsDeployResponse["logs"] = lines.reverse().map((i) => [i.time.getTime(), i.level, i.line]);
+
+    return { time, logs };
+  }
+
   public async _wrap(deploy: Deploy): Promise<GetDeployResponse> {
     return {
       id: deploy.id,
@@ -148,8 +174,8 @@ export class DeployController {
       status: deploy.status,
       trigger: deploy.trigger,
       force: deploy.force,
-      createdAt: deploy.createdAt,
-      updatedAt: deploy.updatedAt,
+      createdAt: deploy.createdAt.getTime(),
+      updatedAt: deploy.updatedAt.getTime(),
     };
   }
 }

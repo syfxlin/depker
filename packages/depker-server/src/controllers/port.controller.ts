@@ -45,8 +45,8 @@ export class PortController {
       proto: i.proto,
       port: i.port,
       binds: i.binds.map((b) => b.appName),
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
+      createdAt: i.createdAt.getTime(),
+      updatedAt: i.updatedAt.getTime(),
     }));
 
     return { total, items };
@@ -130,8 +130,8 @@ export class PortController {
       name: port.name,
       proto: port.proto,
       port: port.port,
-      createdAt: port.createdAt,
-      updatedAt: port.updatedAt,
+      createdAt: port.createdAt.getTime(),
+      updatedAt: port.updatedAt.getTime(),
       binds: port.binds.map((i) => ({
         name: i.appName,
         port: i.port,

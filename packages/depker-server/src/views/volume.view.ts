@@ -12,8 +12,8 @@ export type GetVolumeResponse = {
   name: string;
   path: string;
   global: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
   binds: Array<{
     name: string;
     path: string;
@@ -54,8 +54,8 @@ export type ListVolumeResponse = {
     global: boolean;
     path: string;
     binds: string[];
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: number;
+    updatedAt: number;
   }>;
 };
 

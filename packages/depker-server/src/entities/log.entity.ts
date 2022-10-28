@@ -1,6 +1,7 @@
 import { BaseEntity, Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Relation } from "typeorm";
 import { Deploy } from "./deploy.entity";
 import { Logger } from "@nestjs/common";
+import { DateTime } from "luxon";
 
 export type DeployLogger = ReturnType<typeof Log["logger"]>;
 
@@ -31,7 +32,7 @@ export class Log extends BaseEntity {
 
   // repository
   public static async upload(deploy: Deploy, level: Log["level"], line: string) {
-    const time = new Date();
+    const time = DateTime.utc().toJSDate();
     Log._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${deploy.app.name}:${deploy.id} : ${line}`);
     return this.insert({ deploy, time, level, line });
   }
