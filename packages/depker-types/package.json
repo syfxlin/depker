@@ -15,7 +15,7 @@
   "private": false,
   "type": "module",
   "main": "./index.js",
-  "types": "./dist/src/types.d.ts",
+  "types": "./dist/src/types/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"

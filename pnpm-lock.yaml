@@ -179,6 +179,7 @@ importers:
       '@mantine/notifications': ^5.3.3
       '@mantine/spotlight': ^5.3.3
       '@syfxlin/depker-client': workspace:*
+      '@types/human-format': ^1.0.0
       '@types/luxon': ^3.0.2
       '@types/react': ^18.0.19
       '@types/react-dom': ^18.0.6
@@ -190,6 +191,7 @@ importers:
       classnames: ^2.3.2
       dequal: ^2.0.3
       history: ^5.3.0
+      human-format: ^1.0.0
       luxon: ^3.0.4
       react: ^18.2.0
       react-dom: ^18.2.0
@@ -217,6 +219,7 @@ importers:
       classnames: 2.3.2
       dequal: 2.0.3
       history: 5.3.0
+      human-format: 1.0.0
       luxon: 3.0.4
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -227,6 +230,7 @@ importers:
       react-window: 1.8.7_biqbaboplfbrettd7655fr4n2y
       swr: 1.3.0_react@18.2.0
     devDependencies:
+      '@types/human-format': 1.0.0
       '@types/luxon': 3.0.2
       '@types/react': 18.0.22
       '@types/react-dom': 18.0.7
@@ -2903,6 +2907,10 @@ packages:
   /@types/http-cache-semantics/4.0.1:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
     dev: false
+
+  /@types/human-format/1.0.0:
+    resolution: {integrity: sha512-EpU2OnpDx0b7F93KuhUnsFyLL60h+PWjXsc6QWNU0gHsSqy6Up+7YRqzMHWVcCYjNbaXqYr2g5vpNwOXyUap+A==}
+    dev: true
 
   /@types/istanbul-lib-coverage/2.0.4:
     resolution: {integrity: sha512-z/QT1XN4K4KYuslS23k62yDIDLwLFkzxOuMplDtObz0+y7VqJCaO2o+SPwHCvLFZh7xazvvoor2tA/hPz9ee7g==}
@@ -5996,6 +6004,11 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /human-format/1.0.0:
+    resolution: {integrity: sha512-ZfSxF/LHVDb5Un52AguYkZArbiuMbJQwpOpZ0MBuj3pYDmLt7pkCEws9L8xKbgnaKrfMgGd6qc+PHBbKO97AaA==}
+    engines: {node: '>=4'}
     dev: false
 
   /human-signals/1.1.1:

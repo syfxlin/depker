@@ -18,6 +18,9 @@ import {
 import { objectEach } from "../validation/object-each.validation";
 import { ArrayEach } from "../validation/array-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
+import { AppRestart, AppStatus } from "../entities/app.entity";
+import { PortProtocol } from "../entities/port.entity";
+import { SuccessResponse } from "./common.view";
 
 export class GetAppRequest {
   @IsString()
@@ -32,7 +35,7 @@ export type GetAppResponse = {
   buildpack: string;
   commands: string[];
   entrypoints: string[];
-  restart: "no" | "always" | "on-failure" | `on-failure:${number}`;
+  restart: AppRestart;
   pull: boolean;
   domain: string[];
   rule: string;
@@ -76,7 +79,7 @@ export type GetAppResponse = {
   extensions: Record<string, any>;
   ports: Array<{
     name: string;
-    proto: "tcp" | "udp";
+    proto: PortProtocol;
     hport: number;
     cport: number;
   }>;
@@ -148,8 +151,8 @@ export class UpsertAppRequest {
 
   @IsOptional()
   @IsString()
-  @Matches(/^(no|always|on-failure|on-failure:\d+)$/)
-  restart?: "no" | "always" | "on-failure" | `on-failure:${number}`;
+  @Matches(/^(no|always|on-failure)$/)
+  restart?: AppRestart;
 
   @IsOptional()
   @IsBoolean()
@@ -316,9 +319,7 @@ export class DeleteAppRequest {
   name: string;
 }
 
-export type DeleteAppResponse = {
-  status: "success" | "failure";
-};
+export type DeleteAppResponse = SuccessResponse;
 
 export class StatusAppRequest {
   @IsString()
@@ -329,5 +330,5 @@ export class StatusAppRequest {
 }
 
 export type StatusAppResponse = {
-  status: "stopped" | "running" | "restarting" | "exited";
+  status: AppStatus;
 };

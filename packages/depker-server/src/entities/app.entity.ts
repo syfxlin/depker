@@ -12,6 +12,42 @@ import { Deploy } from "./deploy.entity";
 import { PortBind } from "./port-bind.entity";
 import { VolumeBind } from "./volume-bind.entity";
 
+export type AppRestart = "no" | "always" | "on-failure";
+
+export type AppStatus = "stopped" | "running" | "restarting" | "exited";
+
+export type AppMiddleware = {
+  name: string;
+  type: string;
+  options: Record<string, string>;
+};
+
+export type AppHealthCheck = {
+  cmd?: string[];
+  retries?: number;
+  interval?: number;
+  start?: number;
+  timeout?: number;
+};
+
+export type AppLabel = {
+  name: string;
+  value: string;
+  onbuild: boolean;
+};
+
+export type AppSecret = {
+  name: string;
+  value: string;
+  onbuild: boolean;
+};
+
+export type AppHost = {
+  name: string;
+  value: string;
+  onbuild: boolean;
+};
+
 @Entity()
 export class App extends BaseEntity {
   @PrimaryColumn({ length: 128, nullable: false, unique: true })
@@ -27,7 +63,7 @@ export class App extends BaseEntity {
   entrypoints: string[];
 
   @Column({ nullable: false, default: "always" })
-  restart: "no" | "always" | "on-failure" | `on-failure:${number}`;
+  restart: AppRestart;
 
   @Column({ nullable: false, default: true })
   pull: boolean;
@@ -49,21 +85,11 @@ export class App extends BaseEntity {
   tls: boolean;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  middlewares: Array<{
-    name: string;
-    type: string;
-    options: Record<string, string>;
-  }>;
+  middlewares: AppMiddleware[];
 
   // healthcheck
   @Column({ nullable: false, default: "{}", type: "simple-json" })
-  healthcheck: {
-    cmd?: string[];
-    retries?: number;
-    interval?: number;
-    start?: number;
-    timeout?: number;
-  };
+  healthcheck: AppHealthCheck;
 
   // extensions
   @Column({ nullable: false, default: false })
@@ -89,25 +115,13 @@ export class App extends BaseEntity {
   networks: Record<string, string>;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  labels: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
+  labels: AppLabel[];
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  secrets: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
+  secrets: AppSecret[];
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  hosts: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
+  hosts: AppHost[];
 
   // extensions
   @Column({ nullable: false, default: "{}", type: "simple-json" })

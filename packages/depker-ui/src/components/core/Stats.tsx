@@ -1,7 +1,7 @@
 import React, { ReactNode, useMemo } from "react";
 import { Box, Card, Center, Group, Progress, RingProgress, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { css } from "@emotion/react";
-import { usePrevious } from "react-use";
+import { usePrevious } from "@mantine/hooks";
 import { IconType } from "react-icons";
 import { TbArrowDown, TbArrowUp } from "react-icons/all";
 

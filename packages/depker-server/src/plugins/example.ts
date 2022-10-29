@@ -2,7 +2,7 @@ import { DepkerPlugin } from "./plugin.types";
 
 export const name = "example";
 export const label = "Example";
-export const icon = "/api/icons/nodedotjs";
+export const icon = "nodedotjs";
 export const group = "General";
 
 export const options: DepkerPlugin["options"] = {

@@ -24,6 +24,6 @@ module.exports = {
     "react/display-name": "off",
     "react/no-unknown-property": "off",
     "react-hooks/exhaustive-deps": "off",
-    "max-len": ["warn", { code: 120, ignoreUrls: true }],
+    "max-len": ["off", { code: 120, ignoreUrls: true }],
   },
 };

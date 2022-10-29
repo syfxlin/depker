@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { CardStats, PercStats, TextStats } from "./core/Stats";
-import { GB, HOUR } from "../utils/constant";
+import { CardStats, PercStats, TextStats } from "../core/Stats";
+import { GB, HOUR } from "../../utils/constant";
 import { Grid, List, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { css } from "@emotion/react";
-import { useMetrics } from "../api/use-metrics";
+import { useMetrics } from "../../api/use-metrics";
 import { TbActivity, TbArchive, TbCalendarStats, TbClock, TbCpu2, TbDatabase, TbDatabaseExport } from "react-icons/all";
 import { DateTime } from "luxon";
 

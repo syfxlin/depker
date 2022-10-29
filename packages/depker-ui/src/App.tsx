@@ -9,7 +9,8 @@ import { Dashboard } from "./pages/Dashboard";
 import { AppList } from "./pages/AppList";
 import { AppSetting } from "./pages/AppSetting";
 import { Loading } from "./components/core/Loading";
-import { AppGeneralTab } from "./pages/AppGeneralTab";
+import { AppConfigsTab } from "./pages/AppConfigsTab";
+import { AppDeploysTab } from "./pages/AppDeploysTab";
 
 export const App: React.FC = () => {
   return (
@@ -22,8 +23,10 @@ export const App: React.FC = () => {
               <Route index element={<Navigate to="/home" />} />
               <Route path="/home" element={<Home />} />
               <Route path="/apps" element={<AppList />} />
-              <Route path="/apps/:name" element={<AppSetting />}>
-                <Route index element={<AppGeneralTab />} />
+              <Route path="/apps/:app" element={<AppSetting />}>
+                <Route index element={<AppConfigsTab />} />
+                <Route path="deploys" element={<AppDeploysTab />} />
+                <Route path="deploys/:deploy" element={<AppDeploysTab />} />
               </Route>
             </Route>
           </Routes>

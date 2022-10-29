@@ -1,7 +1,7 @@
-import React, { ChangeEvent, forwardRef, PropsWithChildren, useCallback, useMemo } from "react";
+import React, { ChangeEvent, forwardRef, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useAllBuildpacks } from "../api/use-all-buildpacks";
-import { Avatar, Grid, Group, NumberInput, Select, Stack, Text, TextInput, useMantineTheme } from "@mantine/core";
+import { Avatar, Grid, Group, NumberInput, Select, Stack, Text, TextInput } from "@mantine/core";
 import {
   TbActivity,
   TbAdjustments,
@@ -35,7 +35,6 @@ import { ObjectInput } from "../components/input/ObjectInput";
 import { RecordInput } from "../components/input/RecordInput";
 import { RecordOnbuildInput } from "../components/input/RecordOnbuildInput";
 import { Async } from "../components/core/Async";
-import { css } from "@emotion/react";
 import { useAllPorts } from "../api/use-all-ports";
 import { SelectArrayInput } from "../components/input/SelectArrayInput";
 import { useAllVolumes } from "../api/use-all-volumes";
@@ -45,30 +44,14 @@ import { showNotification } from "@mantine/notifications";
 import { AppSettingContext } from "./AppSetting";
 import { error } from "../utils/message";
 import { ExtensionInput } from "../components/input/ExtensionInput";
+import { Heading } from "../components/parts/Heading";
+import { client } from "../api/client";
 
-export const AppGeneralTab: React.FC = () => {
-  const t = useMantineTheme();
+export const AppConfigsTab: React.FC = () => {
   const { app } = useOutletContext<AppSettingContext>();
   const buildpacks = useAllBuildpacks();
   const ports = useAllPorts();
   const volumes = useAllVolumes();
-
-  // components
-  const Heading = useCallback(
-    (props: PropsWithChildren) => (
-      <Text
-        css={css`
-          padding-bottom: ${t.spacing.xs * 0.5}px;
-          border-bottom: 1px solid ${t.colorScheme === "light" ? t.colors.gray[3] : t.colors.dark[4]};
-          font-size: ${t.headings.sizes.h4.fontSize}px;
-          font-weight: 500;
-        `}
-      >
-        {props.children}
-      </Text>
-    ),
-    [t]
-  );
 
   // general
   const Name = useMemo(
@@ -99,7 +82,7 @@ export const AppGeneralTab: React.FC = () => {
           description="Building application with build package."
           placeholder="Build Package"
           nothingFound="No packages"
-          icon={<Avatar size="xs" src={`http://localhost:3000${buildpacks.data[app.data.buildpack]?.icon}`} />}
+          icon={<Avatar size="xs" src={client.asset.icon(buildpacks.data[app.data.buildpack]?.icon)} />}
           value={app.data.buildpack}
           onChange={(value: string) => {
             const buildpack = buildpacks.data[value];
@@ -112,7 +95,7 @@ export const AppGeneralTab: React.FC = () => {
             value: i.name,
             label: i.label,
             group: i.group,
-            icon: `http://localhost:3000${i.icon}`,
+            icon: client.asset.icon(i.icon),
           }))}
           itemComponent={forwardRef<HTMLDivElement, any>(({ label, icon, ...props }, ref) => {
             return (

@@ -10,6 +10,9 @@ import {
   Matches,
   Min,
 } from "class-validator";
+import { DeployStatus, DeployTrigger } from "../entities/deploy.entity";
+import { LogLevel } from "../entities/log.entity";
+import { SuccessResponse } from "./common.view";
 
 export class ListDeployRequest {
   @IsString()
@@ -25,12 +28,12 @@ export class ListDeployRequest {
   @IsString()
   @IsOptional()
   @IsIn(["queued", "running", "failed", "success"])
-  status?: "queued" | "running" | "failed" | "success";
+  status?: DeployStatus;
 
   @IsString()
   @IsOptional()
   @IsIn(["manual", "depker", "git"])
-  trigger?: "manual" | "depker" | "git";
+  trigger?: DeployTrigger;
 
   @IsBoolean()
   @IsOptional()
@@ -72,8 +75,8 @@ export type GetDeployResponse = {
   id: number;
   app: string;
   commit: string;
-  status: string;
-  trigger: string;
+  status: DeployStatus;
+  trigger: DeployTrigger;
   force: boolean;
   createdAt: number;
   updatedAt: number;
@@ -93,7 +96,7 @@ export class DispatchDeployRequest {
   @IsOptional()
   @IsString()
   @IsIn(["manual", "depker", "git"])
-  trigger?: "manual" | "depker" | "git";
+  trigger?: DeployTrigger;
 
   @IsOptional()
   @IsBoolean()
@@ -108,9 +111,7 @@ export class CancelDeployRequest {
   id: number;
 }
 
-export type CancelDeployResponse = {
-  status: "success" | "failure";
-};
+export type CancelDeployResponse = SuccessResponse;
 
 export class LogsDeployRequest {
   @IsInt()
@@ -131,6 +132,6 @@ export class LogsDeployRequest {
 }
 
 export type LogsDeployResponse = {
-  logs: Array<[number, "debug" | "log" | "step" | "success" | "failed", string]>;
-  time: number;
+  status: DeployStatus;
+  logs: Array<[number, LogLevel, string]>;
 };

@@ -1,8 +1,9 @@
 import useSWR from "swr";
 import { client } from "./client";
 import { useCallback, useMemo } from "react";
+import { AppStatus } from "@syfxlin/depker-client";
 
-export const colors = {
+export const colors: Record<AppStatus, string> = {
   stopped: "pink",
   running: "green",
   restarting: "blue",

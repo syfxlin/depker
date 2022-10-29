@@ -118,7 +118,9 @@ export class SystemController {
       if (!exist) {
         return [];
       }
-      return readLastLinesEnc("utf-8")(file, Math.max(1, request.lines)).split("\n");
+      const lines = readLastLinesEnc("utf-8")(file, Math.max(1, request.lines)).split("\n");
+      lines.pop();
+      return lines;
     } else {
       if (!exist) {
         throw new NotFoundException("Not found access-log files, may not have been generated.");

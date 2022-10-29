@@ -5,6 +5,8 @@ import { DateTime } from "luxon";
 
 export type DeployLogger = ReturnType<typeof Log["logger"]>;
 
+export type LogLevel = "debug" | "log" | "step" | "success" | "failed";
+
 @Entity()
 @Index(["time"])
 @Index(["level"])
@@ -25,13 +27,13 @@ export class Log extends BaseEntity {
   time: Date;
 
   @Column({ nullable: false })
-  level: "debug" | "log" | "step" | "success" | "failed";
+  level: LogLevel;
 
   @Column({ nullable: false, type: "text" })
   line: string;
 
   // repository
-  public static async upload(deploy: Deploy, level: Log["level"], line: string) {
+  public static async upload(deploy: Deploy, level: LogLevel, line: string) {
     const time = DateTime.utc().toJSDate();
     Log._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${deploy.app.name}:${deploy.id} : ${line}`);
     return this.insert({ deploy, time, level, line });

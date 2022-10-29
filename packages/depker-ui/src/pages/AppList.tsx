@@ -21,6 +21,7 @@ import { Async } from "../components/core/Async";
 import { Pages } from "../components/layout/Pages";
 import { colors } from "../api/use-status";
 import { DateTime } from "luxon";
+import { client } from "../api/client";
 
 export const AppList: React.FC = () => {
   const t = useMantineTheme();
@@ -51,7 +52,7 @@ export const AppList: React.FC = () => {
     >
       <Async query={apps}>
         {apps.data && (
-          <Pages page={apps.page} size={apps.size} total={apps.data.total} onChange={apps.setPage}>
+          <Pages edges page={apps.page} size={apps.size} total={apps.data.total} onChange={apps.setPage}>
             <Grid>
               {apps.data?.items?.map((item) => (
                 <Grid.Col key={`apps-${item.name}`} span={4}>
@@ -64,7 +65,7 @@ export const AppList: React.FC = () => {
                     `}
                   >
                     <Group>
-                      <Avatar src={`http://localhost:3000${item.icon}`}>
+                      <Avatar src={client.asset.icon(item.icon)}>
                         <TbApiApp />
                       </Avatar>
                       <Link
@@ -110,11 +111,11 @@ export const AppList: React.FC = () => {
                                 font-family: ${t.fontFamilyMonospace};
                               `}
                             >
-                              Deployd At: {DateTime.fromMillis(item.deploydAt).toLocaleString(DateTime.DATETIME_SHORT)}
+                              Deployd in {DateTime.fromMillis(item.deploydAt).toLocaleString(DateTime.DATETIME_SHORT)}
                               <br />
-                              Created At: {DateTime.fromMillis(item.createdAt).toLocaleString(DateTime.DATETIME_SHORT)}
+                              Created in {DateTime.fromMillis(item.createdAt).toLocaleString(DateTime.DATETIME_SHORT)}
                               <br />
-                              Updated At: {DateTime.fromMillis(item.updatedAt).toLocaleString(DateTime.DATETIME_SHORT)}
+                              Updated in {DateTime.fromMillis(item.updatedAt).toLocaleString(DateTime.DATETIME_SHORT)}
                             </Text>
                           }
                         >

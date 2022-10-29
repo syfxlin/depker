@@ -6,11 +6,13 @@ export type PagesProps = {
   page: number;
   size: number;
   total: number;
+  siblings?: number;
+  edges?: boolean;
   onChange: (page: number) => void;
   children: ReactNode;
 };
 
-export const Pages: React.FC<PagesProps> = ({ children, page, size, total, onChange }) => {
+export const Pages: React.FC<PagesProps> = ({ children, page, size, total, onChange, edges, siblings }) => {
   const t = useMantineTheme();
   return (
     <>
@@ -24,9 +26,10 @@ export const Pages: React.FC<PagesProps> = ({ children, page, size, total, onCha
       <Pagination
         page={page}
         total={Math.max(1, Math.ceil(total / size))}
-        withEdges
         withControls
         position="center"
+        withEdges={edges}
+        siblings={siblings}
         onChange={onChange}
         css={css`
           margin-top: ${t.spacing.md}px;

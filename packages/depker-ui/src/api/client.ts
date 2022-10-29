@@ -7,7 +7,7 @@ export const client = new DepkerClient({
   token: () => token.get(),
 });
 
-client.client.interceptors.response.use(
+client.request.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response.status === 401) {

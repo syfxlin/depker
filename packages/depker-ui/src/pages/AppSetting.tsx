@@ -20,6 +20,7 @@ import { useApp } from "../api/use-app";
 import { showNotification } from "@mantine/notifications";
 import { error } from "../utils/message";
 import { useLoading } from "../hooks/use-loading";
+import { css } from "@emotion/react";
 
 export type AppSettingContext = {
   name: string;
@@ -28,7 +29,7 @@ export type AppSettingContext = {
 };
 
 export const AppSetting: React.FC = () => {
-  const { name } = useParams<"name">();
+  const { app: name } = useParams<"app">();
   const app = useApp(name!);
   const status = useStatus(name!);
   const saving = useLoading();
@@ -68,7 +69,11 @@ export const AppSetting: React.FC = () => {
         </Group>
       }
     >
-      <Grid>
+      <Grid
+        css={css`
+          flex: 1;
+        `}
+      >
         <Grid.Col span={12} md={3}>
           <Stack spacing="xs">
             <NavLink label="Configs" icon={<TbInfoCircle />} action={`/apps/${name}/`} />

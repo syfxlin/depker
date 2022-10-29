@@ -13,6 +13,10 @@ import {
 import { App } from "./app.entity";
 import { Log } from "./log.entity";
 
+export type DeployStatus = "queued" | "running" | "failed" | "success";
+
+export type DeployTrigger = "manual" | "depker" | "git";
+
 @Entity()
 @Index(["status"])
 @Index(["trigger"])
@@ -24,10 +28,10 @@ export class Deploy extends BaseEntity {
   commit: string;
 
   @Column({ nullable: false, default: "queued" })
-  status: "queued" | "running" | "failed" | "success";
+  status: DeployStatus;
 
   @Column({ nullable: false })
-  trigger: "manual" | "depker" | "git";
+  trigger: DeployTrigger;
 
   @Column({ nullable: false, default: false })
   force: boolean;

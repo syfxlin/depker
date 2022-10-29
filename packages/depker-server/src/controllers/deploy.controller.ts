@@ -14,9 +14,10 @@ import {
 import { Deploy } from "../entities/deploy.entity";
 import { StorageService } from "../services/storage.service";
 import { App } from "../entities/app.entity";
-import { FindManyOptions, FindOptionsWhere, Like } from "typeorm";
+import { Between, FindManyOptions, FindOptionsWhere, LessThanOrEqual, Like, MoreThanOrEqual } from "typeorm";
 import { Data } from "../decorators/data.decorator";
 import { Log } from "../entities/log.entity";
+import { DateTime } from "luxon";
 
 @Controller("/deploy")
 export class DeployController {
@@ -146,13 +147,24 @@ export class DeployController {
 
   @Get("/:id/logs")
   public async logs(@Data() request: LogsDeployRequest): Promise<LogsDeployResponse> {
-    const deploy = await Deploy.findOne({ where: { id: request.id } });
-    if (!deploy) {
+    const count = await Deploy.count({ where: { id: request.id } });
+    if (!count) {
       throw new NotFoundException(`Not found deploy of ${request.id}.`);
     }
+
     const where: FindOptionsWhere<Log> = {
-      deploy: { id: deploy.id },
+      deploy: { id: request.id },
     };
+    if (typeof request.since === "number" && typeof request.until === "number") {
+      const since = DateTime.fromMillis(request.since).toJSDate();
+      const until = DateTime.fromMillis(request.until).toJSDate();
+      where.time = Between(since, until);
+    } else if (typeof request.since === "number") {
+      where.time = MoreThanOrEqual(DateTime.fromMillis(request.since).toJSDate());
+    } else if (typeof request.until === "number") {
+      where.time = LessThanOrEqual(DateTime.fromMillis(request.until).toJSDate());
+    }
+
     const options: FindManyOptions<Log> = {
       where: where,
       take: request.tail ?? undefined,
@@ -160,10 +172,11 @@ export class DeployController {
     };
 
     const lines = await Log.find(options);
-    const time: LogsDeployResponse["time"] = lines.length ? lines[0].time.getTime() + 1 : 0;
+    const deploy = await Deploy.findOne({ where: { id: request.id } });
+    const status: LogsDeployResponse["status"] = deploy!.status;
     const logs: LogsDeployResponse["logs"] = lines.reverse().map((i) => [i.time.getTime(), i.level, i.line]);
 
-    return { time, logs };
+    return { status, logs };
   }
 
   public async _wrap(deploy: Deploy): Promise<GetDeployResponse> {

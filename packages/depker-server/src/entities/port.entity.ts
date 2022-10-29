@@ -12,6 +12,8 @@ import {
 } from "typeorm";
 import { PortBind } from "./port-bind.entity";
 
+export type PortProtocol = "tcp" | "udp";
+
 @Entity()
 @Index(["port"])
 @Index(["proto"])
@@ -21,7 +23,7 @@ export class Port extends BaseEntity {
   name: string;
 
   @Column({ nullable: false, default: "tcp" })
-  proto: "tcp" | "udp";
+  proto: PortProtocol;
 
   @Column({ nullable: false })
   port: number;

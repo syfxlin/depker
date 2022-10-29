@@ -4,7 +4,7 @@ import { useSetSWR } from "../hooks/use-set-swr";
 import { useSaveSWR } from "../hooks/use-save-swr";
 
 export const useApp = (name: string) => {
-  const query = useSWR(["client.app.get", name], () => client.app.get({ name }), {
+  const query = useSWR(["client.app.get", name], (key, name) => client.app.get({ name }), {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     refreshWhenHidden: false,

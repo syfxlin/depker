@@ -1,8 +1,8 @@
 import React from "react";
 import { Button, Group, Stack } from "@mantine/core";
 import { css } from "@emotion/react";
-import { Metrics } from "../components/Metrics";
-import { AccessLogs } from "../components/AccessLogs";
+import { Metrics } from "../components/parts/Metrics";
+import { AccessLogs } from "../components/parts/AccessLogs";
 import { Main } from "../components/layout/Main";
 import { SiGithub } from "react-icons/all";
 
