@@ -106,7 +106,7 @@ export const AppGeneralTab: React.FC = () => {
             if (!buildpack) {
               return;
             }
-            app.set((prev) => ({ ...prev, buildpack: value }));
+            app.set((prev) => ({ ...prev, buildpack: value, extensions: {} }));
           }}
           data={Object.values(buildpacks.data).map((i) => ({
             value: i.name,
