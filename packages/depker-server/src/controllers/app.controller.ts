@@ -115,6 +115,7 @@ export class AppController {
     app.labels = request.labels!;
     app.secrets = request.secrets!;
     app.hosts = request.hosts!;
+    app.extensions = request.extensions!;
     // ports
     const ports: PortBind[] = [];
     if (request.ports && request.ports.length) {

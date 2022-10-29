@@ -44,6 +44,7 @@ import { ObjectModal } from "../components/input/ObjectModal";
 import { showNotification } from "@mantine/notifications";
 import { AppSettingContext } from "./AppSetting";
 import { error } from "../utils/message";
+import { ExtensionInput } from "../components/input/ExtensionInput";
 
 export const AppGeneralTab: React.FC = () => {
   const t = useMantineTheme();
@@ -406,7 +407,7 @@ export const AppGeneralTab: React.FC = () => {
               description="Traefik middleware name."
               placeholder="Middleware Name"
               icon={<TbSignature />}
-              value={item.name}
+              value={item.name ?? ""}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
             />,
             <TextInput
@@ -416,7 +417,7 @@ export const AppGeneralTab: React.FC = () => {
               description="Traefik middleware type."
               placeholder="Middleware Type"
               icon={<TbAdjustments />}
-              value={item.type}
+              value={item.type ?? ""}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, type: e.target.value })}
             />,
             <ArrayInput
@@ -582,7 +583,7 @@ export const AppGeneralTab: React.FC = () => {
                         description="The name used by host port proxy."
                         placeholder="Host Port Name"
                         icon={<TbSignature />}
-                        value={item.name}
+                        value={item.name ?? ""}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
                       />,
                       <Select
@@ -720,7 +721,7 @@ export const AppGeneralTab: React.FC = () => {
                         description="The name used by host volume."
                         placeholder="Host Volume Name"
                         icon={<TbSignature />}
-                        value={item.name}
+                        value={item.name ?? ""}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
                       />,
                       <Select
@@ -743,7 +744,7 @@ export const AppGeneralTab: React.FC = () => {
                         description="The path used by host volume."
                         placeholder="Host Volume Path"
                         icon={<TbFolder />}
-                        value={item.path}
+                        value={item.path ?? ""}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, path: e.target.value })}
                       />,
                     ]}
@@ -759,7 +760,7 @@ export const AppGeneralTab: React.FC = () => {
               placeholder="Container Path"
               icon={<TbFolder />}
               readOnly={!item}
-              value={item?.cpath}
+              value={item?.cpath ?? ""}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 if (item) {
                   setItem({ ...item, cpath: e.target.value });
@@ -786,6 +787,21 @@ export const AppGeneralTab: React.FC = () => {
         />
       ),
     [app.data?.ports, app.set, ports]
+  );
+
+  // extensions
+  const Extensions = useMemo(
+    () =>
+      app.data && (
+        <ExtensionInput
+          options={buildpacks.data[app.data.buildpack]?.options}
+          value={app.data.extensions}
+          onChange={(value) => {
+            app.set((prev) => ({ ...prev, extensions: value }));
+          }}
+        />
+      ),
+    [app.data?.buildpack, buildpacks.data, app.data?.extensions, app.set]
   );
 
   // others
@@ -1027,6 +1043,8 @@ export const AppGeneralTab: React.FC = () => {
         <Heading>Binds</Heading>
         {Ports}
         {Volumes}
+        <Heading>Extensions</Heading>
+        {Extensions}
         <Heading>Others</Heading>
         {CommandsRow}
         {WorkingRow}

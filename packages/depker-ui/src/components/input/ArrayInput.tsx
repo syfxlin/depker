@@ -18,7 +18,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
           {value?.map((item, index) => (
             <Input
               key={`array-input-${index}`}
-              value={item}
+              value={item ?? ""}
               icon={icon}
               placeholder={placeholder}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {

@@ -47,7 +47,7 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
                 <Input
                   icon={leftIcon}
                   placeholder={leftPlaceholder}
-                  value={item[0]}
+                  value={item[0] ?? ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const values = [...data];
                     values[index] = [e.target.value, item[1], item[2]];
@@ -59,7 +59,7 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
                 <Input
                   icon={rightIcon}
                   placeholder={rightPlaceholder}
-                  value={item[1]}
+                  value={item[1] ?? ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const values = [...data];
                     values[index] = [item[0], e.target.value, item[2]];

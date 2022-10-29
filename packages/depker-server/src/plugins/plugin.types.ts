@@ -4,27 +4,24 @@ export interface BaseOption<T> {
   type: T;
   name: string;
   label?: string;
-  hint?: string;
+  description?: string;
+  placeholder?: string;
   required?: boolean;
 }
 
 export type BooleanOption = BaseOption<"boolean"> & {
-  default?: boolean;
   validate?: (value: boolean) => boolean;
 };
 
 export type StringOption = BaseOption<"string"> & {
-  default?: string;
   validate?: (value: string) => boolean;
 };
 
 export type TextOption = BaseOption<"text"> & {
-  default?: string;
   validate?: (value: string) => boolean;
 };
 
 export type JsonOption = BaseOption<"json"> & {
-  default?: string;
   validate?: (value: string) => boolean;
 };
 
@@ -33,21 +30,14 @@ export type NumberOption = BaseOption<"number"> & {
   max?: number;
   step?: number;
   precision?: number;
-  default?: number;
   validate?: (value: number) => boolean;
 };
 
 export type ListOption = BaseOption<"list"> & {
-  min?: number;
-  max?: number;
-  default?: string[];
   validate?: (value: string[]) => boolean;
 };
 
 export type ObjectOption = BaseOption<"object"> & {
-  min?: number;
-  max?: number;
-  default?: Record<string, string>;
   validate?: (value: Record<string, string>) => boolean;
 };
 
@@ -59,7 +49,6 @@ export type SelectOption = BaseOption<"select"> &
           value: string;
         }>;
         multiple?: false;
-        default?: string;
         validate?: (value: string) => boolean;
       }
     | {
@@ -70,7 +59,6 @@ export type SelectOption = BaseOption<"select"> &
         multiple: true;
         min?: number;
         max?: number;
-        default?: string[];
         validate?: (value: string[]) => boolean;
       }
   );
