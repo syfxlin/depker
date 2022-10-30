@@ -1,6 +1,6 @@
 import React from "react";
 import { Main } from "../components/layout/Main";
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 import { Badge, Button, Grid, Group, Stack } from "@mantine/core";
 import {
   TbActivity,
@@ -29,10 +29,12 @@ export type AppSettingContext = {
 };
 
 export const AppSetting: React.FC = () => {
+  const navigate = useNavigate();
   const { app: name } = useParams<"app">();
   const app = useApp(name!);
   const status = useStatus(name!);
   const saving = useLoading();
+  const deploying = useLoading();
 
   return (
     <Main
@@ -42,7 +44,28 @@ export const AppSetting: React.FC = () => {
           <Badge size="lg" color={colors[status.data]}>
             {status.data}
           </Badge>
-          <Button variant="light" leftIcon={<TbPlayerPlay />}>
+          <Button
+            variant="light"
+            leftIcon={<TbPlayerPlay />}
+            onClick={async () => {
+              try {
+                deploying.update(true);
+                const deploy = await app.actions.deploy("master");
+                deploying.update(false);
+                showNotification({
+                  title: "Deploy successful",
+                  message: `Application create deploy #${deploy.id} successful.`,
+                  color: "green",
+                });
+                navigate(`/apps/depker/deploys/${deploy.id}`);
+              } catch (e: any) {
+                showNotification({
+                  title: "Deploy failure",
+                  message: error(e),
+                });
+              }
+            }}
+          >
             Deploy
           </Button>
           <Button

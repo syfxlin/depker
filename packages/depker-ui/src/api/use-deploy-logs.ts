@@ -8,10 +8,8 @@ export const useDeployLogs = (id: number | string | undefined) => {
   const [items, handlers] = useListState<LogsDeployResponse["logs"][number]>([]);
 
   useEffect(() => {
-    if (!id) {
-      latest.current = 0;
-      handlers.setState([]);
-    }
+    latest.current = 0;
+    handlers.setState([]);
   }, [id, latest]);
 
   useEffect(() => {

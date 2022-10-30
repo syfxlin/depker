@@ -15,11 +15,11 @@ export const useApp = (name: string) => {
     query,
     (v) => v,
     (q) => ({
-      update: (fn: (prev: GetAppResponse) => GetAppResponse) => {
-        return q.mutate((prev) => (prev ? fn(prev) : prev), false);
+      update: async (fn: (prev: GetAppResponse) => GetAppResponse) => {
+        return await q.mutate((prev) => (prev ? fn(prev) : prev), false);
       },
-      save: () => {
-        return q.mutate(async (value) => {
+      save: async () => {
+        return await q.mutate(async (value) => {
           if (!value) {
             return value;
           }
@@ -36,6 +36,9 @@ export const useApp = (name: string) => {
             })),
           });
         }, false);
+      },
+      deploy: async (ref: string, force: boolean = false) => {
+        return await client.deploy.dispatch({ app: name, ref, force });
       },
     })
   );
