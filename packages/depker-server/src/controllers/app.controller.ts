@@ -124,7 +124,7 @@ export class AppController {
       if (names.length !== items.length) {
         throw new BadRequestException("Port not created，unable to create app.");
       }
-      const maps = items.reduce((m, i) => m.set(i.name, i), new Map<string, Port>());
+      const maps = items.reduce((m, i) => m.update(i.name, i), new Map<string, Port>());
       for (const port of request.ports) {
         const bind = new PortBind();
         bind.port = port.port;
@@ -140,7 +140,7 @@ export class AppController {
       if (names.length !== items.length) {
         throw new BadRequestException("Volume not created，unable to create app.");
       }
-      const maps = items.reduce((m, i) => m.set(i.name, i), new Map<string, Volume>());
+      const maps = items.reduce((m, i) => m.update(i.name, i), new Map<string, Volume>());
       for (const volume of request.volumes) {
         const bind = new VolumeBind();
         bind.path = volume.path;

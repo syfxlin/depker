@@ -23,7 +23,7 @@ module.exports = {
     "react/prop-types": "off",
     "react/display-name": "off",
     "react/no-unknown-property": "off",
-    "react-hooks/exhaustive-deps": "off",
+    "react-hooks/exhaustive-deps": "warn",
     "max-len": ["off", { code: 120, ignoreUrls: true }],
   },
 };

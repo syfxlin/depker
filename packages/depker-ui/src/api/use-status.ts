@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { client } from "./client";
-import { useCallback, useMemo } from "react";
 import { AppStatus } from "@syfxlin/depker-client";
+import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const colors: Record<AppStatus, string> = {
   stopped: "pink",
@@ -20,14 +20,9 @@ export const useStatus = (name: string) => {
       refreshInterval: 5000,
     }
   );
-
-  const data = useMemo(() => {
-    return query.data?.status ?? "stopped";
-  }, [query.data]);
-
-  const mutate = useCallback(() => {
-    return query.mutate();
-  }, [query.mutate]);
-
-  return { data, mutate };
+  return useSWRWrapper(
+    query,
+    (v) => v?.status ?? "stopped",
+    (q) => ({ mutate: q.mutate })
+  );
 };

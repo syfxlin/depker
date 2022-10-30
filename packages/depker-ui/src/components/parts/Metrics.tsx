@@ -1,28 +1,24 @@
 import React, { useMemo, useState } from "react";
 import { CardStats, PercStats, TextStats } from "../core/Stats";
-import { GB, HOUR } from "../../utils/constant";
 import { Grid, List, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { css } from "@emotion/react";
 import { useMetrics } from "../../api/use-metrics";
 import { TbActivity, TbArchive, TbCalendarStats, TbClock, TbCpu2, TbDatabase, TbDatabaseExport } from "react-icons/all";
 import { DateTime } from "luxon";
+import { humanBytes, humanCounts, humanTimes } from "../../utils/human";
 
 export const Metrics: React.FC = () => {
   const t = useMantineTheme();
   const [disk, setDisk] = useState(0);
-  const query = useMetrics();
+  const { data } = useMetrics();
 
   const Uptime = useMemo(
     () => (
       <Grid.Col span={12} md={4}>
-        <TextStats
-          title="Server Uptime"
-          icon={TbActivity}
-          value={((query.data?.time?.uptime ?? 0) / HOUR).toFixed(2) + "H"}
-        />
+        <TextStats title="Server Uptime" icon={TbActivity} value={humanTimes((data?.time?.uptime ?? 0) * 1000)} />
       </Grid.Col>
     ),
-    [query.data?.time?.uptime]
+    [data?.time?.uptime]
   );
 
   const CurrentTime = useMemo(
@@ -31,13 +27,13 @@ export const Metrics: React.FC = () => {
         <TextStats
           title="Server Time"
           icon={TbClock}
-          value={DateTime.fromMillis(query.data?.time?.current ?? DateTime.utc().valueOf()).toLocaleString(
+          value={DateTime.fromMillis(data?.time?.current ?? DateTime.utc().valueOf()).toLocaleString(
             DateTime.DATETIME_SHORT
           )}
         />
       </Grid.Col>
     ),
-    [query.data?.time?.current]
+    [data?.time?.current]
   );
 
   const TimeZone = useMemo(
@@ -46,24 +42,20 @@ export const Metrics: React.FC = () => {
         <TextStats
           title="Server TimeZone"
           icon={TbCalendarStats}
-          value={query.data?.time?.timezone ?? DateTime.local().zoneName}
+          value={data?.time?.timezone ?? DateTime.local().zoneName}
         />
       </Grid.Col>
     ),
-    [query?.data?.time?.timezone]
+    [data?.time?.timezone]
   );
 
   const Cpu = useMemo(
     () => (
       <Grid.Col span={12} md={3}>
-        <PercStats
-          title="CPU"
-          icon={TbCpu2}
-          value={((query.data?.cpu?.used ?? 0) / (query.data?.cpu?.total ?? 1)) * 100}
-        />
+        <PercStats title="CPU" icon={TbCpu2} value={((data?.cpu?.used ?? 0) / (data?.cpu?.total ?? 1)) * 100} />
       </Grid.Col>
     ),
-    [query?.data?.cpu]
+    [data?.cpu]
   );
 
   const Memory = useMemo(
@@ -73,14 +65,14 @@ export const Metrics: React.FC = () => {
           title="Memory"
           icon={TbDatabase}
           value={{
-            used: (query.data?.memory?.used ?? 0) / GB,
-            total: (query.data?.memory?.total ?? 0) / GB,
-            unit: "GB",
+            used: data?.memory?.used ?? 0,
+            total: data?.memory?.total ?? 0,
+            unit: humanBytes,
           }}
         />
       </Grid.Col>
     ),
-    [query?.data?.memory]
+    [data?.memory]
   );
 
   const Swap = useMemo(
@@ -90,18 +82,18 @@ export const Metrics: React.FC = () => {
           title="Swap"
           icon={TbDatabaseExport}
           value={{
-            used: (query.data?.swap?.used ?? 0) / GB,
-            total: (query.data?.swap?.total ?? 0) / GB,
-            unit: "GB",
+            used: data?.swap?.used ?? 0,
+            total: data?.swap?.total ?? 0,
+            unit: humanBytes,
           }}
         />
       </Grid.Col>
     ),
-    [query.data?.swap]
+    [data?.swap]
   );
 
   const Disk = useMemo(() => {
-    const disks = query.data?.disk?.[disk % query.data.disk.length];
+    const disks = data?.disk?.[disk % data.disk.length];
     return (
       <Grid.Col span={12} md={3}>
         <PercStats
@@ -120,17 +112,17 @@ export const Metrics: React.FC = () => {
           }
           icon={TbArchive}
           value={{
-            used: (disks?.used ?? 0) / GB,
-            total: (disks?.total ?? 0) / GB,
-            unit: "GB",
+            used: disks?.used ?? 0,
+            total: disks?.total ?? 0,
+            unit: humanBytes,
           }}
         />
       </Grid.Col>
     );
-  }, [query.data?.disk, disk]);
+  }, [data?.disk, disk]);
 
   const Requests = useMemo(() => {
-    const items = Object.entries(query.data?.traefik?.requests ?? {}) as [string, number][];
+    const items = Object.entries(data?.traefik?.requests ?? {}) as [string, number][];
     const success = items.filter(([c]) => parseInt(c) < 400);
     const failure4 = items.filter(([c]) => parseInt(c) >= 400 && parseInt(c) < 500);
     const failure5 = items.filter(([c]) => parseInt(c) >= 500);
@@ -142,6 +134,7 @@ export const Metrics: React.FC = () => {
             {
               name: "Success",
               value: success.reduce((a, [, i]) => a + i, 0),
+              unit: humanCounts,
               tooltip: success.length && (
                 <List
                   css={css`
@@ -160,6 +153,7 @@ export const Metrics: React.FC = () => {
             {
               name: "Failed（4xx）",
               value: failure4.reduce((a, [, i]) => a + i, 0),
+              unit: humanCounts,
               tooltip: failure4.length && (
                 <List
                   css={css`
@@ -178,6 +172,7 @@ export const Metrics: React.FC = () => {
             {
               name: "Failed（5xx）",
               value: failure5.reduce((a, [, i]) => a + i, 0),
+              unit: humanCounts,
               tooltip: failure5.length && (
                 <List
                   css={css`
@@ -197,14 +192,13 @@ export const Metrics: React.FC = () => {
         />
       </Grid.Col>
     );
-  }, [query.data?.traefik?.requests]);
+  }, [data?.traefik?.requests]);
 
   const Certificates = useMemo(() => {
     const now = DateTime.utc();
-    const items = Object.entries(query.data?.traefik?.certs ?? {}).map(([n, t]) => [
-      n,
-      DateTime.fromMillis(t),
-    ]) as Array<[string, DateTime]>;
+    const items = Object.entries(data?.traefik?.certs ?? {}).map(([n, t]) => [n, DateTime.fromMillis(t)]) as Array<
+      [string, DateTime]
+    >;
     const expired = items.filter(([, i]) => i < now);
     const expiring = items.filter(([, i]) => i >= now && i.plus({ days: 30 }) < now);
     const normal = items.filter(([, i]) => i.plus({ days: 30 }) >= now);
@@ -216,6 +210,7 @@ export const Metrics: React.FC = () => {
             {
               name: "Expiring",
               value: expiring.length,
+              unit: humanCounts,
               tooltip: expiring.length && (
                 <List
                   css={css`
@@ -232,6 +227,7 @@ export const Metrics: React.FC = () => {
             {
               name: "Expired",
               value: expired.length,
+              unit: humanCounts,
               tooltip: expired.length && (
                 <List
                   css={css`
@@ -248,6 +244,7 @@ export const Metrics: React.FC = () => {
             {
               name: "Normal",
               value: normal.length,
+              unit: humanCounts,
               tooltip: normal.length && (
                 <List
                   css={css`
@@ -265,20 +262,20 @@ export const Metrics: React.FC = () => {
         />
       </Grid.Col>
     );
-  }, [query.data?.traefik?.certs]);
+  }, [data?.traefik?.certs]);
 
   const Connections = useMemo(() => {
-    const items = Object.entries(query.data?.traefik?.connections ?? {}) as Array<[string, number]>;
+    const items = Object.entries(data?.traefik?.connections ?? {}) as Array<[string, number]>;
     const connections = items
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
-      .map(([n, c]) => ({ name: n.toUpperCase(), value: c }));
+      .map(([n, c]) => ({ name: n.toUpperCase(), value: c, unit: humanCounts }));
     return (
       <Grid.Col span={12} md={3}>
         <CardStats title="Connections (Top 3)" value={connections} />
       </Grid.Col>
     );
-  }, [query.data?.traefik?.connections]);
+  }, [data?.traefik?.connections]);
 
   const Reloads = useMemo(
     () => (
@@ -288,23 +285,25 @@ export const Metrics: React.FC = () => {
           value={[
             {
               name: "Failed",
-              value: query.data?.traefik?.reload?.total_failure ?? 0,
+              value: data?.traefik?.reload?.total_failure ?? 0,
+              unit: humanCounts,
               tooltip: `Last failed: ${DateTime.fromMillis(
-                query.data?.traefik?.reload?.last_failure ?? DateTime.utc().valueOf()
+                data?.traefik?.reload?.last_failure ?? DateTime.utc().valueOf()
               ).toLocaleString(DateTime.DATETIME_SHORT)}`,
             },
             {
               name: "Success",
-              value: query.data?.traefik?.reload?.total_success ?? 0,
+              value: data?.traefik?.reload?.total_success ?? 0,
+              unit: humanCounts,
               tooltip: `Last success: ${DateTime.fromMillis(
-                query.data?.traefik?.reload?.last_success ?? DateTime.utc().valueOf()
+                data?.traefik?.reload?.last_success ?? DateTime.utc().valueOf()
               ).toLocaleString(DateTime.DATETIME_SHORT)}`,
             },
           ]}
         />
       </Grid.Col>
     ),
-    [query.data?.traefik?.reload]
+    [data?.traefik?.reload]
   );
 
   return (

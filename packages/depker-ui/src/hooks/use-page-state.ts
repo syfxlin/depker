@@ -9,25 +9,35 @@ export const usePageState = () => {
   const [search, setSearch] = useState<string>("");
   const [debounced] = useDebouncedValue(search, 1000);
 
+  const values = useMemo(
+    () => ({
+      page,
+      size,
+      sort,
+      search,
+    }),
+    [page, size, sort, search]
+  );
+
   const request = useMemo(
     () => ({
       offset: (page - 1) * size,
       limit: size,
       sort: sort[0] ? sort.join(":") : undefined,
-      search: search ? search : undefined,
+      search: debounced ? debounced : undefined,
     }),
     [page, size, sort, debounced]
   );
 
-  return {
-    page,
-    size,
-    sort,
-    search,
-    request,
-    setPage,
-    setSize,
-    setSort,
-    setSearch,
-  };
+  const update = useMemo(
+    () => ({
+      page: setPage,
+      size: setSize,
+      sort: setSort,
+      search: setSearch,
+    }),
+    []
+  );
+
+  return { values, request, update };
 };

@@ -65,11 +65,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbApps />}
           value={app.data.name}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.set((prev) => ({ ...prev, name: e.target.value }));
+            app.actions.update((prev) => ({ ...prev, name: e.target.value }));
           }}
         />
       ),
-    [app.data?.name, app.set]
+    [app.data?.name]
   );
 
   const Buildpacks = useMemo(
@@ -89,7 +89,7 @@ export const AppConfigsTab: React.FC = () => {
             if (!buildpack) {
               return;
             }
-            app.set((prev) => ({ ...prev, buildpack: value, extensions: {} }));
+            app.actions.update((prev) => ({ ...prev, buildpack: value, extensions: {} }));
           }}
           data={Object.values(buildpacks.data).map((i) => ({
             value: i.name,
@@ -109,7 +109,7 @@ export const AppConfigsTab: React.FC = () => {
           })}
         />
       ),
-    [app.data?.buildpack, app.set, buildpacks]
+    [app.data?.buildpack, buildpacks.data]
   );
 
   const BasicRow = useMemo(
@@ -136,7 +136,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbRefreshAlert />}
           value={app.data.restart}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, restart: value as any }));
+            app.actions.update((prev) => ({ ...prev, restart: value as any }));
           }}
           data={[
             { label: "No", value: "no" },
@@ -145,7 +145,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.restart, app.set]
+    [app.data?.restart]
   );
 
   const PullImage = useMemo(
@@ -158,7 +158,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbDownload />}
           value={app.data.pull ? "true" : "false"}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, pull: value === "true" }));
+            app.actions.update((prev) => ({ ...prev, pull: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -166,7 +166,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.pull, app.set]
+    [app.data?.pull]
   );
 
   const PolicyRow = useMemo(
@@ -193,7 +193,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbActivity />}
           value={app.data.healthcheck}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, healthcheck: value as any }));
+            app.actions.update((prev) => ({ ...prev, healthcheck: value as any }));
           }}
           modals={(item, setItem) => [
             <ArrayInput
@@ -244,7 +244,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.healthcheck, app.set]
+    [app.data?.healthcheck]
   );
 
   // requests
@@ -258,11 +258,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbLink />}
           value={app.data.domain}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, domain: value }));
+            app.actions.update((prev) => ({ ...prev, domain: value }));
           }}
         />
       ),
-    [app.data?.domain, app.set]
+    [app.data?.domain]
   );
 
   const EnableTLS = useMemo(
@@ -275,7 +275,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbCertificate />}
           value={app.data.tls ? "true" : "false"}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, tls: value === "true" }));
+            app.actions.update((prev) => ({ ...prev, tls: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -283,7 +283,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.tls, app.set]
+    [app.data?.tls]
   );
 
   const ProxyPort = useMemo(
@@ -298,11 +298,11 @@ export const AppConfigsTab: React.FC = () => {
           max={65535}
           value={app.data.port}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, port: value ?? 3000 }));
+            app.actions.update((prev) => ({ ...prev, port: value ?? 3000 }));
           }}
         />
       ),
-    [app.data?.port, app.set]
+    [app.data?.port]
   );
 
   const ProxyScheme = useMemo(
@@ -315,11 +315,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbAtom2 />}
           value={app.data.scheme}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.set((prev) => ({ ...prev, scheme: e.target.value }));
+            app.actions.update((prev) => ({ ...prev, scheme: e.target.value }));
           }}
         />
       ),
-    [app.data?.scheme, app.set]
+    [app.data?.scheme]
   );
 
   const ProxyRule = useMemo(
@@ -332,11 +332,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbAtom2 />}
           value={app.data.rule}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.set((prev) => ({ ...prev, rule: e.target.value }));
+            app.actions.update((prev) => ({ ...prev, rule: e.target.value }));
           }}
         />
       ),
-    [app.data?.rule, app.set]
+    [app.data?.rule]
   );
 
   const DomainRow = useMemo(
@@ -380,7 +380,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbForbid />}
           value={app.data.middlewares}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, middlewares: value as any }));
+            app.actions.update((prev) => ({ ...prev, middlewares: value as any }));
           }}
           modals={(item, setItem) => [
             <TextInput
@@ -415,7 +415,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.middlewares, app.set]
+    [app.data?.middlewares]
   );
 
   // parameters
@@ -431,14 +431,14 @@ export const AppConfigsTab: React.FC = () => {
           rightPlaceholder="Labels Item Value"
           value={app.data.labels.map((i) => [i.name, i.value, i.onbuild])}
           onChange={(value) => {
-            app.set((prev) => ({
+            app.actions.update((prev) => ({
               ...prev,
               labels: value.map(([name, value, onbuild]) => ({ name, value, onbuild })),
             }));
           }}
         />
       ),
-    [app.data?.labels, app.set]
+    [app.data?.labels]
   );
 
   const Secrets = useMemo(
@@ -453,14 +453,14 @@ export const AppConfigsTab: React.FC = () => {
           rightPlaceholder="Secrets Item Alias"
           value={app.data.secrets.map((i) => [i.name, i.value, i.onbuild])}
           onChange={(value) => {
-            app.set((prev) => ({
+            app.actions.update((prev) => ({
               ...prev,
               secrets: value.map(([name, value, onbuild]) => ({ name, value, onbuild })),
             }));
           }}
         />
       ),
-    [app.data?.secrets, app.set]
+    [app.data?.secrets]
   );
 
   const BuildArgs = useMemo(
@@ -475,14 +475,14 @@ export const AppConfigsTab: React.FC = () => {
           rightPlaceholder="Build Args Item Value"
           value={Object.entries(app.data.buildArgs)}
           onChange={(value) => {
-            app.set((prev) => ({
+            app.actions.update((prev) => ({
               ...prev,
               buildArgs: value.reduce((a, [k, v]) => ({ ...a, [k]: v }), {}),
             }));
           }}
         />
       ),
-    [app.data?.buildArgs, app.set]
+    [app.data?.buildArgs]
   );
 
   // ports
@@ -496,7 +496,7 @@ export const AppConfigsTab: React.FC = () => {
           placeholder="Host Port"
           value={app.data.ports}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, ports: value }));
+            app.actions.update((prev) => ({ ...prev, ports: value }));
           }}
           items={Object.values(ports.data).map((i) => ({
             value: i.name,
@@ -532,7 +532,7 @@ export const AppConfigsTab: React.FC = () => {
                         return false;
                       }
                       try {
-                        await ports.create({
+                        await ports.actions.create({
                           name: value.name,
                           proto: value.proto,
                           port: value.port,
@@ -618,7 +618,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.ports, app.set, ports]
+    [app.data?.ports, ports.data]
   );
 
   // volumes
@@ -632,7 +632,7 @@ export const AppConfigsTab: React.FC = () => {
           placeholder="Host Path"
           value={app.data.volumes}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, volumes: value }));
+            app.actions.update((prev) => ({ ...prev, volumes: value }));
           }}
           items={Object.values(volumes.data).map((i) => ({
             value: i.name,
@@ -669,7 +669,7 @@ export const AppConfigsTab: React.FC = () => {
                         return false;
                       }
                       try {
-                        await volumes.create({
+                        await volumes.actions.create({
                           name: value.name,
                           path: value.path,
                           global: value.global,
@@ -769,7 +769,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.ports, app.set, ports]
+    [app.data?.ports, ports.data]
   );
 
   // extensions
@@ -780,11 +780,11 @@ export const AppConfigsTab: React.FC = () => {
           options={buildpacks.data[app.data.buildpack]?.options}
           value={app.data.extensions}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, extensions: value }));
+            app.actions.update((prev) => ({ ...prev, extensions: value }));
           }}
         />
       ),
-    [app.data?.buildpack, buildpacks.data, app.data?.extensions, app.set]
+    [app.data?.buildpack, buildpacks.data, app.data?.extensions]
   );
 
   // others
@@ -798,11 +798,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbTerminal />}
           value={app.data.commands}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, commands: value }));
+            app.actions.update((prev) => ({ ...prev, commands: value }));
           }}
         />
       ),
-    [app.data?.commands, app.set]
+    [app.data?.commands]
   );
 
   const EntryPoints = useMemo(
@@ -815,11 +815,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbTerminal />}
           value={app.data.entrypoints}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, entrypoints: value }));
+            app.actions.update((prev) => ({ ...prev, entrypoints: value }));
           }}
         />
       ),
-    [app.data?.entrypoints, app.set]
+    [app.data?.entrypoints]
   );
 
   const CommandsRow = useMemo(
@@ -846,7 +846,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbInfinity />}
           value={app.data.init ? "true" : "false"}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, init: value === "true" }));
+            app.actions.update((prev) => ({ ...prev, init: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -854,7 +854,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.init, app.set]
+    [app.data?.init]
   );
 
   const Remove = useMemo(
@@ -867,7 +867,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbPinnedOff />}
           value={app.data.rm ? "true" : "false"}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, rm: value === "true" }));
+            app.actions.update((prev) => ({ ...prev, rm: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -875,7 +875,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.rm, app.set]
+    [app.data?.rm]
   );
 
   const Privileged = useMemo(
@@ -888,7 +888,7 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbComet />}
           value={app.data.privileged ? "true" : "false"}
           onChange={(value) => {
-            app.set((prev) => ({ ...prev, privileged: value === "true" }));
+            app.actions.update((prev) => ({ ...prev, privileged: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -896,7 +896,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.privileged, app.set]
+    [app.data?.privileged]
   );
 
   const ModeRow = useMemo(
@@ -926,11 +926,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbUser />}
           value={app.data.user}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.set((prev) => ({ ...prev, user: e.target.value }));
+            app.actions.update((prev) => ({ ...prev, user: e.target.value }));
           }}
         />
       ),
-    [app.data?.user, app.set]
+    [app.data?.user]
   );
 
   const Workdir = useMemo(
@@ -943,11 +943,11 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbFolder />}
           value={app.data.workdir}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.set((prev) => ({ ...prev, workdir: e.target.value }));
+            app.actions.update((prev) => ({ ...prev, workdir: e.target.value }));
           }}
         />
       ),
-    [app.data?.workdir, app.set]
+    [app.data?.workdir]
   );
 
   const Networks = useMemo(
@@ -962,14 +962,14 @@ export const AppConfigsTab: React.FC = () => {
           rightPlaceholder="Networks Item Alias"
           value={Object.entries(app.data.networks)}
           onChange={(value) => {
-            app.set((prev) => ({
+            app.actions.update((prev) => ({
               ...prev,
               networks: value.reduce((a, [k, v]) => ({ ...a, [k]: v }), {}),
             }));
           }}
         />
       ),
-    [app.data?.networks, app.set]
+    [app.data?.networks]
   );
 
   const Hosts = useMemo(
@@ -984,14 +984,14 @@ export const AppConfigsTab: React.FC = () => {
           rightPlaceholder="Hosts Item IP"
           value={app.data.hosts.map((i) => [i.name, i.value, i.onbuild])}
           onChange={(value) => {
-            app.set((prev) => ({
+            app.actions.update((prev) => ({
               ...prev,
               hosts: value.map(([name, value, onbuild]) => ({ name, value, onbuild })),
             }));
           }}
         />
       ),
-    [app.data?.hosts, app.set]
+    [app.data?.hosts]
   );
 
   const WorkingRow = useMemo(
@@ -1009,7 +1009,7 @@ export const AppConfigsTab: React.FC = () => {
   );
 
   return (
-    <Async query={app}>
+    <Async query={app.query}>
       <Stack>
         <Heading>General</Heading>
         {BasicRow}

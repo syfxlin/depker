@@ -18,7 +18,7 @@ export const useFilterState = <T>(
       }
       return data;
     });
-  }, [value, setValue, setData]);
+  }, [value, setValue]);
 
   // update value from data
   const update = useCallback(
@@ -30,8 +30,8 @@ export const useFilterState = <T>(
       }
       setData(data);
     },
-    [value, setValue, setData]
+    [value, setValue]
   );
 
-  return [data, update] as const;
+  return { value: data, update };
 };

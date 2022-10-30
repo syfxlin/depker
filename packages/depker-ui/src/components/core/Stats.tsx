@@ -13,14 +13,14 @@ export interface PercStatsProps {
     | {
         used: number;
         total: number;
-        unit: string;
+        unit: (value: number) => string;
       };
 }
 
 export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }) => {
   const t = useMantineTheme();
   const perc = typeof value === "number" ? value : (value.used / value.total) * 100;
-  const unit = typeof value === "number" ? "%" : value.unit;
+  const unit = typeof value === "number" ? (v: number) => `${v.toFixed(2)}%` : value.unit;
   const prev = usePrevious(perc);
   const diff = Math.round((prev ? (perc - prev) / prev : 0) * 100) / 100;
   return (
@@ -58,9 +58,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
       >
         <Tooltip
           label={`Real-time Status: ${
-            typeof value === "number"
-              ? value.toFixed(2) + unit
-              : value.used.toFixed(2) + unit + " / " + value.total.toFixed(2) + unit
+            typeof value === "number" ? unit(value) : unit(value.used) + " / " + unit(value.total)
           }`}
         >
           <Text
@@ -73,8 +71,8 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
               overflow: hidden;
             `}
           >
-            {typeof value === "number" && value.toFixed(2) + unit}
-            {typeof value !== "number" && value.used.toFixed(1) + unit + " / " + value.total.toFixed(1) + unit}
+            {typeof value === "number" && unit(value)}
+            {typeof value !== "number" && unit(value.used) + " / " + unit(value.used)}
           </Text>
         </Tooltip>
         {diff !== 0 && (
@@ -180,6 +178,7 @@ export interface CardStatsProps {
     name: string;
     value: number;
     tooltip?: ReactNode;
+    unit?: (value: number) => string;
   }[];
 }
 
@@ -222,7 +221,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
                   font-weight: 700;
                 `}
               >
-                {primary.value}
+                {primary.unit ? primary.unit(primary.value) : primary.value}
               </Text>
               <Text
                 color="dimmed"
@@ -244,7 +243,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
                       font-weight: 700;
                     `}
                   >
-                    {item.value}
+                    {item.unit ? item.unit(item.value) : item.value}
                   </Text>
                   <Text
                     color="dimmed"

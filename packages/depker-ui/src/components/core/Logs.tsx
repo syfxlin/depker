@@ -293,13 +293,12 @@ export const Empty = forwardRef<HTMLDivElement, EmptyProps>((props, ref) => {
 });
 
 export type LogsProps = FlexProps & {
-  title?: ReactNode;
-  empty?: ReactNode;
-  data?: Array<string | [number, LogLevel, string]>;
+  title: ReactNode;
+  empty: ReactNode;
+  data: Array<string | [number, LogLevel, string]>;
 };
 
-export const Logs = forwardRef<HTMLDivElement, LogsProps>((props, ref) => {
-  const { title = "Logs", empty = "No logs.", data = [], ...other } = props;
+export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data, ...other }, ref) => {
   const t = useMantineTheme();
 
   // search
@@ -326,7 +325,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>((props, ref) => {
     } else {
       setResult(indexes.map((s, i) => (s.indexOf(debounced.toUpperCase()) !== -1 ? i : -1)).filter((i) => i !== -1));
     }
-  }, [debounced, data]);
+  }, [debounced, data, indexes]);
   // scroll to search target
   useEffect(() => {
     if (list.current && result.length > index) {
@@ -361,7 +360,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>((props, ref) => {
           </Box>
         );
       }),
-    [setFollow]
+    []
   );
 
   const Content = useMemo(
@@ -485,7 +484,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>((props, ref) => {
         </Tooltip>
       </>
     ),
-    [t, index, search, result, setIndex, setSearch]
+    [t, index, search, result]
   );
 
   const More = useMemo(
@@ -517,7 +516,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>((props, ref) => {
         </Menu.Dropdown>
       </Menu>
     ),
-    [t, follow, timestamps, fullscreen, setFollow, setTimestamps, setFullscreen]
+    [t, follow, timestamps, fullscreen]
   );
 
   const Header = useMemo(
@@ -538,7 +537,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>((props, ref) => {
         {More}
       </Group>
     ),
-    [Search, More]
+    [t, Search, More]
   );
 
   return (

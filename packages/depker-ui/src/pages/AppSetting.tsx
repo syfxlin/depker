@@ -50,7 +50,9 @@ export const AppSetting: React.FC = () => {
             leftIcon={<TbDeviceFloppy />}
             onClick={async () => {
               try {
-                await saving.wrap(app.save());
+                saving.update(true);
+                await app.actions.save();
+                saving.update(false);
                 showNotification({
                   title: "Save successful",
                   message: "Application save successful.",

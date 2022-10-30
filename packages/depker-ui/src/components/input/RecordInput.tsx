@@ -25,11 +25,11 @@ export type RecordInputProps = Omit<InputWrapperProps, "children" | "onChange"> 
 export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
   ({ leftIcon, rightIcon, leftPlaceholder, rightPlaceholder, value, onChange, ...props }, ref) => {
     const t = useMantineTheme();
-    const [data, setData] = useFilterState(value ?? [], onChange ?? (() => {}), ([k]) => k);
+    const data = useFilterState(value ?? [], onChange ?? (() => {}), ([k]) => k);
     return (
       <Input.Wrapper {...props} ref={ref}>
         <Stack spacing="xs">
-          {!data.length && (
+          {!data.value.length && (
             <Grid>
               <Grid.Col span={6}>
                 <Input disabled icon={leftIcon} placeholder={leftPlaceholder} />
@@ -39,7 +39,7 @@ export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
               </Grid.Col>
             </Grid>
           )}
-          {data.map((item, index) => (
+          {data.value.map((item, index) => (
             <Grid key={`record-input-${index}`}>
               <Grid.Col span={6}>
                 <Input
@@ -47,9 +47,9 @@ export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
                   placeholder={leftPlaceholder}
                   value={item[0] ?? ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    const values = [...data];
+                    const values = [...data.value];
                     values[index] = [e.target.value, item[1]];
-                    setData(values);
+                    data.update(values);
                   }}
                 />
               </Grid.Col>
@@ -59,17 +59,17 @@ export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
                   placeholder={rightPlaceholder}
                   value={item[1] ?? ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    const values = [...data];
+                    const values = [...data.value];
                     values[index] = [item[0], e.target.value];
-                    setData(values);
+                    data.update(values);
                   }}
                   rightSection={
                     <Tooltip label="Delete">
                       <ActionIcon
                         onClick={() => {
-                          const values = [...data];
+                          const values = [...data.value];
                           values.splice(index, 1);
-                          setData(values);
+                          data.update(values);
                         }}
                       >
                         <TbX />
@@ -81,10 +81,15 @@ export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
             </Grid>
           ))}
           <Group spacing={t.spacing.xs}>
-            <Button size="xs" variant="light" leftIcon={<TbCodePlus />} onClick={() => setData([...data, ["", ""]])}>
+            <Button
+              size="xs"
+              variant="light"
+              leftIcon={<TbCodePlus />}
+              onClick={() => data.update([...data.value, ["", ""]])}
+            >
               Add
             </Button>
-            <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => setData([])}>
+            <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => data.update([])}>
               Clear
             </Button>
           </Group>

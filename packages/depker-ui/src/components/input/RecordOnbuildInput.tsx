@@ -27,11 +27,11 @@ export type RecordOnbuildInputProps = Omit<InputWrapperProps, "children" | "onCh
 export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputProps>(
   ({ leftIcon, rightIcon, leftPlaceholder, rightPlaceholder, value, onChange, ...props }, ref) => {
     const t = useMantineTheme();
-    const [data, setData] = useFilterState(value ?? [], onChange ?? (() => {}), ([k]) => k);
+    const data = useFilterState(value ?? [], onChange ?? (() => {}), ([k]) => k);
     return (
       <Input.Wrapper {...props} ref={ref}>
         <Stack spacing="xs">
-          {!data.length && (
+          {!data.value.length && (
             <Grid>
               <Grid.Col span={6}>
                 <Input disabled icon={leftIcon} placeholder={leftPlaceholder} />
@@ -41,7 +41,7 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
               </Grid.Col>
             </Grid>
           )}
-          {data.map((item, index) => (
+          {data.value.map((item, index) => (
             <Grid key={`record-input-${index}`}>
               <Grid.Col span={6}>
                 <Input
@@ -49,9 +49,9 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
                   placeholder={leftPlaceholder}
                   value={item[0] ?? ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    const values = [...data];
+                    const values = [...data.value];
                     values[index] = [e.target.value, item[1], item[2]];
-                    setData(values);
+                    data.update(values);
                   }}
                 />
               </Grid.Col>
@@ -61,9 +61,9 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
                   placeholder={rightPlaceholder}
                   value={item[1] ?? ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    const values = [...data];
+                    const values = [...data.value];
                     values[index] = [item[0], e.target.value, item[2]];
-                    setData(values);
+                    data.update(values);
                   }}
                 />
               </Grid.Col>
@@ -77,17 +77,17 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
                     { label: "On Build: No", value: "false" },
                   ]}
                   onChange={(v) => {
-                    const values = [...data];
+                    const values = [...data.value];
                     values[index] = [item[0], item[1], v === "true"];
-                    setData(values);
+                    data.update(values);
                   }}
                   rightSection={
                     <Tooltip label="Delete">
                       <ActionIcon
                         onClick={() => {
-                          const values = [...data];
+                          const values = [...data.value];
                           values.splice(index, 1);
-                          setData(values);
+                          data.update(values);
                         }}
                       >
                         <TbX />
@@ -107,11 +107,11 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
               size="xs"
               variant="light"
               leftIcon={<TbCodePlus />}
-              onClick={() => setData([...data, ["", "", false]])}
+              onClick={() => data.update([...data.value, ["", "", false]])}
             >
               Add
             </Button>
-            <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => setData([])}>
+            <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => data.update([])}>
               Clear
             </Button>
           </Group>

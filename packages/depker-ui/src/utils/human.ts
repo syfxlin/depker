@@ -1,17 +1,6 @@
 import humanFormat from "human-format";
 
-export const humanShortTime = (value: number) => {
-  const scale = new humanFormat.Scale({
-    ms: 1,
-    s: 1000,
-    m: 60000,
-    h: 3600000,
-    d: 86400000,
-  });
-  return humanFormat(value, { scale });
-};
-
-export const humanLongTime = (value: number) => {
+export const humanTimes = (value: number) => {
   const scale = new humanFormat.Scale({
     milliseconds: 1,
     seconds: 1000,
@@ -20,4 +9,22 @@ export const humanLongTime = (value: number) => {
     days: 86400000,
   });
   return humanFormat(value, { scale });
+};
+
+export const humanBytes = (value: number) => {
+  const scale = new humanFormat.Scale({
+    KB: Math.pow(1024, 1),
+    MB: Math.pow(1024, 2),
+    GB: Math.pow(1024, 3),
+    TB: Math.pow(1024, 4),
+    PB: Math.pow(1024, 5),
+    EB: Math.pow(1024, 6),
+    ZB: Math.pow(1024, 7),
+    YB: Math.pow(1024, 8),
+  });
+  return humanFormat(value, { scale: scale });
+};
+
+export const humanCounts = (value: number) => {
+  return humanFormat(value);
 };

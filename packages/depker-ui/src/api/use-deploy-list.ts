@@ -2,6 +2,7 @@ import { usePageState } from "../hooks/use-page-state";
 import useSWR from "swr";
 import { client } from "./client";
 import { DeployStatus } from "@syfxlin/depker-client";
+import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const colors: Record<DeployStatus, string> = {
   queued: "blue",
@@ -23,8 +24,14 @@ export const useDeployList = (app: string) => {
     }
   );
 
+  const result = useSWRWrapper(
+    query,
+    (v) => v,
+    (q) => ({ mutate: q.mutate })
+  );
+
   return {
-    ...query,
+    ...result,
     ...page,
   };
 };

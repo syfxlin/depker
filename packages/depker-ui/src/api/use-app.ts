@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { client } from "./client";
-import { useSetSWR } from "../hooks/use-set-swr";
-import { useSaveSWR } from "../hooks/use-save-swr";
+import { useSWRWrapper } from "../hooks/use-swr-wrapper";
+import { GetAppResponse } from "@syfxlin/depker-client";
 
 export const useApp = (name: string) => {
   const query = useSWR(["client.app.get", name], (key, name) => client.app.get({ name }), {
@@ -11,25 +11,32 @@ export const useApp = (name: string) => {
     refreshWhenOffline: false,
   });
 
-  const set = useSetSWR(query);
-  const save = useSaveSWR(query, (value) => {
-    return client.app.upsert({
-      ...value,
-      ports: value.ports.map((i) => ({
-        name: i.name,
-        port: i.cport,
-      })),
-      volumes: value.volumes.map((i) => ({
-        name: i.name,
-        path: i.cpath,
-        readonly: i.readonly,
-      })),
-    });
-  });
-
-  return {
-    ...query,
-    set,
-    save,
-  };
+  return useSWRWrapper(
+    query,
+    (v) => v,
+    (q) => ({
+      update: (fn: (prev: GetAppResponse) => GetAppResponse) => {
+        return q.mutate((prev) => (prev ? fn(prev) : prev), false);
+      },
+      save: () => {
+        return q.mutate(async (value) => {
+          if (!value) {
+            return value;
+          }
+          return client.app.upsert({
+            ...value,
+            ports: value.ports.map((i) => ({
+              name: i.name,
+              port: i.cport,
+            })),
+            volumes: value.volumes.map((i) => ({
+              name: i.name,
+              path: i.cpath,
+              readonly: i.readonly,
+            })),
+          });
+        }, false);
+      },
+    })
+  );
 };

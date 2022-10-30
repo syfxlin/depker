@@ -32,13 +32,13 @@ export const AppList: React.FC = () => {
       header={
         <Group>
           <Input
-            value={apps.search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => apps.setSearch(e.target.value)}
+            value={apps.values.search}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => apps.update.search(e.target.value)}
             placeholder="Search apps"
             icon={<TbSearch />}
             rightSection={
-              apps.search ? (
-                <ActionIcon onClick={() => apps.setSearch("")}>
+              apps.values.search ? (
+                <ActionIcon onClick={() => apps.update.search("")}>
                   <TbX />
                 </ActionIcon>
               ) : (
@@ -50,9 +50,15 @@ export const AppList: React.FC = () => {
         </Group>
       }
     >
-      <Async query={apps}>
+      <Async query={apps.query}>
         {apps.data && (
-          <Pages edges page={apps.page} size={apps.size} total={apps.data.total} onChange={apps.setPage}>
+          <Pages
+            edges
+            page={apps.values.page}
+            size={apps.values.size}
+            total={apps.data.total}
+            onChange={apps.update.page}
+          >
             <Grid>
               {apps.data?.items?.map((item) => (
                 <Grid.Col key={`apps-${item.name}`} span={4}>

@@ -8,15 +8,15 @@ export const useDeployLogs = (id: number | string | undefined) => {
   const [items, handlers] = useListState<LogsDeployResponse["logs"][number]>([]);
 
   useEffect(() => {
-    if (typeof id !== "number" && typeof id !== "string") {
+    if (!id) {
       latest.current = 0;
       handlers.setState([]);
     }
-  }, [id, latest, handlers]);
+  }, [id, latest]);
 
   useEffect(() => {
     const fn = () => {
-      if ((typeof id !== "number" && typeof id !== "string") || latest.current < 0) {
+      if (!id || latest.current < 0) {
         return;
       }
       (async () => {

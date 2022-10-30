@@ -40,7 +40,7 @@ const SelectArrayInputInner = <T,>(
 ) => {
   const t = useMantineTheme();
   // @ts-ignore
-  const [data, setData] = useFilterState<T | undefined>(value ?? [], onChange ?? (() => {}), (v) => v);
+  const data = useFilterState<T | undefined>(value ?? [], onChange ?? (() => {}), (v) => v);
   return (
     <Input.Wrapper {...props} ref={ref}>
       <Stack
@@ -51,18 +51,18 @@ const SelectArrayInputInner = <T,>(
           }
         `}
       >
-        {!data.length && (
+        {!data.value.length && (
           <Grid>
             <Grid.Col span={12}>
               <Input disabled icon={icon} placeholder={placeholder} />
             </Grid.Col>
           </Grid>
         )}
-        {data.map((item, index) => {
+        {data.value.map((item, index) => {
           const setItem = (value: T | undefined) => {
-            const values = [...data];
+            const values = [...data.value];
             values[index] = value;
-            setData(values);
+            data.update(values);
           };
           return (
             <Grid key={`selected-array-input-${index}`}>
@@ -85,9 +85,9 @@ const SelectArrayInputInner = <T,>(
                     <Tooltip label="Delete">
                       <ActionIcon
                         onClick={() => {
-                          const values = [...data];
+                          const values = [...data.value];
                           values.splice(index, 1);
-                          setData(values);
+                          data.update(values);
                         }}
                       >
                         <TbX />
@@ -105,10 +105,15 @@ const SelectArrayInputInner = <T,>(
           );
         })}
         <Group spacing={t.spacing.xs}>
-          <Button size="xs" variant="light" leftIcon={<TbCodePlus />} onClick={() => setData([...data, undefined])}>
+          <Button
+            size="xs"
+            variant="light"
+            leftIcon={<TbCodePlus />}
+            onClick={() => data.update([...data.value, undefined])}
+          >
             Add
           </Button>
-          <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => setData([])}>
+          <Button size="xs" variant="light" leftIcon={<TbCodeMinus />} onClick={() => data.update([])}>
             Clear
           </Button>
         </Group>
