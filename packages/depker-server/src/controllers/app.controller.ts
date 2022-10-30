@@ -283,25 +283,23 @@ export class AppController {
   }
 
   private async _status(names: string[]) {
+    const allInfos = await this.docker.listContainers({ all: true });
+
     const result: Record<string, StatusAppResponse["status"]> = {};
-
     for (const name of names) {
-      let status: StatusAppResponse["status"] = "stopped";
-      try {
-        const info = await this.docker.getContainer(name).inspect();
-        if (info.State.Status === "running") {
-          status = "running";
-        } else if (info.State.Status === "restarting") {
-          status = "restarting";
-        } else if (info.State.Status === "exited") {
-          status = "exited";
-        }
-      } catch (e) {
-        status = "stopped";
-      }
-      result[name] = status;
-    }
+      const infos = allInfos.filter((i) => i.Labels["depker.name"] === name).sort((a, b) => b.Created - a.Created);
+      const state = infos.length ? infos[0].State.toLowerCase() : null;
 
+      if (state === "running") {
+        result[name] = "running";
+      } else if (state === "restarting") {
+        result[name] = "restarting";
+      } else if (state === "exited") {
+        result[name] = "exited";
+      } else {
+        result[name] = "stopped";
+      }
+    }
     return result;
   }
 }

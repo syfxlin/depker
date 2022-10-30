@@ -40,7 +40,7 @@
     "luxon": "^3.0.4",
     "nestjs-http-promise": "^2.0.0",
     "node-git-server": "^1.0.0",
-    "nodegit": "^0.27.0",
+    "nodegit": "^0.28.0-alpha.18",
     "p-all": "^4.0.0",
     "parse-prometheus-text-format": "^1.1.1",
     "passport": "^0.6.0",

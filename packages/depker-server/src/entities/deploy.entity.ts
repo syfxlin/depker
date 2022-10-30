@@ -40,10 +40,15 @@ export class Deploy extends BaseEntity {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
+    cascade: false,
+    persistence: false,
   })
   app: Relation<App>;
 
-  @OneToMany(() => Log, (log) => log.deploy)
+  @OneToMany(() => Log, (log) => log.deploy, {
+    cascade: false,
+    persistence: false,
+  })
   logs: Relation<Log[]>;
 
   // date

@@ -78,12 +78,20 @@ export interface DepkerPlugin {
   label?: string;
   group?: string;
   icon?: string;
-  options?: {
-    global?: DepkerPluginOption[];
-    buildpack?: DepkerPluginOption[];
+  options?: DepkerPluginOption[];
+  init?: (ctx: PluginContext) => Promise<void> | void;
+  destroy?: (ctx: PluginContext) => Promise<void> | void;
+  routes?: (ctx: RouteContext) => Promise<any> | any;
+  buildpack?: {
+    options: DepkerPluginOption[];
+    handle: (ctx: PackContext) => Promise<void> | void;
   };
-  init?: (ctx: PluginContext) => Promise<void>;
-  destroy?: (ctx: PluginContext) => Promise<void>;
-  routes?: (ctx: RouteContext) => Promise<any>;
-  buildpack?: (ctx: PackContext) => Promise<void> | void;
+  service?: {
+    options: DepkerPluginOption[];
+    handle: (ctx: PackContext) => Promise<void> | void; // TODO: update ctx
+  };
+  database?: {
+    options: DepkerPluginOption[];
+    handle: (ctx: PackContext) => Promise<void> | void; // TODO: update ctx
+  };
 }

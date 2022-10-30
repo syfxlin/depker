@@ -28,7 +28,10 @@ export class Port extends BaseEntity {
   @Column({ nullable: false })
   port: number;
 
-  @OneToMany(() => PortBind, (bind) => bind.bind)
+  @OneToMany(() => PortBind, (bind) => bind.bind, {
+    cascade: false,
+    persistence: false,
+  })
   binds: Relation<PortBind[]>;
 
   // date

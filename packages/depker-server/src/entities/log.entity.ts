@@ -20,6 +20,8 @@ export class Log extends BaseEntity {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
+    cascade: false,
+    persistence: false,
   })
   deploy: Relation<Deploy>;
 

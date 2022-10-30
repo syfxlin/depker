@@ -138,7 +138,7 @@ export class DeployService {
   public async project(deploy: Deploy) {
     const pack = await this.plugins.plugin(deploy.app.buildpack);
 
-    if (!pack || !pack.buildpack) {
+    if (!pack || !pack.buildpack || !pack.buildpack.handle) {
       await Log.failed(
         deploy,
         `Init project ${deploy.app.name} failure. Caused by not found buildpack ${deploy.app.buildpack}`
@@ -147,7 +147,7 @@ export class DeployService {
     }
 
     const dir = await this.storages.project(deploy.app.name, deploy.commit);
-    await pack.buildpack(
+    await pack.buildpack.handle(
       new PackContext({
         name: pack.name,
         deploy: deploy,

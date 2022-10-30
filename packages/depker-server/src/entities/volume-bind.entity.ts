@@ -15,6 +15,8 @@ export class VolumeBind extends BaseEntity {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
+    cascade: false,
+    persistence: false,
   })
   app: Relation<App>;
 
@@ -22,6 +24,8 @@ export class VolumeBind extends BaseEntity {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
+    cascade: false,
+    persistence: false,
   })
   bind: Relation<Volume>;
 

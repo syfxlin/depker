@@ -9,13 +9,13 @@ export class BuildpackController {
   @Get("/")
   public async list(): Promise<ListBuildPackResponse> {
     return Object.values(await this.plugins.plugins())
-      .filter((p) => p.buildpack)
+      .filter((p) => p.buildpack?.handle)
       .map((p) => ({
         name: p.name,
         label: p.label,
         group: p.group,
         icon: p.icon,
-        options: p.options?.buildpack,
+        options: p.buildpack?.options,
       }));
   }
 }

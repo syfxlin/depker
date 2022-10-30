@@ -26,7 +26,10 @@ export class Volume extends BaseEntity {
   @Column({ nullable: false, default: false })
   global: boolean;
 
-  @OneToMany(() => VolumeBind, (bind) => bind.bind)
+  @OneToMany(() => VolumeBind, (bind) => bind.bind, {
+    cascade: false,
+    persistence: false,
+  })
   binds: Relation<VolumeBind[]>;
 
   // date

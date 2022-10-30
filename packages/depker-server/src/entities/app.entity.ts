@@ -128,14 +128,23 @@ export class App extends BaseEntity {
   extensions: Record<string, any>;
 
   // relations
-  @OneToMany(() => PortBind, (bind) => bind.app)
+  @OneToMany(() => PortBind, (bind) => bind.app, {
+    cascade: false,
+    persistence: false,
+  })
   ports: Relation<PortBind[]>;
 
-  @OneToMany(() => VolumeBind, (bind) => bind.app)
+  @OneToMany(() => VolumeBind, (bind) => bind.app, {
+    cascade: false,
+    persistence: false,
+  })
   volumes: Relation<VolumeBind[]>;
 
   // deploy
-  @OneToMany(() => Deploy, (deploy) => deploy.app)
+  @OneToMany(() => Deploy, (deploy) => deploy.app, {
+    cascade: false,
+    persistence: false,
+  })
   deploys: Relation<Deploy[]>;
 
   // date

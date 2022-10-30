@@ -5,8 +5,8 @@ export const label = "Dockerfile";
 export const icon = "docker";
 export const group = "General";
 
-export const options: DepkerPlugin["options"] = {
-  buildpack: [
+export const buildpack: DepkerPlugin["buildpack"] = {
+  options: [
     {
       type: "boolean",
       name: "boolean",
@@ -80,10 +80,9 @@ export const options: DepkerPlugin["options"] = {
       ],
     },
   ],
-};
-
-export const buildpack: DepkerPlugin["buildpack"] = async (ctx) => {
-  await ctx.values("dockerfile", "value1");
-  await ctx.values("dockerfile");
-  await ctx.values("dockerfile", null);
+  handle: async (ctx) => {
+    await ctx.values("dockerfile", "value1");
+    await ctx.values("dockerfile");
+    await ctx.values("dockerfile", null);
+  },
 };

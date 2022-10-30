@@ -7,6 +7,7 @@ import { Badge, Grid, Stack, Text, Tooltip, useMantineTheme } from "@mantine/cor
 import { css } from "@emotion/react";
 import { humanTimes } from "../../utils/human";
 import { Async } from "../core/Async";
+import { TimeRefresh } from "../core/TimeRefresh";
 
 export type DeployListProps = {
   app: string;
@@ -75,7 +76,9 @@ export const DeployList: React.FC<DeployListProps> = ({ app }) => {
                         {["queued", "running"].includes(deploy.status) && (
                           <Tooltip label={`Created in ${createdAt.toLocaleString(DateTime.DATETIME_SHORT)}`}>
                             <Text size="lg" weight={500} inline>
-                              {humanTimes(DateTime.utc().diff(createdAt).get("milliseconds"))}
+                              <TimeRefresh interval={5000}>
+                                {() => humanTimes(DateTime.utc().diff(createdAt).get("milliseconds"))}
+                              </TimeRefresh>
                             </Text>
                           </Tooltip>
                         )}
@@ -83,12 +86,16 @@ export const DeployList: React.FC<DeployListProps> = ({ app }) => {
                           <>
                             <Tooltip label={`Created in ${createdAt.toLocaleString(DateTime.DATETIME_SHORT)}`}>
                               <Text size="md" weight={500}>
-                                {humanTimes(DateTime.utc().diff(createdAt).get("milliseconds"))} ago
+                                <TimeRefresh interval={5000}>
+                                  {() => `${humanTimes(DateTime.utc().diff(createdAt).get("milliseconds"))} ago`}
+                                </TimeRefresh>
                               </Text>
                             </Tooltip>
                             <Tooltip label={`Finished in ${updatedAt.toLocaleString(DateTime.DATETIME_SHORT)}`}>
                               <Text size="xs" inline>
-                                Finished in {humanTimes(updatedAt.diff(createdAt).get("milliseconds"))}
+                                <TimeRefresh interval={5000}>
+                                  {() => `Finished in ${humanTimes(updatedAt.diff(createdAt).get("milliseconds"))}`}
+                                </TimeRefresh>
                               </Text>
                             </Tooltip>
                           </>
