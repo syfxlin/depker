@@ -23,7 +23,7 @@ export const useDeployLogs = (id: number | string | undefined) => {
           since: latest.current,
         });
         if (["queued", "running"].includes(response.status)) {
-          latest.current = response.logs[response.logs.length - 1][0];
+          latest.current = response.logs[response.logs.length - 1][0] + 1;
         } else {
           latest.current = -1;
         }

@@ -19,11 +19,12 @@ import { VolumeBind } from "../entities/volume-bind.entity";
 import { PortBind } from "../entities/port-bind.entity";
 import * as example from "../plugins/example";
 import * as dockerfile from "../plugins/dockerfile";
+import { image } from "../plugins/image";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private _loaded = false;
-  private readonly _internal: DepkerPlugin[] = [example as DepkerPlugin, dockerfile as DepkerPlugin];
+  private readonly _internal: DepkerPlugin[] = [image, example as DepkerPlugin, dockerfile as DepkerPlugin];
   private readonly _plugins: Record<string, DepkerPlugin> = {};
 
   constructor(
@@ -33,7 +34,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     private readonly schedule: SchedulerRegistry
   ) {}
 
-  public async load() {
+  public async load(): Promise<Record<string, DepkerPlugin>> {
     if (!this._loaded) {
       const plugins: DepkerPlugin[] = [...this._internal];
       const pjson = fs.readJsonSync(path.join(PATHS.PLUGINS, "package.json"));
@@ -53,13 +54,15 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     return this._plugins;
   }
 
-  public async plugins() {
+  public async plugins(): Promise<Record<string, DepkerPlugin>> {
     return await this.load();
   }
 
-  public async plugin(name: string) {
+  public async buildpacks(): Promise<Record<string, DepkerPlugin>> {
     const plugins = await this.load();
-    return plugins[name];
+    return Object.entries(plugins)
+      .filter(([, p]) => p.buildpack?.handle)
+      .reduce((a, [n, p]) => ({ ...a, [n]: p }), {});
   }
 
   public async onModuleInit() {

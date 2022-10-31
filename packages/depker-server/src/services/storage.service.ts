@@ -16,7 +16,7 @@ export class StorageService {
     return await git.Repository.open(target);
   }
 
-  public async project(name: string, id: string) {
+  public async checkout(name: string, id: string) {
     const source = path.join(PATHS.REPOS, `${name}.git`);
     const target = path.join(os.tmpdir(), `${name}-${randomUUID()}`);
     fs.removeSync(target);
@@ -27,10 +27,15 @@ export class StorageService {
     return target;
   }
 
-  public async file(name: string, data: string) {
+  public async dir(name: string) {
     const target = path.join(os.tmpdir(), `${name}-${randomUUID()}`);
     fs.removeSync(target);
-    fs.outputFileSync(target, data);
+    return target;
+  }
+
+  public async file(name: string) {
+    const target = path.join(os.tmpdir(), `${name}-${randomUUID()}`);
+    fs.removeSync(target);
     return target;
   }
 }

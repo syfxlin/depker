@@ -83,15 +83,15 @@ export interface DepkerPlugin {
   destroy?: (ctx: PluginContext) => Promise<void> | void;
   routes?: (ctx: RouteContext) => Promise<any> | any;
   buildpack?: {
-    options: DepkerPluginOption[];
-    handle: (ctx: PackContext) => Promise<void> | void;
+    options?: DepkerPluginOption[];
+    handle?: (ctx: PackContext) => Promise<void> | void;
   };
   service?: {
-    options: DepkerPluginOption[];
-    handle: (ctx: PackContext) => Promise<void> | void; // TODO: update ctx
+    options?: DepkerPluginOption[];
+    handle?: (ctx: PackContext) => Promise<void> | void; // TODO: update ctx
   };
   database?: {
-    options: DepkerPluginOption[];
-    handle: (ctx: PackContext) => Promise<void> | void; // TODO: update ctx
+    options?: DepkerPluginOption[];
+    handle?: (ctx: PackContext) => Promise<void> | void; // TODO: update ctx
   };
 }

@@ -22,6 +22,7 @@ import { Volume } from "../entities/volume.entity";
 import { Port } from "../entities/port.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PortBind } from "../entities/port-bind.entity";
+import fs from "fs-extra";
 
 @Injectable()
 export class DeployService {
@@ -90,7 +91,7 @@ export class DeployService {
         await Deploy.update(deploy.id, { status: "running" });
 
         // init project
-        const project = await this.project(deploy);
+        const project = await this.pack(deploy);
         if (!project) {
           throw new Error(`init project`);
         }
@@ -135,23 +136,24 @@ export class DeployService {
     await pAll(actions, { concurrency: setting.concurrency });
   }
 
-  public async project(deploy: Deploy) {
-    const pack = await this.plugins.plugin(deploy.app.buildpack);
+  public async pack(deploy: Deploy) {
+    const app = deploy.app;
+    const buildpack = (await this.plugins.buildpacks())[app.buildpack];
 
-    if (!pack || !pack.buildpack || !pack.buildpack.handle) {
-      await Log.failed(
-        deploy,
-        `Init project ${deploy.app.name} failure. Caused by not found buildpack ${deploy.app.buildpack}`
-      );
+    if (!buildpack?.buildpack?.handle) {
+      await Log.failed(deploy, `Init project ${app.name} failure. Caused by not found buildpack ${app.buildpack}`);
       return null;
     }
 
-    const dir = await this.storages.project(deploy.app.name, deploy.commit);
-    await pack.buildpack.handle(
+    const project =
+      buildpack.name === "image"
+        ? await this.storages.dir(app.name)
+        : await this.storages.checkout(app.name, deploy.commit);
+    await buildpack.buildpack.handle(
       new PackContext({
-        name: pack.name,
+        name: buildpack.name,
         deploy: deploy,
-        project: dir,
+        project: project,
         http: this.http,
         events: this.events,
         docker: this.docker,
@@ -168,10 +170,10 @@ export class DeployService {
         },
       })
     );
-    return dir;
+    return project;
   }
 
-  public async build(deploy: Deploy, dir: string) {
+  public async build(deploy: Deploy, project: string) {
     const app = deploy.app;
     const tag = `depker-${app.name}:${deploy.id}`;
 
@@ -195,13 +197,13 @@ export class DeployService {
     for (const v of app.hosts) {
       commands.push(`--add-host=${v.name}:${v.value}`);
     }
-    commands.push(`--secret=id=secrets,src=/sec`);
+    commands.push(`--secret=id=secrets,src=/secrets`);
     commands.push(`.`);
 
     // secrets
+    const secrets = await this.storages.file(deploy.app.name);
     // prettier-ignore
-    const secrets = app.secrets.filter(s => s.onbuild).map(s => `${s.name}=${s.value}`).join("\n");
-    const sec = await this.storages.file(deploy.app.name, `${secrets}\n`);
+    fs.outputFileSync(secrets, app.secrets.filter((s) => s.onbuild).map((s) => `${s.name}=${s.value}`).join("\n"));
 
     // output
     const through = new PassThrough({ encoding: "utf-8" });
@@ -213,10 +215,14 @@ export class DeployService {
     // build image
     await this.docker.pullImage(IMAGES.DOCKER);
     const [result] = await this.docker.run(IMAGES.DOCKER, [`sh`, `-c`, commands.join(" ")], through, {
-      WorkingDir: "/app",
+      WorkingDir: "/project",
       HostConfig: {
         AutoRemove: true,
-        Binds: [`${PATHS.LINUX(sec)}:/sec`, `${PATHS.LINUX(dir)}:/app`, `/var/run/docker.sock:/var/run/docker.sock`],
+        Binds: [
+          `${PATHS.LINUX(secrets)}:/secrets`,
+          `${PATHS.LINUX(project)}:/project`,
+          `/var/run/docker.sock:/var/run/docker.sock`,
+        ],
       },
     });
     if (result.StatusCode === 0) {
