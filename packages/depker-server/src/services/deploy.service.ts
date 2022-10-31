@@ -181,7 +181,7 @@ export class DeployService {
     await Log.step(deploy, `Building image ${tag} started.`);
 
     // commands
-    const commands: string[] = [`DOCKER_BUILDKIT=1`, `docker`, `build`, `--tag=${tag}`];
+    const commands: string[] = [`DOCKER_BUILDKIT=1`, `docker`, `build`, `--progress=plain`, `--tag=${tag}`];
     if (app.pull) {
       commands.push(`--pull`);
     }
@@ -203,7 +203,7 @@ export class DeployService {
     // secrets
     const secrets = await this.storages.file(deploy.app.name);
     // prettier-ignore
-    fs.outputFileSync(secrets, app.secrets.filter((s) => s.onbuild).map((s) => `${s.name}=${s.value}`).join("\n"));
+    fs.outputFileSync(secrets, app.secrets.filter((s) => s.onbuild).map((s) => `${s.name}=${s.value}`).join("\n") + "\n");
 
     // output
     const through = new PassThrough({ encoding: "utf-8" });
