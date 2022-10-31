@@ -1,12 +1,19 @@
 import { useMemo, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 
-export const usePageState = () => {
-  const [page, setPage] = useState<number>(1);
-  const [size, setSize] = useState<number>(15);
-  const [sort, setSort] = useState<[string, "asc" | "desc"]>(["", "asc"]);
+export type UsePageStateProps = {
+  page?: number;
+  size?: number;
+  sort?: [string, "asc" | "desc"];
+  search?: string;
+};
 
-  const [search, setSearch] = useState<string>("");
+export const usePageState = (initial?: UsePageStateProps) => {
+  const [page, setPage] = useState<number>(initial?.page ?? 1);
+  const [size, setSize] = useState<number>(initial?.size ?? 10);
+  const [sort, setSort] = useState<[string, "asc" | "desc"]>(initial?.sort ?? ["", "asc"]);
+
+  const [search, setSearch] = useState<string>(initial?.search ?? "");
   const [debounced] = useDebouncedValue(search, 1000);
 
   const values = useMemo(

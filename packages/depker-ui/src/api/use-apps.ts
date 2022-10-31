@@ -4,7 +4,7 @@ import { usePageState } from "../hooks/use-page-state";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useApps = () => {
-  const page = usePageState();
+  const page = usePageState({ page: 1, size: 15 });
 
   const query = useSWR(["client.app.list", page.request], (key, request) => client.app.list(request));
 

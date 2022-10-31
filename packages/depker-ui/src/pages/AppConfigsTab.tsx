@@ -112,6 +112,20 @@ export const AppConfigsTab: React.FC = () => {
     [app.data?.buildpack, buildpacks.data]
   );
 
+  const Image = useMemo(
+    () =>
+      app.data?.buildpack === "image" && (
+        <ExtensionInput
+          options={buildpacks.data[app.data.buildpack]?.options}
+          value={app.data.extensions}
+          onChange={(value) => {
+            app.actions.update((prev) => ({ ...prev, extensions: value }));
+          }}
+        />
+      ),
+    [app.data?.buildpack, app.data?.extensions]
+  );
+
   const BasicRow = useMemo(
     () => (
       <Grid>
@@ -1013,6 +1027,7 @@ export const AppConfigsTab: React.FC = () => {
       <Stack>
         <Heading>General</Heading>
         {BasicRow}
+        {Image}
         {PolicyRow}
         {HealthCheck}
         <Heading>Requests</Heading>

@@ -12,7 +12,7 @@ export const colors: Record<DeployStatus, string> = {
 };
 
 export const useDeployList = (app: string) => {
-  const page = usePageState();
+  const page = usePageState({ page: 1, size: 5 });
 
   const query = useSWR(
     ["client.deploy.list", app, page.request],
