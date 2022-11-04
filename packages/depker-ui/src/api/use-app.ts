@@ -37,8 +37,14 @@ export const useApp = (name: string) => {
           });
         }, false);
       },
-      deploy: async (ref: string, force: boolean = false) => {
-        return await client.deploy.dispatch({ app: name, ref, force });
+      deploy: async (force: boolean = false) => {
+        return await client.app.up({ name, force });
+      },
+      stop: async () => {
+        return await client.app.down({ name });
+      },
+      restart: async () => {
+        return await client.app.restart({ name });
       },
     })
   );

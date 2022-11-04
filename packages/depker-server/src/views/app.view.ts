@@ -1,98 +1,59 @@
 import {
-  IsBoolean,
   isBoolean,
+  IsBoolean,
   isFQDN,
+  IsIn,
   IsInt,
   isNotEmpty,
   IsNotEmpty,
+  IsNumber,
   isNumber,
   IsObject,
   IsOptional,
-  IsString,
   isString,
+  IsString,
   Length,
   Matches,
   Max,
   Min,
 } from "class-validator";
-import { objectEach } from "../validation/object-each.validation";
-import { ArrayEach } from "../validation/array-each.validation";
-import { RecordEach, recordEach } from "../validation/record-each.validation";
-import { AppRestart, AppStatus } from "../entities/app.entity";
+import {
+  AppHealthCheck,
+  AppHost,
+  AppLabel,
+  AppMiddleware,
+  AppRestart,
+  AppSecret,
+  AppStatus,
+} from "../entities/app.entity";
 import { PortProtocol } from "../entities/port.entity";
-import { SuccessResponse } from "./common.view";
+import { ArrayEach } from "../validation/array-each.validation";
+import { objectEach } from "../validation/object-each.validation";
+import { RecordEach, recordEach } from "../validation/record-each.validation";
+import { DeployStatus, DeployTrigger } from "../entities/deploy.entity";
+import { LogLevel } from "../entities/log.entity";
 
-export class GetAppRequest {
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 128)
-  @Matches(/^[a-zA-Z0-9._-]+$/)
-  name: string;
-}
+/*
+GET    /apps
+POST   /apps
+GET    /apps/:name
+DELETE /apps/:name
 
-export type GetAppResponse = {
-  name: string;
-  buildpack: string;
-  commands: string[];
-  entrypoints: string[];
-  restart: AppRestart;
-  pull: boolean;
-  domain: string[];
-  rule: string;
-  port: number;
-  scheme: string;
-  tls: boolean;
-  middlewares: Array<{
-    name: string;
-    type: string;
-    options: Record<string, string>;
-  }>;
-  healthcheck: {
-    cmd?: string[];
-    retries?: number;
-    interval?: number;
-    start?: number;
-    timeout?: number;
-  };
-  init: boolean;
-  rm: boolean;
-  privileged: boolean;
-  user: string;
-  workdir: string;
-  buildArgs: Record<string, string>;
-  networks: Record<string, string>;
-  labels: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
-  secrets: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
-  hosts: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
-  extensions: Record<string, any>;
-  ports: Array<{
-    name: string;
-    proto: PortProtocol;
-    hport: number;
-    cport: number;
-  }>;
-  volumes: Array<{
-    name: string;
-    global: boolean;
-    hpath: string;
-    cpath: string;
-    readonly: boolean;
-  }>;
-  createdAt: number;
-  updatedAt: number;
-};
+GET    /apps/:name/status
+GET    /apps/:name/metrics
+GET    /apps/:name/logs
+
+POST   /apps/:name/up
+POST   /apps/:name/down
+POST   /apps/:name/restart
+
+// list deploy
+GET    /apps/:name/deploy
+// get deploy logs
+GET    /apps/:name/deploy/:id/logs
+// cancel deploy
+POST   /apps/:name/deploy/:id/cancel
+ */
 
 export class ListAppRequest {
   @IsString()
@@ -123,7 +84,7 @@ export type ListAppResponse = {
     buildpack: string;
     icon: string;
     domain: string;
-    status: StatusAppResponse["status"];
+    status: AppStatus;
     createdAt: number;
     updatedAt: number;
     deploydAt: number;
@@ -189,22 +150,12 @@ export class UpsertAppRequest {
       options: [recordEach([isString, isNotEmpty], [isString])],
     }),
   ])
-  middlewares?: Array<{
-    name: string;
-    type: string;
-    options: Record<string, string>;
-  }>;
+  middlewares?: Array<AppMiddleware>;
 
   // healthcheck
   @IsOptional()
   @IsObject()
-  healthcheck?: {
-    cmd?: string[];
-    retries?: number;
-    interval?: number;
-    start?: number;
-    timeout?: number;
-  };
+  healthcheck?: AppHealthCheck;
 
   // extensions
   @IsOptional()
@@ -244,11 +195,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  labels?: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
+  labels?: Array<AppLabel>;
 
   @IsOptional()
   @ArrayEach([
@@ -258,11 +205,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  secrets?: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
+  secrets?: Array<AppSecret>;
 
   @IsOptional()
   @ArrayEach([
@@ -272,11 +215,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  hosts?: Array<{
-    name: string;
-    value: string;
-    onbuild: boolean;
-  }>;
+  hosts?: Array<AppHost>;
 
   @IsOptional()
   @ArrayEach([
@@ -311,6 +250,56 @@ export class UpsertAppRequest {
 
 export type UpsertAppResponse = GetAppResponse;
 
+export class GetAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+}
+
+export type GetAppResponse = {
+  name: string;
+  buildpack: string;
+  commands: string[];
+  entrypoints: string[];
+  restart: AppRestart;
+  pull: boolean;
+  domain: string[];
+  rule: string;
+  port: number;
+  scheme: string;
+  tls: boolean;
+  middlewares: Array<AppMiddleware>;
+  healthcheck: AppHealthCheck;
+  init: boolean;
+  rm: boolean;
+  privileged: boolean;
+  user: string;
+  workdir: string;
+  buildArgs: Record<string, string>;
+  networks: Record<string, string>;
+  labels: Array<AppLabel>;
+  secrets: Array<AppSecret>;
+  hosts: Array<AppHost>;
+  createdAt: number;
+  updatedAt: number;
+  extensions: Record<string, any>;
+  ports: Array<{
+    name: string;
+    proto: PortProtocol;
+    hport: number;
+    cport: number;
+  }>;
+  volumes: Array<{
+    name: string;
+    global: boolean;
+    hpath: string;
+    cpath: string;
+    readonly: boolean;
+  }>;
+};
+
 export class DeleteAppRequest {
   @IsString()
   @IsNotEmpty()
@@ -319,7 +308,9 @@ export class DeleteAppRequest {
   name: string;
 }
 
-export type DeleteAppResponse = SuccessResponse;
+export type DeleteAppResponse = {
+  status: "success";
+};
 
 export class StatusAppRequest {
   @IsString()
@@ -331,4 +322,172 @@ export class StatusAppRequest {
 
 export type StatusAppResponse = {
   status: AppStatus;
+};
+
+export class MetricsAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+}
+
+export type MetricsAppResponse = {
+  //
+};
+
+export class LogsAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+
+  @IsNumber()
+  @IsOptional()
+  since?: number;
+
+  @IsInt()
+  @IsOptional()
+  tail?: number;
+}
+
+export type LogsAppResponse = {
+  logs: Array<[LogLevel, number, string]>;
+  since: number;
+};
+
+export class UpAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(["manual", "depker", "git"])
+  trigger?: DeployTrigger;
+
+  @IsOptional()
+  @IsBoolean()
+  force?: boolean;
+}
+
+export type UpAppResponse = {
+  id: number;
+  app: string;
+  commit: string;
+  status: DeployStatus;
+  trigger: DeployTrigger;
+  force: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export class DownAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+}
+
+export type DownAppResponse = {
+  status: "success";
+};
+
+export class RestartAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+}
+
+export type RestartAppResponse = {
+  status: "success";
+};
+
+export class ListAppDeployRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  search?: string;
+
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  offset?: number;
+
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  limit?: number;
+
+  @IsString()
+  @IsOptional()
+  @Matches(/\w+:(asc|desc)/)
+  sort?: string;
+}
+
+export type ListAppDeployResponse = {
+  total: number;
+  items: Array<{
+    id: number;
+    app: string;
+    commit: string;
+    status: DeployStatus;
+    trigger: DeployTrigger;
+    force: boolean;
+    createdAt: number;
+    updatedAt: number;
+  }>;
+};
+
+export class LogsAppDeployRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+
+  @IsInt()
+  @Min(0)
+  id: number;
+
+  @IsNumber()
+  @IsOptional()
+  since?: number;
+
+  @IsInt()
+  @IsOptional()
+  tail?: number;
+}
+
+export type LogsAppDeployResponse = {
+  since: number;
+  logs: Array<[LogLevel, number, string]>;
+};
+
+export class CancelAppDeployRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+
+  @IsInt()
+  @Min(0)
+  id: number;
+}
+
+export type CancelAppDeployResponse = {
+  status: "success";
 };

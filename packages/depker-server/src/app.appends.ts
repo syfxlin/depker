@@ -1,6 +1,5 @@
 import { DockerService } from "./services/docker.service";
 import { StorageService } from "./services/storage.service";
-import { DeployController } from "./controllers/deploy.controller";
 import { DeployService } from "./services/deploy.service";
 import { App } from "./entities/app.entity";
 import { Volume } from "./entities/volume.entity";
@@ -29,7 +28,6 @@ export const controllers = [
   SystemController,
   AssetController,
   GitController,
-  DeployController,
   AppController,
   PortController,
   VolumeController,

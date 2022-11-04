@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import Docker from "dockerode";
 import { IS_DOCKER, NAMES } from "../constants/depker.constant";
+import { AppStatus } from "../entities/app.entity";
 
 @Injectable()
 export class DockerService extends Docker {
@@ -38,13 +39,13 @@ export class DockerService extends Docker {
     return await this.initNetwork(NAMES.NETWORK);
   }
 
-  public async pullImage(tag: string, force?: boolean) {
-    if (force || !(await this.listImages()).find((i) => i.RepoTags?.includes(tag))) {
-      this.logger.log(`Pulling image ${tag}.`);
+  public async pullImage(name: string, force?: boolean) {
+    if (force || !(await this.listImages()).find((i) => i.RepoTags?.includes(name))) {
+      this.logger.log(`Pulling image ${name}.`);
       await new Promise<void>((resolve, reject) => {
-        this.pull(tag, {}, (error, output: NodeJS.ReadableStream) => {
+        this.pull(name, {}, (error, output: NodeJS.ReadableStream) => {
           if (error) {
-            this.logger.error(`Pull ${tag} image error, ${error.message}`);
+            this.logger.error(`Pull ${name} image error, ${error.message}`);
             reject(error);
             return;
           }
@@ -68,5 +69,23 @@ export class DockerService extends Docker {
         });
       });
     }
+  }
+
+  public async listStatus(names: string[]) {
+    const results: Record<string, AppStatus> = {};
+    const infos = await this.listContainers({ all: true });
+    for (const name of names) {
+      const info = infos.find((i) => i.Names.includes(`/${name}`));
+      if (info?.State === "running") {
+        results[name] = "running";
+      } else if (info?.State === "restarting") {
+        results[name] = "restarting";
+      } else if (info?.State === "exited") {
+        results[name] = "exited";
+      } else {
+        results[name] = "stopped";
+      }
+    }
+    return results;
   }
 }

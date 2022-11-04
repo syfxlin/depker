@@ -22,7 +22,7 @@ import { TbArrowDown, TbArrowUp, TbMenu2, TbSearch, TbSquare, TbSquareCheck } fr
 
 export type LineProps = BoxProps & {
   index?: number;
-  data?: string | [number, LogLevel, string];
+  data?: string | [LogLevel, number, string];
   highlight?: boolean;
   timestamp?: boolean;
 };
@@ -35,7 +35,7 @@ export const Line = forwardRef<HTMLDivElement, LineProps>((props, ref) => {
       return "";
     }
     const c = {
-      failed: "\u001b[31m",
+      error: "\u001b[31m",
       success: "\u001b[32m",
       debug: "\u001b[33m",
       log: "\u001b[34m",
@@ -49,9 +49,9 @@ export const Line = forwardRef<HTMLDivElement, LineProps>((props, ref) => {
     if (typeof data === "string") {
       return p(data);
     }
-    const [time, level, logs] = data;
+    const [level, time, logs] = data;
     const part1 = DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS);
-    const part2 = level.toUpperCase().padStart(8);
+    const part2 = level.toUpperCase().padStart(5);
     const part3 = logs;
     if (timestamp) {
       return p(`${c.time}[${part1}]${c.none} ${c[level]}${part2}${c.none} ${part3}`);
@@ -295,7 +295,7 @@ export const Empty = forwardRef<HTMLDivElement, EmptyProps>((props, ref) => {
 export type LogsProps = FlexProps & {
   title: ReactNode;
   empty: ReactNode;
-  data: Array<string | [number, LogLevel, string]>;
+  data: Array<string | [LogLevel, number, string]>;
 };
 
 export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data, ...other }, ref) => {

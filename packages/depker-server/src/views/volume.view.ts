@@ -1,5 +1,4 @@
 import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Length, Matches, Min } from "class-validator";
-import { SuccessResponse } from "./common.view";
 
 export class GetVolumeRequest {
   @IsString()
@@ -85,7 +84,9 @@ export class DeleteVolumeRequest {
   name: string;
 }
 
-export type DeleteVolumeResponse = SuccessResponse;
+export type DeleteVolumeResponse = {
+  status: "success";
+};
 
 export class ConnectVolumeRequest {
   @IsString()
@@ -108,7 +109,9 @@ export class ConnectVolumeRequest {
   readonly: boolean;
 }
 
-export type ConnectVolumeResponse = SuccessResponse;
+export type ConnectVolumeResponse = {
+  status: "success";
+};
 
 export class DisconnectVolumeRequest {
   @IsString()
@@ -124,4 +127,6 @@ export class DisconnectVolumeRequest {
   app: string;
 }
 
-export type DisconnectVolumeResponse = SuccessResponse;
+export type DisconnectVolumeResponse = {
+  status: "success";
+};

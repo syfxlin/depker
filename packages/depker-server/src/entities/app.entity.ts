@@ -154,6 +154,51 @@ export class App extends BaseEntity {
   @UpdateDateColumn({ nullable: false })
   updatedAt: Date;
 
+  // method
+  public toView() {
+    return {
+      name: this.name,
+      buildpack: this.buildpack,
+      commands: this.commands,
+      entrypoints: this.entrypoints,
+      restart: this.restart,
+      pull: this.pull,
+      domain: this.domain,
+      rule: this.rule,
+      port: this.port,
+      scheme: this.scheme,
+      tls: this.tls,
+      middlewares: this.middlewares,
+      healthcheck: this.healthcheck,
+      init: this.init,
+      rm: this.rm,
+      privileged: this.privileged,
+      user: this.user,
+      workdir: this.workdir,
+      buildArgs: this.buildArgs,
+      networks: this.networks,
+      labels: this.labels,
+      secrets: this.secrets,
+      hosts: this.hosts,
+      ports: this.ports.map((i) => ({
+        name: i.bind.name,
+        proto: i.bind.proto,
+        hport: i.bind.port,
+        cport: i.port,
+      })),
+      volumes: this.volumes.map((i) => ({
+        name: i.bind.name,
+        global: i.bind.global,
+        hpath: i.bind.path,
+        cpath: i.path,
+        readonly: i.readonly,
+      })),
+      createdAt: this.createdAt.getTime(),
+      updatedAt: this.updatedAt.getTime(),
+      extensions: this.extensions,
+    };
+  }
+
   // repository
   public static async listDeploydAt(names: string[]): Promise<Record<string, Date>> {
     const items = await Deploy.createQueryBuilder()

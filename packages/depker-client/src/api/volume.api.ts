@@ -16,7 +16,9 @@ import {
 
 export class VolumeApi extends Api {
   public async list(request?: ListVolumeRequest) {
-    const response = await this.request.get<ListVolumeResponse>(`/api/volumes`, { params: request });
+    const response = await this.request.get<ListVolumeResponse>(`/api/volumes`, {
+      params: request,
+    });
     return response.data;
   }
 

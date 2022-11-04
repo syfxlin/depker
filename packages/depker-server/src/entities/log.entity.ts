@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 
 export type DeployLogger = ReturnType<typeof Log["logger"]>;
 
-export type LogLevel = "debug" | "log" | "step" | "success" | "failed";
+export type LogLevel = "debug" | "log" | "step" | "success" | "error";
 
 @Entity()
 @Index(["time"])
@@ -57,11 +57,11 @@ export class Log extends BaseEntity {
     return Log.upload(deploy, "success", line);
   }
 
-  public static async failed(deploy: Deploy, line: string, error?: Error) {
+  public static async error(deploy: Deploy, line: string, error?: Error) {
     if (error) {
       line += `[ERROR] ${error.name}: ${error.message}, ${error.stack}`;
     }
-    return Log.upload(deploy, "failed", line);
+    return Log.upload(deploy, "error", line);
   }
 
   public static logger(deploy: Deploy) {
@@ -70,7 +70,7 @@ export class Log extends BaseEntity {
       log: (line: string) => Log.log(deploy, line),
       step: (line: string) => Log.step(deploy, line),
       success: (line: string) => Log.success(deploy, line),
-      failed: (line: string, error?: Error) => Log.failed(deploy, line, error),
+      failed: (line: string, error?: Error) => Log.error(deploy, line, error),
     };
   }
 }

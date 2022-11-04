@@ -11,6 +11,7 @@ import { AppSetting } from "./pages/AppSetting";
 import { Loading } from "./components/core/Loading";
 import { AppConfigsTab } from "./pages/AppConfigsTab";
 import { AppDeploysTab } from "./pages/AppDeploysTab";
+import { AppLogsTab } from "./pages/AppLogsTab";
 
 export const App: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ export const App: React.FC = () => {
               <Route path="/apps" element={<AppList />} />
               <Route path="/apps/:app" element={<AppSetting />}>
                 <Route index element={<AppConfigsTab />} />
+                <Route path="logs" element={<AppLogsTab />} />
                 <Route path="deploys" element={<AppDeploysTab />} />
                 <Route path="deploys/:deploy" element={<AppDeploysTab />} />
               </Route>

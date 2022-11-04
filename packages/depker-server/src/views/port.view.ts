@@ -2,7 +2,6 @@ import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Length, Match
 import { IsValidate } from "../validation/is-validate.validation";
 import { Setting } from "../entities/setting.entity";
 import { PortProtocol } from "../entities/port.entity";
-import { SuccessResponse } from "./common.view";
 
 export class GetPortRequest {
   @IsString()
@@ -92,7 +91,9 @@ export class DeletePortRequest {
   name: string;
 }
 
-export type DeletePortResponse = SuccessResponse;
+export type DeletePortResponse = {
+  status: "success";
+};
 
 export class ConnectPortRequest {
   @IsString()
@@ -113,7 +114,9 @@ export class ConnectPortRequest {
   port: number;
 }
 
-export type ConnectPortResponse = SuccessResponse;
+export type ConnectPortResponse = {
+  status: "success";
+};
 
 export class DisconnectPortRequest {
   @IsString()
@@ -129,4 +132,6 @@ export class DisconnectPortRequest {
   app: string;
 }
 
-export type DisconnectPortResponse = SuccessResponse;
+export type DisconnectPortResponse = {
+  status: "success";
+};

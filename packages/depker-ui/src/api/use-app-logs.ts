@@ -1,25 +1,24 @@
-import { client } from "./client";
 import { useEffect, useRef, useState } from "react";
-import { LogsAppDeployResponse } from "@syfxlin/depker-client";
+import { client } from "./client";
+import { LogsAppResponse } from "@syfxlin/depker-client";
 
-export const useDeployLogs = (name: string, id: number | string | undefined) => {
+export const useAppLogs = (name: string) => {
   const latest = useRef<number>(0);
-  const [logs, setLogs] = useState<LogsAppDeployResponse["logs"] | null>(null);
+  const [logs, setLogs] = useState<LogsAppResponse["logs"] | null>(null);
 
   useEffect(() => {
     latest.current = 0;
     setLogs(null);
-  }, [name, id, latest]);
+  }, [name, latest]);
 
   useEffect(() => {
     const fn = () => {
-      if (!name || !id || latest.current < 0) {
+      if (!name || latest.current < 0) {
         return;
       }
       (async () => {
-        const response = await client.deploy.logs({
+        const response = await client.app.logs({
           name: name,
-          id: typeof id === "number" ? id : parseInt(id),
           since: latest.current,
         });
         latest.current = response.since ?? latest.current;
@@ -30,10 +29,10 @@ export const useDeployLogs = (name: string, id: number | string | undefined) => 
     };
     const interval = window.setInterval(fn, 1000);
     return () => window.clearInterval(interval);
-  }, [name, id, latest]);
+  }, [name, latest]);
 
   return {
-    empty: name && id ? (logs ? "No Logs." : "Loading...") : "Select a deploy to see the logs.",
+    empty: name && logs ? "No Logs." : "Loading...",
     data: logs ?? [],
   };
 };

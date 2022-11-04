@@ -19,12 +19,14 @@ export const ObjectModal: React.FC<ObjectModalProps> = (props) => {
         mt="xs"
         fullWidth
         loading={loading.value}
-        onClick={async () => {
-          loading.update(true);
-          if (await props.onChange?.(value)) {
-            closeAllModals();
-          }
-          loading.update(false);
+        onClick={() => {
+          (async () => {
+            loading.update(true);
+            if (await props.onChange?.(value)) {
+              closeAllModals();
+            }
+            loading.update(false);
+          })();
         }}
       >
         Save

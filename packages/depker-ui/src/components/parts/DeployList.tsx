@@ -55,6 +55,7 @@ export const DeployList: React.FC<DeployListProps> = ({ app }) => {
                         </Tooltip>
                         <Text size="xs" inline>
                           {deploy.trigger}
+                          {deploy.force && " - force"}
                         </Text>
                         <Badge color={colors[deploy.status]} size="sm">
                           {deploy.status}

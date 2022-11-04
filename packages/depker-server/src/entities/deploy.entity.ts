@@ -57,4 +57,18 @@ export class Deploy extends BaseEntity {
 
   @UpdateDateColumn({ nullable: false })
   updatedAt: Date;
+
+  // method
+  public toView() {
+    return {
+      id: this.id,
+      app: this.app.name,
+      commit: this.commit,
+      status: this.status,
+      trigger: this.trigger,
+      force: this.force,
+      createdAt: this.createdAt.getTime(),
+      updatedAt: this.updatedAt.getTime(),
+    };
+  }
 }

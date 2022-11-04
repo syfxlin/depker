@@ -28,7 +28,7 @@ export const AppDeploysTab: React.FC = () => {
         `}
       >
         <Grid.Col span={8}>
-          <DeployLogs id={deploy!} />
+          <DeployLogs app={app!} id={deploy!} />
         </Grid.Col>
         <Grid.Col span={4}>
           <DeployList app={app!} />

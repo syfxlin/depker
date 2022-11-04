@@ -129,7 +129,7 @@ export class DeployService {
         );
 
         // save failed logs
-        await Log.failed(deploy, `Deployment app ${deploy.app.name} failure. Caused by ${e}.`);
+        await Log.error(deploy, `Deployment app ${deploy.app.name} failure. Caused by ${e}.`);
       }
     });
 
@@ -141,7 +141,7 @@ export class DeployService {
     const buildpack = (await this.plugins.buildpacks())[app.buildpack];
 
     if (!buildpack?.buildpack?.handle) {
-      await Log.failed(deploy, `Init project ${app.name} failure. Caused by not found buildpack ${app.buildpack}`);
+      await Log.error(deploy, `Init project ${app.name} failure. Caused by not found buildpack ${app.buildpack}`);
       return null;
     }
 
@@ -229,7 +229,7 @@ export class DeployService {
       await Log.success(deploy, `Building image ${tag} successful.`);
       return tag;
     } else {
-      await Log.failed(deploy, `Building image ${tag} failure.`);
+      await Log.error(deploy, `Building image ${tag} failure.`);
       return null;
     }
   }
@@ -247,7 +247,7 @@ export class DeployService {
 
     // create options
     const options: ContainerCreateOptions = {
-      name: `${name}-${id}-${Date.now()}`,
+      name: `${name}-${Date.now()}`,
       Image: image,
       Env: Object.entries({
         ...app.secrets.reduce((a, v) => ({ ...a, [v.name]: v.value }), {}),
@@ -398,7 +398,7 @@ export class DeployService {
       await container.start();
 
       // wait healthcheck, max timeout 1h
-      await Log.log(deploy, `Waiting container ${app.name} to finished.`);
+      await Log.log(deploy, `Waiting container ${name} to finished.`);
       for (let i = 1; i <= 1200; i++) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const info = await container.inspect();
@@ -408,7 +408,7 @@ export class DeployService {
           if (status === "running" && (!health || health === "healthy")) {
             break;
           } else {
-            throw new Error(`Start container ${app.name} is unhealthy.`);
+            throw new Error(`Start container ${name} is unhealthy.`);
           }
         }
         if (i % 10 === 0) {
@@ -416,10 +416,19 @@ export class DeployService {
         }
       }
 
-      await Log.success(deploy, `Start container ${app.name} successful.`);
+      // rename
+      try {
+        const running = this.docker.getContainer(name);
+        await running.rename({ name: `${name}-${Date.now()}` });
+      } catch (e) {
+        // ignore
+      }
+
+      await container.rename({ name: name });
+      await Log.success(deploy, `Start container ${name} successful.`);
       return container.id;
     } catch (e: any) {
-      await Log.failed(deploy, `Start container ${app.name} failure.`, e);
+      await Log.error(deploy, `Start container ${name} failure.`, e);
       return null;
     }
   }
@@ -435,7 +444,10 @@ export class DeployService {
       try {
         await container.remove({ force: true });
       } catch (e: any) {
-        await Log.failed(deploy, `Purge container ${container.id} failed.`, e);
+        if (e.statusCode === 404) {
+          return;
+        }
+        await Log.error(deploy, `Purge container ${container.id} failed.`, e);
       }
     }
     process.nextTick(async () => {

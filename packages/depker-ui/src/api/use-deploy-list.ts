@@ -11,13 +11,13 @@ export const colors: Record<DeployStatus, string> = {
   failed: "red",
 };
 
-export const useDeployList = (app: string) => {
+export const useDeployList = (name: string) => {
   const page = usePageState({ page: 1, size: 5 });
 
   const query = useSWR(
-    ["client.deploy.list", app, page.request],
-    async (key, app, request) => {
-      return await client.deploy.list({ ...request, app });
+    ["client.deploy.list", name, page.request],
+    async (key, name, request) => {
+      return await client.deploy.list({ ...request, name });
     },
     {
       refreshInterval: 1000,

@@ -11,35 +11,59 @@ import {
   Query,
 } from "@nestjs/common";
 import {
+  CancelAppDeployRequest,
+  CancelAppDeployResponse,
   DeleteAppRequest,
   DeleteAppResponse,
+  DownAppRequest,
+  DownAppResponse,
   GetAppRequest,
   GetAppResponse,
+  ListAppDeployRequest,
+  ListAppDeployResponse,
   ListAppRequest,
   ListAppResponse,
+  LogsAppDeployRequest,
+  LogsAppDeployResponse,
+  LogsAppRequest,
+  LogsAppResponse,
+  RestartAppRequest,
+  RestartAppResponse,
   StatusAppRequest,
   StatusAppResponse,
+  UpAppRequest,
+  UpAppResponse,
   UpsertAppRequest,
   UpsertAppResponse,
 } from "../views/app.view";
 import { DockerService } from "../services/docker.service";
 import { App } from "../entities/app.entity";
-import { In, Like } from "typeorm";
+import { In, Like, MoreThanOrEqual } from "typeorm";
 import { Port } from "../entities/port.entity";
 import { Volume } from "../entities/volume.entity";
 import { PortBind } from "../entities/port-bind.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PluginService } from "../services/plugin.service";
 import { diff } from "../utils/save.util";
+import { StorageService } from "../services/storage.service";
+import { Deploy } from "../entities/deploy.entity";
+import { Data } from "../decorators/data.decorator";
+import { stdcopy } from "../utils/docker.util";
+import { DateTime } from "luxon";
+import { Log } from "../entities/log.entity";
 
 @Controller("/apps")
 export class AppController {
-  constructor(private readonly docker: DockerService, private readonly plugins: PluginService) {}
+  constructor(
+    private readonly docker: DockerService,
+    private readonly storage: StorageService,
+    private readonly plugins: PluginService
+  ) {}
 
   @Get("/")
   public async list(@Query() request: ListAppRequest): Promise<ListAppResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc" } = request;
-    const [orderBy, orderAxis] = sort.split(":");
+    const [by, axis] = sort.split(":");
     const [apps, count] = await App.findAndCount({
       select: {
         name: true,
@@ -53,7 +77,7 @@ export class AppController {
         domain: search ? Like(`%${search}%`) : undefined,
       },
       order: {
-        [orderBy]: orderAxis ? orderAxis : "asc",
+        [by]: axis ? axis : "asc",
       },
       skip: offset,
       take: limit,
@@ -61,7 +85,7 @@ export class AppController {
 
     const plugins = await this.plugins.plugins();
     const deploys = await App.listDeploydAt(apps.map((i) => i.name));
-    const status = await this._status(apps.map((i) => i.name));
+    const status = await this.docker.listStatus(apps.map((i) => i.name));
 
     const total: ListAppResponse["total"] = count;
     const items: ListAppResponse["items"] = apps.map((i) => {
@@ -152,7 +176,7 @@ export class AppController {
 
     // save app
     await App.save(app, { reload: false });
-    const savedApp = await App.findOne({
+    const saved = await App.findOne({
       where: {
         name: app.name,
       },
@@ -166,39 +190,39 @@ export class AppController {
       },
     });
     // save ports or volumes
-    if (ports.length && savedApp) {
-      const value = diff([ports, savedApp.ports], (v) => v.bind.name);
+    if (ports.length && saved) {
+      const value = diff([ports, saved.ports], (v) => v.bind.name);
       await PortBind.save(
         value.upsert.map((v) => {
-          v.app = savedApp;
+          v.app = saved;
           return v;
         })
       );
       await PortBind.remove(
         value.remove.map((v) => {
-          v.app = savedApp;
+          v.app = saved;
           return v;
         })
       );
-      savedApp.ports = ports;
+      saved.ports = ports;
     }
-    if (volumes.length && savedApp) {
-      const value = diff([volumes, savedApp.volumes], (v) => v.bind.name);
+    if (volumes.length && saved) {
+      const value = diff([volumes, saved.volumes], (v) => v.bind.name);
       await VolumeBind.save(
         value.upsert.map((v) => {
-          v.app = savedApp!;
+          v.app = saved!;
           return v;
         })
       );
       await VolumeBind.remove(
         value.remove.map((v) => {
-          v.app = savedApp!;
+          v.app = saved!;
           return v;
         })
       );
-      savedApp.volumes = volumes;
+      saved.volumes = volumes;
     }
-    return await this._wrap(savedApp!);
+    return saved!.toView();
   }
 
   @Get("/:name")
@@ -219,7 +243,7 @@ export class AppController {
     if (!app) {
       throw new NotFoundException(`Not found application of ${request.name}.`);
     }
-    return await this._wrap(app);
+    return app.toView();
   }
 
   @Delete("/:name")
@@ -233,73 +257,208 @@ export class AppController {
 
   @Get("/:name/status")
   public async status(@Param() request: StatusAppRequest): Promise<StatusAppResponse> {
-    const name = request.name;
-    const status = await this._status([name]);
-    return { status: status[name] };
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
+    const status = await this.docker.listStatus([request.name]);
+    return { status: status[request.name] };
   }
 
-  private async _wrap(app: App): Promise<GetAppResponse> {
-    return {
-      name: app.name,
-      buildpack: app.buildpack,
-      commands: app.commands,
-      entrypoints: app.entrypoints,
-      restart: app.restart,
-      pull: app.pull,
-      domain: app.domain,
-      rule: app.rule,
-      port: app.port,
-      scheme: app.scheme,
-      tls: app.tls,
-      middlewares: app.middlewares,
-      healthcheck: app.healthcheck,
-      init: app.init,
-      rm: app.rm,
-      privileged: app.privileged,
-      user: app.user,
-      workdir: app.workdir,
-      buildArgs: app.buildArgs,
-      networks: app.networks,
-      labels: app.labels,
-      secrets: app.secrets,
-      hosts: app.hosts,
-      ports: app.ports.map((i) => ({
-        name: i.bind.name,
-        proto: i.bind.proto,
-        hport: i.bind.port,
-        cport: i.port,
-      })),
-      volumes: app.volumes.map((i) => ({
-        name: i.bind.name,
-        global: i.bind.global,
-        hpath: i.bind.path,
-        cpath: i.path,
-        readonly: i.readonly,
-      })),
-      createdAt: app.createdAt.getTime(),
-      updatedAt: app.updatedAt.getTime(),
-      extensions: app.extensions,
-    };
-  }
+  // @Get("/:name/metrics")
+  // public async metrics(@Param() request: MetricsAppRequest) {
+  //   return {};
+  // }
 
-  private async _status(names: string[]) {
-    const allInfos = await this.docker.listContainers({ all: true });
+  @Get("/:name/logs")
+  public async logs(@Data() request: LogsAppRequest): Promise<LogsAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
 
-    const result: Record<string, StatusAppResponse["status"]> = {};
-    for (const name of names) {
-      const infos = allInfos.filter((i) => i.Labels["depker.name"] === name).sort((a, b) => b.Created - a.Created);
-      const state = infos.length ? infos[0].State.toLowerCase() : null;
-
-      if (state === "running") {
-        result[name] = "running";
-      } else if (state === "restarting") {
-        result[name] = "restarting";
-      } else if (state === "exited") {
-        result[name] = "exited";
+    try {
+      const since = DateTime.now().toUnixInteger();
+      const container = this.docker.getContainer(request.name);
+      // @ts-ignore
+      const buffer: Buffer = await container.logs({
+        stdout: true,
+        stderr: true,
+        timestamps: true,
+        since: request.since,
+        until: since,
+        tail: request.tail,
+      });
+      const output = stdcopy(buffer);
+      return {
+        since: since,
+        logs: output.map(([type, buffer]) => {
+          const level = type ? "error" : "log";
+          const data = buffer.toString();
+          const time = data.substring(0, 30);
+          const line = data.substring(31).replace("\n", "");
+          return [level, DateTime.fromISO(time).valueOf(), line];
+        }),
+      };
+    } catch (e: any) {
+      if (e.statusCode === 404) {
+        return {
+          since: -1,
+          logs: [["error", DateTime.utc().valueOf(), `Not found container of ${request.name}.`]],
+        };
       } else {
-        result[name] = "stopped";
+        return {
+          since: -1,
+          logs: [["error", DateTime.utc().valueOf(), `Logs container ${request.name} has error. ${e.message}`]],
+        };
       }
     }
-    return result;
+  }
+
+  @Post("/:name/up")
+  public async up(@Data() request: UpAppRequest): Promise<UpAppResponse> {
+    const app = await App.findOne({ where: { name: request.name } });
+    if (!app) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
+    const deploy = new Deploy();
+    deploy.app = app;
+    deploy.status = "queued";
+    deploy.force = request.force ?? false;
+    deploy.trigger = request.trigger ?? "manual";
+
+    if (app.buildpack === "image") {
+      deploy.commit = app.extensions.image;
+    } else {
+      const repo = await this.storage.repository(request.name);
+      if (!repo) {
+        throw new NotFoundException(`Not found application source of ${request.name}.`);
+      }
+      try {
+        const commit = await repo.getReferenceCommit("master");
+        deploy.commit = commit.id().tostrS();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (!deploy.commit) {
+      throw new NotFoundException(`Not found reference of ${request.name}`);
+    }
+
+    const saved = await Deploy.save(deploy);
+    return saved!.toView();
+  }
+
+  @Post("/:name/down")
+  public async down(@Data() request: DownAppRequest): Promise<DownAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
+    try {
+      await this.docker.getContainer(request.name).remove({ force: true });
+    } catch (e: any) {
+      if (e.statusCode === 404) {
+        throw new NotFoundException(`Not found container of ${request.name}`);
+      } else {
+        throw e;
+      }
+    }
+    return { status: "success" };
+  }
+
+  @Post("/:name/restart")
+  public async restart(@Data() request: RestartAppRequest): Promise<RestartAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
+    try {
+      await this.docker.getContainer(request.name).restart();
+    } catch (e: any) {
+      if (e.statusCode === 404) {
+        throw new NotFoundException(`Not found container of ${request.name}`);
+      } else {
+        throw e;
+      }
+    }
+    return { status: "success" };
+  }
+
+  @Get("/:name/deploy")
+  public async listDeploy(@Data() request: ListAppDeployRequest): Promise<ListAppDeployResponse> {
+    const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
+    const [by, axis] = sort.split(":");
+    const exist = await App.countBy({ name: request.name });
+    if (!exist) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
+    const [deploys, count] = await Deploy.findAndCount({
+      where: {
+        app: { name },
+        commit: search ? Like(`%${search}%`) : undefined,
+        status: search ? (Like(`%${search}%`) as any) : undefined,
+        trigger: search ? (Like(`%${search}%`) as any) : undefined,
+      },
+      relations: { app: true },
+      skip: offset,
+      take: limit,
+      order: { [by]: axis },
+    });
+
+    const total: ListAppDeployResponse["total"] = count;
+    const items: ListAppDeployResponse["items"] = deploys.map((d) => d.toView());
+
+    return { total, items };
+  }
+
+  @Get("/:name/deploy/:id/logs")
+  public async logsDeploy(@Data() request: LogsAppDeployRequest): Promise<LogsAppDeployResponse> {
+    const { id, name, since, tail } = request;
+    const count = await Deploy.countBy({ id, app: { name } });
+    if (!count) {
+      throw new NotFoundException(`Not found deploy of ${name}.`);
+    }
+
+    const lines = await Log.find({
+      where: {
+        deploy: { id },
+        time: typeof since === "number" ? MoreThanOrEqual(DateTime.fromMillis(since).toJSDate()) : undefined,
+      },
+      take: typeof tail === "number" ? tail : undefined,
+      order: { id: "desc" },
+    });
+    const deploy = await Deploy.findOne({ where: { id, app: { name } } });
+
+    lines.reverse();
+
+    const logs: LogsAppDeployResponse["logs"] = lines.map((i) => [i.level, i.time.getTime(), i.line]);
+    if (["success", "failed"].includes(deploy!.status)) {
+      return { since: -1, logs };
+    }
+    if (lines.length) {
+      return { since: lines[lines.length - 1].time.getTime() + 1, logs };
+    }
+    if (since) {
+      return { since, logs };
+    }
+    return { since: 0, logs };
+  }
+
+  @Delete("/:name/deploy/:id/cancel")
+  public async cancelDeploy(@Data() request: CancelAppDeployRequest): Promise<CancelAppDeployResponse> {
+    const { id, name } = request;
+    const count = await Deploy.countBy({ id, app: { name } });
+    if (!count) {
+      throw new NotFoundException(`Not found deploy of ${name}.`);
+    }
+    await Deploy.update(id, { status: "failed" });
+    return { status: "success" };
   }
 }

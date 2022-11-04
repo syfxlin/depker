@@ -1,7 +1,7 @@
 import React from "react";
 import { Main } from "../components/layout/Main";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
-import { Badge, Button, Grid, Group, Stack } from "@mantine/core";
+import { Badge, Button, Grid, Group, Loader, Stack } from "@mantine/core";
 import {
   TbActivity,
   TbAlertTriangle,
@@ -10,7 +10,10 @@ import {
   TbHistory,
   TbInfoCircle,
   TbNotes,
+  TbPlayerPause,
   TbPlayerPlay,
+  TbPlayerStop,
+  TbRefresh,
   TbTerminal,
   TbWreckingBall,
 } from "react-icons/all";
@@ -33,60 +36,132 @@ export const AppSetting: React.FC = () => {
   const { app: name } = useParams<"app">();
   const app = useApp(name!);
   const status = useStatus(name!);
-  const saving = useLoading();
-  const deploying = useLoading();
+  const running = useLoading();
 
   return (
     <Main
       title="App Settings"
       header={
-        <Group>
-          <Badge size="lg" color={colors[status.data]}>
+        <Group spacing="xs">
+          <Badge
+            size="lg"
+            color={colors[status.data]}
+            leftSection={status.loading && <Loader size="xs" color={colors[status.data]} />}
+            css={css`
+              .mantine-Badge-leftSection {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              }
+            `}
+          >
             {status.data}
           </Badge>
+          {["running", "restarting", "exited"].includes(status.data) && (
+            <Button
+              loading={running.value}
+              variant="light"
+              color="red"
+              leftIcon={<TbPlayerPause />}
+              onClick={() => {
+                (async () => {
+                  try {
+                    running.update(true);
+                    await app.actions.stop();
+                    running.update(false);
+                    showNotification({
+                      title: "Stop successful",
+                      message: `Application stop successful.`,
+                      color: "green",
+                    });
+                  } catch (e: any) {
+                    showNotification({
+                      title: "Stop failure",
+                      message: error(e),
+                    });
+                  }
+                })();
+              }}
+            >
+              Stop
+            </Button>
+          )}
+          {["running", "restarting", "exited"].includes(status.data) && (
+            <Button
+              loading={running.value}
+              variant="light"
+              leftIcon={<TbRefresh />}
+              onClick={() => {
+                (async () => {
+                  try {
+                    running.update(true);
+                    await app.actions.restart();
+                    running.update(false);
+                    showNotification({
+                      title: "Restart successful",
+                      message: `Application restart successful.`,
+                      color: "green",
+                    });
+                  } catch (e: any) {
+                    showNotification({
+                      title: "Restart failure",
+                      message: error(e),
+                    });
+                  }
+                })();
+              }}
+            >
+              Restart
+            </Button>
+          )}
           <Button
+            loading={running.value}
             variant="light"
-            leftIcon={<TbPlayerPlay />}
-            onClick={async () => {
-              try {
-                deploying.update(true);
-                const deploy = await app.actions.deploy("master");
-                deploying.update(false);
-                showNotification({
-                  title: "Deploy successful",
-                  message: `Application create deploy #${deploy.id} successful.`,
-                  color: "green",
-                });
-                navigate(`/apps/depker/deploys/${deploy.id}`);
-              } catch (e: any) {
-                showNotification({
-                  title: "Deploy failure",
-                  message: error(e),
-                });
-              }
+            leftIcon={status.data !== "stopped" ? <TbPlayerStop /> : <TbPlayerPlay />}
+            onClick={() => {
+              (async () => {
+                try {
+                  running.update(true);
+                  const deploy = await app.actions.deploy(status.data !== "stopped");
+                  running.update(false);
+                  showNotification({
+                    title: "Deploy successful",
+                    message: `Application create deploy #${deploy.id} successful.`,
+                    color: "green",
+                  });
+                  navigate(`/apps/depker/deploys/${deploy.id}`);
+                } catch (e: any) {
+                  showNotification({
+                    title: "Deploy failure",
+                    message: error(e),
+                  });
+                }
+              })();
             }}
           >
-            Deploy
+            {status.data !== "stopped" ? "Re-deploy" : "Deploy"}
           </Button>
           <Button
-            loading={saving.value}
+            loading={running.value}
             leftIcon={<TbDeviceFloppy />}
-            onClick={async () => {
-              try {
-                saving.update(true);
-                await app.actions.save();
-                saving.update(false);
-                showNotification({
-                  title: "Save successful",
-                  message: "Application save successful.",
-                  color: "green",
-                });
-              } catch (e: any) {
-                showNotification({
-                  title: "Save failure",
-                  message: error(e),
-                });
-              }
+            onClick={() => {
+              (async () => {
+                try {
+                  running.update(true);
+                  await app.actions.save();
+                  running.update(false);
+                  showNotification({
+                    title: "Save successful",
+                    message: "Application save successful.",
+                    color: "green",
+                  });
+                } catch (e: any) {
+                  showNotification({
+                    title: "Save failure",
+                    message: error(e),
+                  });
+                }
+              })();
             }}
           >
             Save
