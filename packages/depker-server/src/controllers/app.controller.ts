@@ -27,6 +27,8 @@ import {
   LogsAppDeployResponse,
   LogsAppRequest,
   LogsAppResponse,
+  MetricsAppRequest,
+  MetricsAppResponse,
   RestartAppRequest,
   RestartAppResponse,
   StatusAppRequest,
@@ -266,10 +268,39 @@ export class AppController {
     return { status: status[request.name] };
   }
 
-  // @Get("/:name/metrics")
-  // public async metrics(@Param() request: MetricsAppRequest) {
-  //   return {};
-  // }
+  @Get("/:name/metrics")
+  public async metrics(@Param() request: MetricsAppRequest): Promise<MetricsAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
+    const stats = await this.docker.getContainer(request.name).stats({ stream: false });
+    const cpu_delta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+    const system_cpu_delta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+    const number_cpus = stats.cpu_stats.online_cpus;
+    const cpu = (cpu_delta / system_cpu_delta) * number_cpus * 100;
+    const memory = stats.memory_stats.usage - stats.memory_stats.stats.cache;
+    const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
+    const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
+    return {
+      pid: stats.pid_stats?.current,
+      cpu: {
+        free: 100 - cpu,
+        used: cpu,
+        total: 100,
+      },
+      memory: {
+        free: stats.memory_stats.limit - memory,
+        used: memory,
+        total: stats.memory_stats.limit,
+      },
+      network: {
+        input,
+        output,
+      },
+    };
+  }
 
   @Get("/:name/logs")
   public async logs(@Data() request: LogsAppRequest): Promise<LogsAppResponse> {
