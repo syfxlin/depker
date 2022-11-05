@@ -41,6 +41,7 @@ importers:
       axios: ^0.27.2
       axios-retry: ^3.3.1
       qs: ^6.11.0
+      socket.io-client: ^4.5.3
       tsup: ^6.3.0
       typescript: ^4.8.4
     dependencies:
@@ -48,6 +49,7 @@ importers:
       axios: 0.27.2
       axios-retry: 3.3.1
       qs: 6.11.0
+      socket.io-client: 4.5.3
     devDependencies:
       '@types/qs': 6.9.7
       tsup: 6.3.0_typescript@4.8.4
@@ -63,11 +65,13 @@ importers:
       '@nestjs/jwt': ^9.0.0
       '@nestjs/passport': ^9.0.0
       '@nestjs/platform-express': ^9.1.6
+      '@nestjs/platform-socket.io': ^9.1.6
       '@nestjs/schedule': ^2.1.0
       '@nestjs/schematics': ^9.0.3
       '@nestjs/terminus': ^9.1.2
       '@nestjs/testing': ^9.1.6
       '@nestjs/typeorm': ^9.0.1
+      '@nestjs/websockets': ^9.1.6
       '@types/bcrypt': ^5.0.0
       '@types/cron': ^2.0.0
       '@types/dockerode': ^3.3.11
@@ -101,6 +105,7 @@ importers:
       rimraf: ^3.0.2
       rxjs: ^7.5.7
       simple-icons: ^7.17.0
+      socket.io: ^4.5.3
       systeminformation: ^5.12.10
       tar-fs: ^2.1.1
       typeorm: ^0.3.10
@@ -110,14 +115,16 @@ importers:
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
       '@nestjs/config': 2.2.0_yjxybkvltbh2d3oivnq5etx3oi
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       '@nestjs/event-emitter': 1.3.1_6gc6obcawnp52bp7gggit3czna
       '@nestjs/jwt': 9.0.0_@nestjs+common@9.1.6
       '@nestjs/passport': 9.0.0_pkfoh2sq4j5mhokn7ayryfespi
       '@nestjs/platform-express': 9.1.6_6whalgrsvisgjemghedgkfq7dm
+      '@nestjs/platform-socket.io': 9.1.6_vzp54junx56nuwta7cdfyezrwy
       '@nestjs/schedule': 2.1.0_6gc6obcawnp52bp7gggit3czna
       '@nestjs/terminus': 9.1.2_abdwileke2hqrs3f5gykhzlvd4
       '@nestjs/typeorm': 9.0.1_v5sk3sol6y4pjqg44yrie3mozm
+      '@nestjs/websockets': 9.1.6_q7oeefvfo2joyojxllcrmxhtve
       '@types/tar-fs': 2.0.1
       bcrypt: 5.1.0
       better-sqlite3: 7.6.2
@@ -140,6 +147,7 @@ importers:
       rimraf: 3.0.2
       rxjs: 7.5.7
       simple-icons: 7.17.0
+      socket.io: 4.5.3
       systeminformation: 5.12.10
       tar-fs: 2.1.1
       typeorm: 0.3.10_better-sqlite3@7.6.2
@@ -185,6 +193,7 @@ importers:
       '@types/react-dom': ^18.0.6
       '@types/react-virtualized-auto-sizer': ^1.0.1
       '@types/react-window': ^1.8.5
+      '@types/xterm': ^3.0.0
       '@vitejs/plugin-react': ^2.1.0
       anser: ^2.1.1
       axios: ^0.27.2
@@ -200,11 +209,14 @@ importers:
       react-use: ^17.4.0
       react-virtualized-auto-sizer: ^1.0.7
       react-window: ^1.8.7
+      socket.io-client: ^4.5.3
       swr: ^1.3.0
       typescript: ^4.6.4
       vite: ^3.1.0
       vite-plugin-checker: ^0.5.1
       vite-plugin-eslint: ^1.8.1
+      xterm: ^5.0.0
+      xterm-addon-fit: ^0.6.0
     dependencies:
       '@emotion/react': 11.10.4_gd4tregka43x4eiz452mfdbv4y
       '@mantine/core': 5.6.2_lngwrt6bikluxxndr5vqlr57ty
@@ -229,7 +241,10 @@ importers:
       react-use: 17.4.0_biqbaboplfbrettd7655fr4n2y
       react-virtualized-auto-sizer: 1.0.7_biqbaboplfbrettd7655fr4n2y
       react-window: 1.8.7_biqbaboplfbrettd7655fr4n2y
+      socket.io-client: 4.5.3
       swr: 1.3.0_react@18.2.0
+      xterm: 5.0.0
+      xterm-addon-fit: 0.6.0_xterm@5.0.0
     devDependencies:
       '@types/human-format': 1.0.0
       '@types/luxon': 3.0.2
@@ -237,6 +252,7 @@ importers:
       '@types/react-dom': 18.0.7
       '@types/react-virtualized-auto-sizer': 1.0.1
       '@types/react-window': 1.8.5
+      '@types/xterm': 3.0.0
       '@vitejs/plugin-react': 2.1.0_vite@3.1.8
       typescript: 4.8.4
       vite: 3.1.8
@@ -2424,7 +2440,7 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /@nestjs/core/9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu:
+  /@nestjs/core/9.1.6_eiqpoj6egdfzegnwdx574ucemu:
     resolution: {integrity: sha512-B52nYYTDSH72f1DU0G14NQSPCviXRE9fCp2/gUHuWIfVfBwcmVBAxVgyB/jAIUAhhj1f5/2odwUiw194xYtRRA==}
     requiresBuild: true
     peerDependencies:
@@ -2444,6 +2460,7 @@ packages:
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
       '@nestjs/platform-express': 9.1.6_6whalgrsvisgjemghedgkfq7dm
+      '@nestjs/websockets': 9.1.6_q7oeefvfo2joyojxllcrmxhtve
       '@nuxtjs/opencollective': 0.3.2
       fast-safe-stringify: 2.1.1
       iterare: 1.2.1
@@ -2464,7 +2481,7 @@ packages:
       reflect-metadata: ^0.1.12
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       eventemitter2: 6.4.6
       reflect-metadata: 0.1.13
     dev: false
@@ -2496,7 +2513,7 @@ packages:
       '@nestjs/core': ^9.0.0
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       body-parser: 1.20.1
       cors: 2.8.5
       express: 4.18.2
@@ -2504,6 +2521,23 @@ packages:
       tslib: 2.4.0
     transitivePeerDependencies:
       - supports-color
+
+  /@nestjs/platform-socket.io/9.1.6_vzp54junx56nuwta7cdfyezrwy:
+    resolution: {integrity: sha512-h1cilQaVimA3HjlEQWXidAZ3apaooeH1RTL+yZRZ1Wa/FPybiJCgkfDm/9K0zaqWSBdSPiNYArjyaoW/G2PDLg==}
+    peerDependencies:
+      '@nestjs/common': ^9.0.0
+      '@nestjs/websockets': ^9.0.0
+      rxjs: ^7.1.0
+    dependencies:
+      '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
+      '@nestjs/websockets': 9.1.6_q7oeefvfo2joyojxllcrmxhtve
+      rxjs: 7.5.7
+      socket.io: 4.5.3
+      tslib: 2.4.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   /@nestjs/schedule/2.1.0_6gc6obcawnp52bp7gggit3czna:
     resolution: {integrity: sha512-4Xaw56WiW3VsxEPPnj/iDtfjcO+sUZyYAeRxD0gnF5havncxjAnv52Iw7UH3DuzzUA784xPGgGje3Fq0Gu925g==}
@@ -2513,7 +2547,7 @@ packages:
       reflect-metadata: ^0.1.12
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       cron: 2.0.0
       reflect-metadata: 0.1.13
       uuid: 8.3.2
@@ -2558,7 +2592,7 @@ packages:
       rxjs: 7.x
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       boxen: 5.1.2
       check-disk-space: 3.3.1
       reflect-metadata: 0.1.13
@@ -2579,7 +2613,7 @@ packages:
         optional: true
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       '@nestjs/platform-express': 9.1.6_6whalgrsvisgjemghedgkfq7dm
       tslib: 2.4.0
     dev: true
@@ -2594,12 +2628,33 @@ packages:
       typeorm: ^0.3.0
     dependencies:
       '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
-      '@nestjs/core': 9.1.6_bx3wiubfryfbvpzqwr6ml4ajpu
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
       reflect-metadata: 0.1.13
       rxjs: 7.5.7
       typeorm: 0.3.10_better-sqlite3@7.6.2
       uuid: 8.3.2
     dev: false
+
+  /@nestjs/websockets/9.1.6_q7oeefvfo2joyojxllcrmxhtve:
+    resolution: {integrity: sha512-n6ldWU2FdVFESTj0ahmGLDEOT0sc3QKLya7N/L7dh8Z5F50gqd5Qw6LPmhRWcyXLGi+1Ugn1ZMnLn62B1CsZ7A==}
+    peerDependencies:
+      '@nestjs/common': ^9.0.0
+      '@nestjs/core': ^9.0.0
+      '@nestjs/platform-socket.io': ^9.0.0
+      reflect-metadata: ^0.1.12
+      rxjs: ^7.1.0
+    peerDependenciesMeta:
+      '@nestjs/platform-socket.io':
+        optional: true
+    dependencies:
+      '@nestjs/common': 9.1.6_x6yqyveuahcdef4z4mxykmuv6a
+      '@nestjs/core': 9.1.6_eiqpoj6egdfzegnwdx574ucemu
+      '@nestjs/platform-socket.io': 9.1.6_vzp54junx56nuwta7cdfyezrwy
+      iterare: 1.2.1
+      object-hash: 3.0.0
+      reflect-metadata: 0.1.13
+      rxjs: 7.5.7
+      tslib: 2.4.0
 
   /@nicolo-ribaudo/eslint-scope-5-internals/5.1.1-v1:
     resolution: {integrity: sha512-54/JRvkLIzzDWshCWfuhadfrfZVPiElY8Fcgmg1HroEly/EDSszzhBAsarCux+D/kOslTRquNzuyGSmUSTTHGg==}
@@ -2804,6 +2859,9 @@ packages:
       '@sinonjs/commons': 1.8.3
     dev: true
 
+  /@socket.io/component-emitter/3.1.0:
+    resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}
+
   /@sqltools/formatter/1.2.5:
     resolution: {integrity: sha512-Uy0+khmZqUrUGm5dmMqVlnvufZRSK0FbYzVgp0UMstm+F5+W2/jnEEQyc9vo1ZR/E5ZI/B1WjjoTqBqwJL6Krw==}
     dev: false
@@ -2876,6 +2934,12 @@ packages:
     dependencies:
       '@types/node': 18.11.5
     dev: true
+
+  /@types/cookie/0.4.1:
+    resolution: {integrity: sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==}
+
+  /@types/cors/2.8.12:
+    resolution: {integrity: sha512-vt+kDhq/M2ayberEtJcIN/hxXy1Pk+59g2FV/ZQceeaTyCtCucjL2Q7FXlFjtWn4n15KCr1NE2lNNFhp0lEThw==}
 
   /@types/cron/2.0.0:
     resolution: {integrity: sha512-xZM08fqvwIXgghtPVkSPKNgC+JoMQ2OHazEvyTKnNf7aWu1aB6/4lBbQFrb03Td2cUGG7ITzMv3mFYnMu6xRaQ==}
@@ -3132,6 +3196,13 @@ packages:
     dependencies:
       '@types/node': 18.11.5
     dev: false
+
+  /@types/xterm/3.0.0:
+    resolution: {integrity: sha512-+VaAJQmE7E1d1ebkIh/Zdc2mbXBVwxZGGSgqwzDPpk/HKo0mNT+iX5ZrnswztHSV+CDV+bURl7Yg7PWF7IZfXQ==}
+    deprecated: This is a stub types definition for xterm.js (https://github.com/sourcelair/xterm.js/). xterm.js provides its own type definitions, so you don't need @types/xterm installed!
+    dependencies:
+      xterm: 5.0.0
+    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -3882,6 +3953,10 @@ packages:
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
+  /base64id/2.0.0:
+    resolution: {integrity: sha512-lGe34o6EHj9y3Kts9R4ZYs/Gr+6N7MCaMlIFA3F1R2O5/m7K06AxfSeO5530PEERE6/WyEg3lsuyw4GHlPZHog==}
+    engines: {node: ^4.5.0 || >= 5.9}
+
   /bcrypt-pbkdf/1.0.2:
     resolution: {integrity: sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==}
     dependencies:
@@ -4405,6 +4480,10 @@ packages:
   /cookie-signature/1.0.6:
     resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
 
+  /cookie/0.4.2:
+    resolution: {integrity: sha512-aSWTXFzaKWkvHO1Ny/s+ePFpvKsPnjc551iI41v3ny/ow6tBG5Vd+FuqGNhh1LxOmVzOlGUriIlOaokOvhaStA==}
+    engines: {node: '>= 0.6'}
+
   /cookie/0.5.0:
     resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
     engines: {node: '>= 0.6'}
@@ -4744,6 +4823,43 @@ packages:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
     dependencies:
       once: 1.4.0
+
+  /engine.io-client/6.2.3:
+    resolution: {integrity: sha512-aXPtgF1JS3RuuKcpSrBtimSjYvrbhKW9froICH4s0F3XQWLxsKNxqzG39nnvQZQnva4CMvUK63T7shevxRyYHw==}
+    dependencies:
+      '@socket.io/component-emitter': 3.1.0
+      debug: 4.3.4
+      engine.io-parser: 5.0.4
+      ws: 8.2.3
+      xmlhttprequest-ssl: 2.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
+
+  /engine.io-parser/5.0.4:
+    resolution: {integrity: sha512-+nVFp+5z1E3HcToEnO7ZIj3g+3k9389DvWtvJZz0T6/eOCPIyyxehFcedoYrZQrp0LgQbD9pPXhpMBKMd5QURg==}
+    engines: {node: '>=10.0.0'}
+
+  /engine.io/6.2.0:
+    resolution: {integrity: sha512-4KzwW3F3bk+KlzSOY57fj/Jx6LyRQ1nbcyIadehl+AnXjKT7gDO0ORdRi/84ixvMKTym6ZKuxvbzN62HDDU1Lg==}
+    engines: {node: '>=10.0.0'}
+    dependencies:
+      '@types/cookie': 0.4.1
+      '@types/cors': 2.8.12
+      '@types/node': 18.11.7
+      accepts: 1.3.8
+      base64id: 2.0.0
+      cookie: 0.4.2
+      cors: 2.8.5
+      debug: 4.3.4
+      engine.io-parser: 5.0.4
+      ws: 8.2.3
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   /enhanced-resolve/5.10.0:
     resolution: {integrity: sha512-T0yTFjdpldGY8PmuXXR0PyQ1ufZpEGiHVrp7zHKB7jdR4qlmZHhONVM5AQOAWXuF/w3dnHbEQVrNptJgt7F+cQ==}
@@ -8605,6 +8721,47 @@ packages:
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
     dev: false
 
+  /socket.io-adapter/2.4.0:
+    resolution: {integrity: sha512-W4N+o69rkMEGVuk2D/cvca3uYsvGlMwsySWV447y99gUPghxq42BxqLNMndb+a1mm/5/7NeXVQS7RLa2XyXvYg==}
+
+  /socket.io-client/4.5.3:
+    resolution: {integrity: sha512-I/hqDYpQ6JKwtJOf5ikM+Qz+YujZPMEl6qBLhxiP0nX+TfXKhW4KZZG8lamrD6Y5ngjmYHreESVasVCgi5Kl3A==}
+    engines: {node: '>=10.0.0'}
+    dependencies:
+      '@socket.io/component-emitter': 3.1.0
+      debug: 4.3.4
+      engine.io-client: 6.2.3
+      socket.io-parser: 4.2.1
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
+
+  /socket.io-parser/4.2.1:
+    resolution: {integrity: sha512-V4GrkLy+HeF1F/en3SpUaM+7XxYXpuMUWLGde1kSSh5nQMN4hLrbPIkD+otwh6q9R6NOQBN4AMaOZ2zVjui82g==}
+    engines: {node: '>=10.0.0'}
+    dependencies:
+      '@socket.io/component-emitter': 3.1.0
+      debug: 4.3.4
+    transitivePeerDependencies:
+      - supports-color
+
+  /socket.io/4.5.3:
+    resolution: {integrity: sha512-zdpnnKU+H6mOp7nYRXH4GNv1ux6HL6+lHL8g7Ds7Lj8CkdK1jJK/dlwsKDculbyOHifcJ0Pr/yeXnZQ5GeFrcg==}
+    engines: {node: '>=10.0.0'}
+    dependencies:
+      accepts: 1.3.8
+      base64id: 2.0.0
+      debug: 4.3.4
+      engine.io: 6.2.0
+      socket.io-adapter: 2.4.0
+      socket.io-parser: 4.2.1
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   /socks-proxy-agent/6.2.1:
     resolution: {integrity: sha512-a6KW9G+6B3nWZ1yB8G7pJwL3ggLy1uTzKAgCb7ttblwqdz9fMGJUuTy3uFzEP48FAs9FLILlmzDlE2JJhVQaXQ==}
     engines: {node: '>= 10'}
@@ -9767,6 +9924,18 @@ packages:
       signal-exit: 3.0.7
     dev: true
 
+  /ws/8.2.3:
+    resolution: {integrity: sha512-wBuoj1BDpC6ZQ1B7DWQBYVLphPWkm8i9Y0/3YdHjHKHiohOJ1ws+3OccDWtH+PoC9DZD5WOTrJvNbWvjS6JWaA==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   /xml2js/0.4.23:
     resolution: {integrity: sha512-ySPiMjM0+pLDftHgXY4By0uswI3SPKLDw/i3UXbnO8M/p28zqexCUoPmQFrYD+/1BzhGJSs2i1ERWKJAtiLrug==}
     engines: {node: '>=4.0.0'}
@@ -9780,9 +9949,25 @@ packages:
     engines: {node: '>=4.0'}
     dev: false
 
+  /xmlhttprequest-ssl/2.0.0:
+    resolution: {integrity: sha512-QKxVRxiRACQcVuQEYFsI1hhkrMlrXHPegbbd1yn9UHOmRxY+si12nQYzri3vbzt8VdTTRviqcKxcyllFas5z2A==}
+    engines: {node: '>=0.4.0'}
+    dev: false
+
   /xtend/4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
+
+  /xterm-addon-fit/0.6.0_xterm@5.0.0:
+    resolution: {integrity: sha512-9/7A+1KEjkFam0yxTaHfuk9LEvvTSBi0PZmEkzJqgafXPEXL9pCMAVV7rB09sX6ATRDXAdBpQhZkhKj7CGvYeg==}
+    peerDependencies:
+      xterm: ^5.0.0
+    dependencies:
+      xterm: 5.0.0
+    dev: false
+
+  /xterm/5.0.0:
+    resolution: {integrity: sha512-tmVsKzZovAYNDIaUinfz+VDclraQpPUnAME+JawosgWRMphInDded/PuY0xmU5dOhyeYZsI0nz5yd8dPYsdLTA==}
 
   /y18n/5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}

@@ -1,11 +1,13 @@
 import { NestFactory, Reflector } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
+import { WebSocketAdapter } from "./ws/websocket.adapter";
 
 (async () => {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
   app.enableShutdownHooks();
+  app.useWebSocketAdapter(new WebSocketAdapter(app));
   app.setGlobalPrefix("api");
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalPipes(

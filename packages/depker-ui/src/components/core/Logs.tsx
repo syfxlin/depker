@@ -19,6 +19,7 @@ import { FixedSizeList } from "react-window";
 import { useDebouncedValue } from "@mantine/hooks";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { TbArrowDown, TbArrowUp, TbMenu2, TbSearch, TbSquare, TbSquareCheck } from "react-icons/all";
+import { colors } from "../../utils/color";
 
 export type LineProps = BoxProps & {
   index?: number;
@@ -71,8 +72,8 @@ export const Line = forwardRef<HTMLDivElement, LineProps>((props, ref) => {
         font-size: 12px;
         font-family: ${t.fontFamilyMonospace};
         white-space: pre;
-        color: #d0d7de;
-        background-color: #24292f;
+        color: ${colors.foreground};
+        background-color: ${colors.background};
 
         &:hover {
           color: #f6f8fa;
@@ -105,131 +106,131 @@ export const Line = forwardRef<HTMLDivElement, LineProps>((props, ref) => {
 
         .ansi-black {
           &-fg {
-            color: #24292c;
+            color: ${colors.black};
           }
           &-bg {
-            background-color: #24292c;
+            background-color: ${colors.black};
           }
         }
         .ansi-red {
           &-fg {
-            color: #ff8182;
+            color: ${colors.red};
           }
           &-bg {
-            background-color: #ff8182;
+            background-color: ${colors.red};
           }
         }
         .ansi-green {
           &-fg {
-            color: #4ac26b;
+            color: ${colors.green};
           }
           &-bg {
-            background-color: #4ac26b;
+            background-color: ${colors.green};
           }
         }
         .ansi-yellow {
           &-fg {
-            color: #d4a72c;
+            color: ${colors.yellow};
           }
           &-bg {
-            background-color: #d4a72c;
+            background-color: ${colors.yellow};
           }
         }
         .ansi-blue {
           &-fg {
-            color: #54aeff;
+            color: ${colors.blue};
           }
           &-bg {
-            background-color: #54aeff;
+            background-color: ${colors.blue};
           }
         }
         .ansi-magenta {
           &-fg {
-            color: #c297ff;
+            color: ${colors.magenta};
           }
           &-bg {
-            background-color: #c297ff;
+            background-color: ${colors.magenta};
           }
         }
         .ansi-cyan {
           &-fg {
-            color: #76e3ea;
+            color: ${colors.cyan};
           }
           &-bg {
-            background-color: #76e3ea;
+            background-color: ${colors.cyan};
           }
         }
         .ansi-white {
           &-fg {
-            color: #d0d7de;
+            color: ${colors.white};
           }
           &-bg {
-            background-color: #d0d7de;
+            background-color: ${colors.white};
           }
         }
 
         .ansi-bright-black {
           &-fg {
-            color: #32383f;
+            color: ${colors.brightBlack};
           }
           &-bg {
-            background-color: #32383f;
+            background-color: ${colors.brightBlack};
           }
         }
         .ansi-bright-red {
           &-fg {
-            color: #ffaba8;
+            color: ${colors.brightRed};
           }
           &-bg {
-            background-color: #ffaba8;
+            background-color: ${colors.brightRed};
           }
         }
         .ansi-bright-green {
           &-fg {
-            color: #6fdd8b;
+            color: ${colors.brightGreen};
           }
           &-bg {
-            background-color: #6fdd8b;
+            background-color: ${colors.brightGreen};
           }
         }
         .ansi-bright-yellow {
           &-fg {
-            color: #eac54f;
+            color: ${colors.brightYellow};
           }
           &-bg {
-            background-color: #eac54f;
+            background-color: ${colors.brightYellow};
           }
         }
         .ansi-bright-blue {
           &-fg {
-            color: #80ccff;
+            color: ${colors.brightBlue};
           }
           &-bg {
-            background-color: #80ccff;
+            background-color: ${colors.brightBlue};
           }
         }
         .ansi-bright-magenta {
           &-fg {
-            color: #d8b9ff;
+            color: ${colors.brightMagenta};
           }
           &-bg {
-            background-color: #d8b9ff;
+            background-color: ${colors.brightMagenta};
           }
         }
         .ansi-bright-cyan {
           &-fg {
-            color: #b3f0ff;
+            color: ${colors.brightCyan};
           }
           &-bg {
-            background-color: #b3f0ff;
+            background-color: ${colors.brightCyan};
           }
         }
         .ansi-bright-white {
           &-fg {
-            color: #d0d7de;
+            color: ${colors.brightWhite};
           }
           &-bg {
-            background-color: #d0d7de;
+            background-color: ${colors.brightWhite};
           }
         }
 
@@ -283,8 +284,8 @@ export const Empty = forwardRef<HTMLDivElement, EmptyProps>((props, ref) => {
         font-size: 12px;
         font-family: ${t.fontFamilyMonospace};
         white-space: pre;
-        color: #d0d7de;
-        background-color: #24292f;
+        color: ${colors.foreground};
+        background-color: ${colors.background};
       `}
     >
       {children}
@@ -545,8 +546,8 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data,
       {...other}
       ref={ref}
       css={css`
-        color: #d0d7de;
-        background-color: #24292f;
+        color: ${colors.foreground};
+        background-color: ${colors.background};
         padding: ${t.spacing.xs}px;
         border-radius: ${t.radius.sm}px;
         min-height: ${t.fontSizes.md * 10}px;

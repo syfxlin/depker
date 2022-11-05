@@ -21,6 +21,7 @@ import {
   UpsertAppRequest,
   UpsertAppResponse,
 } from "@syfxlin/depker-types";
+import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 
 export class AppApi extends Api {
   public async list(request?: ListAppRequest) {
@@ -75,5 +76,11 @@ export class AppApi extends Api {
   public async restart(request: RestartAppRequest) {
     const response = await this.request.post<RestartAppResponse>(`/api/apps/${request.name}/restart`);
     return response.data;
+  }
+
+  public terminal(name: string, options?: Partial<ManagerOptions & SocketOptions>): Socket {
+    const url = new URL(`/terminal`, this.client.endpoint);
+    const query = { ...options?.query, name };
+    return io(url.toString(), { ...options, query });
   }
 }
