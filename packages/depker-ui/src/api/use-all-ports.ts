@@ -16,7 +16,6 @@ export const useAllPorts = () => {
         {} as Record<string, ListPortResponse["items"][number]>
       ),
     (q) => ({
-      mutate: q.mutate,
       create: async (request: UpsertPortRequest) => {
         const response = await client.port.upsert(request);
         await q.mutate();

@@ -7,6 +7,6 @@ export const useAccessLogs = () => {
   return useSWRWrapper(
     query,
     (v) => v ?? [],
-    (q) => ({ mutate: q.mutate })
+    () => {}
   );
 };

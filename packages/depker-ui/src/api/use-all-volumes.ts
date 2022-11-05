@@ -16,7 +16,6 @@ export const useAllVolumes = () => {
         {} as Record<string, ListVolumeResponse["items"][number]>
       ),
     (q) => ({
-      mutate: q.mutate,
       create: async (request: UpsertVolumeRequest) => {
         const response = await client.volume.upsert(request);
         await q.mutate();

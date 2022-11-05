@@ -11,7 +11,7 @@ export const useApps = () => {
   const result = useSWRWrapper(
     query,
     (v) => v,
-    (q) => ({ mutate: q.mutate })
+    () => {}
   );
 
   return {

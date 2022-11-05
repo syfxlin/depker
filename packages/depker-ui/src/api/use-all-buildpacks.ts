@@ -8,6 +8,6 @@ export const useAllBuildpacks = () => {
   return useSWRWrapper(
     query,
     (v) => (v ?? []).reduce((a, i) => ({ ...a, [i.name]: i }), {} as Record<string, ListBuildPackResponse[number]>),
-    (q) => ({ mutate: q.mutate })
+    () => {}
   );
 };

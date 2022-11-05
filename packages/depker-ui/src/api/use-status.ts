@@ -11,18 +11,12 @@ export const colors: Record<AppStatus, string> = {
 };
 
 export const useStatus = (name: string) => {
-  const query = useSWR(
-    ["client.app.status", name],
-    (key, name) => {
-      return client.app.status({ name });
-    },
-    {
-      refreshInterval: 5000,
-    }
-  );
+  const query = useSWR(["client.app.status", name], (key, name) => client.app.status({ name }), {
+    refreshInterval: 5000,
+  });
   return useSWRWrapper(
     query,
     (v) => v?.status ?? "stopped",
-    (q) => ({ mutate: q.mutate })
+    () => {}
   );
 };

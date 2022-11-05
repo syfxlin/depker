@@ -16,9 +16,7 @@ export const useDeployList = (name: string) => {
 
   const query = useSWR(
     ["client.deploy.list", name, page.request],
-    async (key, name, request) => {
-      return await client.deploy.list({ ...request, name });
-    },
+    (key, name, request) => client.deploy.list({ ...request, name }),
     {
       refreshInterval: 1000,
     }
@@ -27,7 +25,7 @@ export const useDeployList = (name: string) => {
   const result = useSWRWrapper(
     query,
     (v) => v,
-    (q) => ({ mutate: q.mutate })
+    () => {}
   );
 
   return {

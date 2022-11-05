@@ -333,7 +333,6 @@ export class MetricsAppRequest {
 }
 
 export type MetricsAppResponse = {
-  pid: number | undefined;
   cpu: {
     free: number;
     used: number;

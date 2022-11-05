@@ -72,7 +72,7 @@ export const PercStats: React.FC<PercStatsProps> = ({ title, icon: Icon, value }
             `}
           >
             {typeof value === "number" && unit(value)}
-            {typeof value !== "number" && unit(value.used) + " / " + unit(value.used)}
+            {typeof value !== "number" && unit(value.used) + " / " + unit(value.total)}
           </Text>
         </Tooltip>
         {diff !== 0 && (

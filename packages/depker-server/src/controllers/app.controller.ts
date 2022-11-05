@@ -284,7 +284,6 @@ export class AppController {
     const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
     const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
     return {
-      pid: stats.pid_stats?.current,
       cpu: {
         free: 100 - cpu,
         used: cpu,
