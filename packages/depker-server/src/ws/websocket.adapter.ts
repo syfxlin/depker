@@ -1,7 +1,7 @@
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { Server, ServerOptions, Socket } from "socket.io";
 import { INestApplication } from "@nestjs/common";
-import { JwtStrategy } from "../guards/jwt.strategy";
+import { AuthService } from "../guards/auth.service";
 
 export type WebSocketOptions = ServerOptions & {
   namespace?: string;
@@ -19,9 +19,9 @@ export class WebSocketAdapter extends IoAdapter {
       if (!options?.auth) {
         next();
       } else {
-        const jwt = this.app.get(JwtStrategy);
+        const auth = this.app.get(AuthService);
         try {
-          jwt.verify(socket.handshake.auth.token);
+          await auth.verify(socket.handshake.auth.token);
           next();
         } catch (e: any) {
           next(e);

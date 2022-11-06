@@ -5,11 +5,11 @@ import { Express } from "express";
 import cloudcmd from "cloudcmd";
 import { Server } from "socket.io";
 import { PATHS } from "../constants/depker.constant";
-import { JwtStrategy } from "../guards/jwt.strategy";
+import { AuthService } from "../guards/auth.service";
 
 @Controller("/files")
 export class FileController implements OnModuleInit {
-  constructor(private readonly adapter: HttpAdapterHost, private readonly jwts: JwtStrategy) {}
+  constructor(private readonly adapter: HttpAdapterHost, private readonly auths: AuthService) {}
 
   public onModuleInit() {
     const app = this.adapter.httpAdapter.getInstance<Express>();
@@ -18,14 +18,14 @@ export class FileController implements OnModuleInit {
     socket.attach(server);
     app.use(
       "/files",
-      (req, res, next) => {
+      async (req, res, next) => {
         const tokens = req.headers.authorization?.split(" ");
         if (tokens && tokens.length === 2 && tokens[0] === "Basic") {
           const splitHash = Buffer.from(tokens[1], "base64").toString("utf8").split(":");
           const username = splitHash.shift();
           const password = splitHash.join(":");
           try {
-            this.jwts.verify(password, username);
+            await this.auths.verify(password, username);
             return next();
           } catch (e: any) {
             // ignore
