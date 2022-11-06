@@ -21,7 +21,7 @@ export class WebSocketAdapter extends IoAdapter {
       } else {
         const jwt = this.app.get(JwtStrategy);
         try {
-          jwt.auth(socket.handshake.auth.token);
+          jwt.verify(socket.handshake.auth.token);
           next();
         } catch (e: any) {
           next(e);

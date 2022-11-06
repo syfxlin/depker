@@ -3,7 +3,7 @@ import { Center, Navbar, Stack, useMantineColorScheme, useMantineTheme } from "@
 import { css } from "@emotion/react";
 import { showNotification } from "@mantine/notifications";
 import { logout } from "../../api/client";
-import { TbApps, TbBrightness, TbHome2, TbLogout, TbSettings } from "react-icons/all";
+import { TbApps, TbBrightness, TbFiles, TbHome2, TbLogout, TbSettings } from "react-icons/all";
 import { SidebarLink } from "../core/SidebarLink";
 
 export const Sidebar: React.FC = () => {
@@ -25,6 +25,7 @@ export const Sidebar: React.FC = () => {
         <Stack justify="center" spacing="xs">
           <SidebarLink icon={TbHome2} label="Home" action="/home" />
           <SidebarLink icon={TbApps} label="Apps" action="/apps" />
+          <SidebarLink icon={TbFiles} label="Files" action="/files" />
         </Stack>
       </Navbar.Section>
       <Navbar.Section>

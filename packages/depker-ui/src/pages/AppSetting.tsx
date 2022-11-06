@@ -6,7 +6,6 @@ import {
   TbActivity,
   TbAlertTriangle,
   TbDeviceFloppy,
-  TbFiles,
   TbHistory,
   TbInfoCircle,
   TbNotes,
@@ -180,9 +179,8 @@ export const AppSetting: React.FC = () => {
             <NavLink label="Deploys" icon={<TbWreckingBall />} action={`/apps/${name}/deploys`} />
             <NavLink label="Metrics" icon={<TbActivity />} action={`/apps/${name}/metrics`} />
             <NavLink label="Logs" icon={<TbNotes />} action={`/apps/${name}/logs`} />
-            <NavLink label="History" icon={<TbHistory />} action={`/apps/${name}/history`} />
-            <NavLink label="Files" icon={<TbFiles />} action={`/apps/${name}/files`} />
             <NavLink label="Terminal" icon={<TbTerminal />} action={`/apps/${name}/terminal`} />
+            <NavLink label="History" icon={<TbHistory />} action={`/apps/${name}/history`} />
             <NavLink label="Danger Zone" icon={<TbAlertTriangle />} color="red" action={`/apps/${name}/danger`} />
           </Stack>
         </Grid.Col>

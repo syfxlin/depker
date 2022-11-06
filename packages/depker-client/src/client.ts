@@ -9,6 +9,7 @@ import { PortApi } from "./api/port.api";
 import { VolumeApi } from "./api/volume.api";
 import { AssetApi } from "./api/asset.api";
 import { DeployApi } from "./api/deploy.api";
+import { FilesApi } from "./api/files.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -30,6 +31,7 @@ export class DepkerClient {
   public readonly volume: VolumeApi;
   public readonly asset: AssetApi;
   public readonly deploy: DeployApi;
+  public readonly files: FilesApi;
 
   constructor(options: DepkerClientOptions) {
     this.endpoint = options.endpoint;
@@ -58,5 +60,6 @@ export class DepkerClient {
     this.volume = new VolumeApi(this);
     this.asset = new AssetApi(this);
     this.deploy = new DeployApi(this);
+    this.files = new FilesApi(this);
   }
 }

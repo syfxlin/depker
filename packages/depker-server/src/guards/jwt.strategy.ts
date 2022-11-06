@@ -17,16 +17,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   public validate(payload: any) {
     const user = payload.user;
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(`401 Unauthorized`);
     }
     return { user };
   }
 
-  public auth(token: string, user?: string) {
+  public sign(user: string) {
+    return this.jwts.sign({ user });
+  }
+
+  public verify(token: string, user?: string) {
     const payload = this.jwts.verify(token, { secret: this.configs.get(AUTH_SECRET) });
     const result = this.validate(payload);
     if (result.user !== user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(`401 Unauthorized`);
     }
     return result;
   }

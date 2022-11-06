@@ -25,9 +25,8 @@ export class FileController implements OnModuleInit {
           const username = splitHash.shift();
           const password = splitHash.join(":");
           try {
-            if (this.jwts.auth(password, username)) {
-              return next();
-            }
+            this.jwts.verify(password, username);
+            return next();
           } catch (e: any) {
             // ignore
           }
