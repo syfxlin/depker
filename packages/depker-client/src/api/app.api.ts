@@ -81,6 +81,7 @@ export class AppApi extends Api {
   public terminal(name: string, options?: Partial<ManagerOptions & SocketOptions>): Socket {
     const url = new URL(`/terminal`, this.client.endpoint);
     const query = { ...options?.query, name };
-    return io(url.toString(), { ...options, query });
+    const auth = { ...options?.auth, token: this.client.token() };
+    return io(url.toString(), { ...options, query, auth });
   }
 }

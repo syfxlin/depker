@@ -20,6 +20,7 @@ import { PortController } from "./controllers/port.controller";
 import { VolumeController } from "./controllers/volume.controller";
 import { BuildpackController } from "./controllers/buildpack.controller";
 import { TerminalGateway } from "./ws/terminal.gateway";
+import { FileController } from "./controllers/file.controller";
 
 // entity
 export const entities = [Setting, Token, App, Deploy, Log, Volume, Port, PortBind, VolumeBind];
@@ -33,6 +34,7 @@ export const controllers = [
   PortController,
   VolumeController,
   BuildpackController,
+  FileController,
 ];
 export const gateways = [TerminalGateway];
 export const services = [DeployService, DockerService, StorageService];

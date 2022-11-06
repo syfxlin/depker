@@ -20,6 +20,7 @@ export interface DepkerClientOptions {
 
 export class DepkerClient {
   public readonly endpoint: string;
+  public readonly token: () => string | null | undefined;
   public readonly request: AxiosInstance;
   public readonly auth: AuthApi;
   public readonly system: SystemApi;
@@ -32,6 +33,7 @@ export class DepkerClient {
 
   constructor(options: DepkerClientOptions) {
     this.endpoint = options.endpoint;
+    this.token = options.token ?? (() => undefined);
     this.request = options.client?.(options.endpoint) ?? axios.create({ baseURL: options.endpoint });
     this.request.defaults.timeout = options.timeout;
     this.request.defaults.paramsSerializer = (params) => qs.stringify(params, { arrayFormat: "brackets" });

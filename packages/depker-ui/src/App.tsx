@@ -14,6 +14,7 @@ import { AppDeploysTab } from "./pages/AppDeploysTab";
 import { AppLogsTab } from "./pages/AppLogsTab";
 import { AppMetricsTab } from "./pages/AppMetricsTab";
 import { AppTerminalTab } from "./pages/AppTerminalTab";
+import { AppFilesTab } from "./pages/AppFilesTab";
 
 export const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ export const App: React.FC = () => {
                 <Route index element={<AppConfigsTab />} />
                 <Route path="metrics" element={<AppMetricsTab />} />
                 <Route path="logs" element={<AppLogsTab />} />
+                <Route path="files" element={<AppFilesTab />} />
                 <Route path="terminal" element={<AppTerminalTab />} />
                 <Route path="deploys" element={<AppDeploysTab />} />
                 <Route path="deploys/:deploy" element={<AppDeploysTab />} />

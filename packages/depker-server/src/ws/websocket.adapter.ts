@@ -2,9 +2,6 @@ import { IoAdapter } from "@nestjs/platform-socket.io";
 import { Server, ServerOptions, Socket } from "socket.io";
 import { INestApplication } from "@nestjs/common";
 import { JwtStrategy } from "../guards/jwt.strategy";
-import { ExtendedError } from "socket.io/dist/namespace";
-
-export type WebSocketMiddleware = (socket: Socket, next: (err?: ExtendedError) => void, app: INestApplication) => void;
 
 export type WebSocketOptions = ServerOptions & {
   namespace?: string;
@@ -24,7 +21,7 @@ export class WebSocketAdapter extends IoAdapter {
       } else {
         const jwt = this.app.get(JwtStrategy);
         try {
-          jwt.$validate(socket.handshake.auth.token);
+          jwt.auth(socket.handshake.auth.token);
           next();
         } catch (e: any) {
           next(e);

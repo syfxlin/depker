@@ -15,7 +15,7 @@ export class AuthController {
       throw new UnauthorizedException("Username or password not match, try again.");
     }
     return {
-      token: this.jwts.sign({ logged: true }),
+      token: this.jwts.sign({ user: user.username }),
     };
   }
 }
