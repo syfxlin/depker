@@ -18,7 +18,7 @@ import { Volume } from "../entities/volume.entity";
 import { Data } from "../decorators/data.decorator";
 import { VolumeBind } from "../entities/volume-bind.entity";
 
-@Controller("/volumes")
+@Controller("/api/volumes")
 export class VolumeController {
   @Get("/")
   public async list(@Query() request: ListVolumeRequest): Promise<ListVolumeResponse> {

@@ -18,7 +18,7 @@ import { Like } from "typeorm";
 import { Data } from "../decorators/data.decorator";
 import { PortBind } from "../entities/port-bind.entity";
 
-@Controller("/ports")
+@Controller("/api/ports")
 export class PortController {
   @Get("/")
   public async list(@Query() request: ListPortRequest): Promise<ListPortResponse> {

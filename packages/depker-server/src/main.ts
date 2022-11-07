@@ -8,7 +8,6 @@ import { WebSocketAdapter } from "./ws/websocket.adapter";
   app.enableCors();
   app.enableShutdownHooks();
   app.useWebSocketAdapter(new WebSocketAdapter(app));
-  app.setGlobalPrefix("api");
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalPipes(
     new ValidationPipe({

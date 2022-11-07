@@ -75,7 +75,7 @@ export const Login: React.FC = () => {
             component="form"
             onSubmit={form.onSubmit(async (values) => {
               try {
-                const token = await client.auth.login(values);
+                const token = await client.auth.auth(values);
                 login(token);
                 showNotification({
                   title: "Login successful",

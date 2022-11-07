@@ -8,7 +8,7 @@ import { AuthService } from "./auth.service";
 export class AuthController {
   constructor(private readonly auths: AuthService) {}
 
-  @Post("/login")
+  @Post("/")
   public async token(@Body() user: LoginRequest): Promise<LoginResponse> {
     const one = await Setting.read();
     if (user.username !== one.username || !compareSync(user.password, one.password)) {

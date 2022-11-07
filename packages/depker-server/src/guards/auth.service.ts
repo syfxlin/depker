@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Setting } from "../entities/setting.entity";
 import { Token } from "../entities/token.entity";
+import { Request } from "express";
 
 export type TokenPayload = {
   type: "web" | "api";
@@ -36,5 +37,25 @@ export class AuthService {
       }
     }
     return payload;
+  }
+
+  public async request(request: Request) {
+    const authorization: string = request.headers["authorization"] ?? request.cookies["depker-token"];
+    try {
+      if (authorization) {
+        if (authorization.startsWith("Basic ")) {
+          const strings = Buffer.from(authorization.replace("Basic ", ""), "base64").toString("utf-8").split(":");
+          const username = strings.shift();
+          const password = strings.join(":");
+          return await this.verify(password, username);
+        } else {
+          const token = authorization.replace("Bearer ", "");
+          return await this.verify(token);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new UnauthorizedException(`401 Unauthorized`);
   }
 }

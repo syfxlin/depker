@@ -2,7 +2,7 @@ import { Controller, Get, Header, NotFoundException, Param } from "@nestjs/commo
 import * as icons from "simple-icons/icons";
 import { SimpleIcon } from "simple-icons";
 
-@Controller()
+@Controller("/api")
 export class AssetController {
   @Get("/icons/:name")
   @Header("content-type", "image/svg+xml")

@@ -1,4 +1,4 @@
-export const TOKEN_NAME = "depker$token";
+export const TOKEN_NAME = "depker-token";
 
 export const token = {
   get: () => localStorage.getItem(TOKEN_NAME),

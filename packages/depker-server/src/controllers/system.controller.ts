@@ -15,7 +15,7 @@ import MemData = Systeminformation.MemData;
 import CurrentLoadData = Systeminformation.CurrentLoadData;
 import FsSizeData = Systeminformation.FsSizeData;
 
-@Controller("/system")
+@Controller("/api/system")
 export class SystemController {
   constructor(
     private readonly health: HealthCheckService,

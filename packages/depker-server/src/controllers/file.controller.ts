@@ -7,35 +7,28 @@ import { Server } from "socket.io";
 import { PATHS } from "../constants/depker.constant";
 import { AuthService } from "../guards/auth.service";
 
-@Controller("/files")
+@Controller("/api/files")
 export class FileController implements OnModuleInit {
   constructor(private readonly adapter: HttpAdapterHost, private readonly auths: AuthService) {}
 
   public onModuleInit() {
     const app = this.adapter.httpAdapter.getInstance<Express>();
     const server = this.adapter.httpAdapter.getHttpServer();
-    const socket = new Server({ path: "/files/socket.io" });
+    const socket = new Server({ path: "/api/files/socket.io" });
     socket.attach(server);
     app.use(
-      "/files",
-      async (req, res, next) => {
-        const tokens = req.headers.authorization?.split(" ");
-        if (tokens && tokens.length === 2 && tokens[0] === "Basic") {
-          const splitHash = Buffer.from(tokens[1], "base64").toString("utf8").split(":");
-          const username = splitHash.shift();
-          const password = splitHash.join(":");
-          try {
-            await this.auths.verify(password, username);
-            return next();
-          } catch (e: any) {
-            // ignore
-          }
+      "/api/files",
+      async (request, response, next) => {
+        try {
+          await this.auths.request(request);
+          return next();
+        } catch (e: any) {
+          return response
+            .status(401)
+            .header("Content-Type", "text/plain")
+            .header("WWW-Authenticate", 'Basic realm="authorization needed"')
+            .send("401 Unauthorized");
         }
-        return res
-          .status(401)
-          .header("Content-Type", "text/plain")
-          .header("WWW-Authenticate", 'Basic realm="authorization needed"')
-          .send("401 Unauthorized");
       },
       ...cloudcmd({
         socket,

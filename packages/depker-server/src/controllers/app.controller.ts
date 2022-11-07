@@ -54,7 +54,7 @@ import { stdcopy } from "../utils/docker.util";
 import { DateTime } from "luxon";
 import { Log } from "../entities/log.entity";
 
-@Controller("/apps")
+@Controller("/api/apps")
 export class AppController {
   constructor(
     private readonly docker: DockerService,

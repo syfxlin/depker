@@ -2,7 +2,7 @@ import { Controller, Get } from "@nestjs/common";
 import { PluginService } from "../services/plugin.service";
 import { ListBuildPackResponse } from "../views/buildpack.view";
 
-@Controller("/buildpacks")
+@Controller("/api/buildpacks")
 export class BuildpackController {
   constructor(private readonly plugins: PluginService) {}
 
