@@ -19,6 +19,8 @@ import {
   DownAppResponse,
   GetAppRequest,
   GetAppResponse,
+  HistoryAppRequest,
+  HistoryAppResponse,
   ListAppDeployRequest,
   ListAppDeployResponse,
   ListAppRequest,
@@ -53,6 +55,7 @@ import { Data } from "../decorators/data.decorator";
 import { stdcopy } from "../utils/docker.util";
 import { DateTime } from "luxon";
 import { Log } from "../entities/log.entity";
+import { Revwalk } from "nodegit";
 
 @Controller("/api/apps")
 export class AppController {
@@ -346,6 +349,55 @@ export class AppController {
     }
   }
 
+  @Get("/:name/history")
+  public async history(@Data() request: HistoryAppRequest): Promise<HistoryAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+    const repo = await this.storage.repository(request.name);
+    if (!repo) {
+      return { total: 0, items: [] };
+    }
+
+    const { offset = 0, limit = 10 } = request;
+    const master = await repo.getMasterCommit();
+    const walk = repo.createRevWalk();
+    walk.push(master.id());
+    walk.sorting(Revwalk.SORT.TOPOLOGICAL, Revwalk.SORT.TIME);
+
+    const references = await repo.getReferences();
+    const refs = new Map<string, Array<string>>();
+    for (const reference of references) {
+      const id = reference.target().tostrS();
+      const name = reference.name();
+      const arr = refs.get(id) ?? [];
+      if (reference.isBranch()) {
+        arr.push(name.replace("refs/heads/", ""));
+      }
+      if (reference.isTag()) {
+        arr.push(name.replace("refs/tags/", "tag: "));
+      }
+      refs.set(id, arr);
+    }
+
+    const all = offset + limit + 1;
+    const commits = await walk.getCommits(all);
+
+    const total: HistoryAppResponse["total"] = commits.length;
+    const items: HistoryAppResponse["items"] = commits
+      .slice(offset, commits.length !== all ? commits.length : commits.length - 1)
+      .map((i) => {
+        const commit = i.id().tostrS();
+        const message = i.message();
+        const author = `${i.author().name()} <${i.author().email()}>`;
+        const time = i.timeMs();
+        return { commit, message, author, time, refs: refs.get(commit) ?? [] };
+      });
+
+    return { total, items };
+  }
+
   @Post("/:name/up")
   public async up(@Data() request: UpAppRequest): Promise<UpAppResponse> {
     const app = await App.findOne({ where: { name: request.name } });
@@ -367,7 +419,7 @@ export class AppController {
         throw new NotFoundException(`Not found application source of ${request.name}.`);
       }
       try {
-        const commit = await repo.getReferenceCommit("master");
+        const commit = await repo.getMasterCommit();
         deploy.commit = commit.id().tostrS();
       } catch (e) {
         // ignore

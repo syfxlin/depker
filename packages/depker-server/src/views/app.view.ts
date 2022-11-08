@@ -370,6 +370,35 @@ export type LogsAppResponse = {
   since: number;
 };
 
+export class HistoryAppRequest {
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9._-]+$/)
+  name: string;
+
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  offset?: number;
+
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  limit?: number;
+}
+
+export type HistoryAppResponse = {
+  total: number;
+  items: Array<{
+    message: string;
+    commit: string;
+    refs: string[];
+    author: string;
+    time: number;
+  }>;
+};
+
 export class UpAppRequest {
   @IsString()
   @IsNotEmpty()
