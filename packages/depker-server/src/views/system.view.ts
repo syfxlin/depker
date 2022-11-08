@@ -57,11 +57,11 @@ export class LogsRequest {
   @IsOptional()
   @IsInt()
   @Min(0)
-  lines: number = 1000;
+  lines?: number;
 
   @IsOptional()
   @IsBoolean()
-  download: boolean = false;
+  download?: boolean;
 }
 
 export type LogsResponse = Array<string>;

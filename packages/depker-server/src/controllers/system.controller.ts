@@ -118,7 +118,7 @@ export class SystemController {
       if (!exist) {
         return [];
       }
-      const lines = readLastLinesEnc("utf-8")(file, Math.max(1, request.lines)).split("\n");
+      const lines = readLastLinesEnc("utf-8")(file, Math.max(1, request.lines ?? 1000)).split("\n");
       lines.pop();
       return lines;
     } else {

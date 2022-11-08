@@ -9,7 +9,20 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ActionIcon, Box, BoxProps, Center, Group, Input, Menu, Text, Tooltip, useMantineTheme } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  BoxProps,
+  Center,
+  Group,
+  Input,
+  Popover,
+  Select,
+  Stack,
+  Text,
+  Tooltip,
+  useMantineTheme,
+} from "@mantine/core";
 import Anser from "anser";
 import { css } from "@emotion/react";
 import { LogLevel } from "@syfxlin/depker-client";
@@ -18,7 +31,7 @@ import { Flex, FlexProps } from "./Flex";
 import { FixedSizeList } from "react-window";
 import { useDebouncedValue } from "@mantine/hooks";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { TbArrowDown, TbArrowUp, TbMenu2, TbSearch, TbSquare, TbSquareCheck } from "react-icons/all";
+import { TbArrowDown, TbArrowUp, TbInfinity, TbMenu2, TbSearch } from "react-icons/all";
 import { colors } from "../../utils/color";
 
 export type LineProps = BoxProps & {
@@ -297,9 +310,10 @@ export type LogsProps = FlexProps & {
   title: ReactNode;
   empty: ReactNode;
   data: Array<string | [LogLevel, number, string]>;
+  children?: ReactNode;
 };
 
-export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data, ...other }, ref) => {
+export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data, children, ...other }, ref) => {
   const t = useMantineTheme();
 
   // search
@@ -488,36 +502,70 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data,
     [t, index, search, result]
   );
 
-  const More = useMemo(
-    () => (
-      <Menu shadow="md" withArrow position="bottom-end" width={t.fontSizes.md * 20}>
-        <Menu.Target>
-          <ActionIcon
-            css={css`
-              color: #8c959f;
+  const Addon = useMemo(
+    () =>
+      children && (
+        <Popover shadow="md" withArrow position="bottom-end" width={t.fontSizes.md * 20}>
+          <Popover.Target>
+            <ActionIcon
+              css={css`
+                color: #8c959f;
 
-              &:hover {
-                background-color: rgba(255, 255, 255, 0.125);
-              }
-            `}
-          >
-            <TbMenu2 />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Item icon={follow ? <TbSquareCheck /> : <TbSquare />} onClick={() => setFollow((v) => !v)}>
-            Follow Logs
-          </Menu.Item>
-          <Menu.Item icon={timestamps ? <TbSquareCheck /> : <TbSquare />} onClick={() => setTimestamps((v) => !v)}>
-            Show Timestamps
-          </Menu.Item>
-          <Menu.Item icon={fullscreen ? <TbSquareCheck /> : <TbSquare />} onClick={() => setFullscreen((v) => !v)}>
-            Show Fullscreen
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
-    ),
-    [t, follow, timestamps, fullscreen]
+                &:hover {
+                  background-color: rgba(255, 255, 255, 0.125);
+                }
+              `}
+            >
+              <TbMenu2 />
+            </ActionIcon>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <Stack spacing={t.spacing.xs * 0.5}>
+              <Select
+                size="xs"
+                label="Follow Logs"
+                description="	Follow log output"
+                placeholder="Follow Logs"
+                icon={<TbInfinity />}
+                value={follow ? "true" : "false"}
+                onChange={(value) => setFollow(value === "true")}
+                data={[
+                  { label: "Yes", value: "true" },
+                  { label: "No", value: "false" },
+                ]}
+              />
+              <Select
+                size="xs"
+                label="Show Timestamps"
+                description="Show log timestamps"
+                placeholder="Show Timestamps"
+                icon={<TbInfinity />}
+                value={timestamps ? "true" : "false"}
+                onChange={(value) => setTimestamps(value === "true")}
+                data={[
+                  { label: "Yes", value: "true" },
+                  { label: "No", value: "false" },
+                ]}
+              />
+              <Select
+                size="xs"
+                label="Show Fullscreen"
+                description="Show log fullscreen"
+                placeholder="Show Fullscreen"
+                icon={<TbInfinity />}
+                value={fullscreen ? "true" : "false"}
+                onChange={(value) => setFullscreen(value === "true")}
+                data={[
+                  { label: "Yes", value: "true" },
+                  { label: "No", value: "false" },
+                ]}
+              />
+              {children}
+            </Stack>
+          </Popover.Dropdown>
+        </Popover>
+      ),
+    [follow, timestamps, fullscreen, children]
   );
 
   const Header = useMemo(
@@ -535,10 +583,10 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data,
         `}
       >
         {Search}
-        {More}
+        {Addon}
       </Group>
     ),
-    [t, Search, More]
+    [t, Search, Addon]
   );
 
   return (
