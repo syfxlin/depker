@@ -390,9 +390,11 @@ export class AppController {
       .map((i) => {
         const commit = i.id().tostrS();
         const message = i.message();
-        const author = `${i.author().name()} <${i.author().email()}>`;
+        const body = i.body();
+        const author = i.author().name();
+        const email = i.author().email();
         const time = i.timeMs();
-        return { commit, message, author, time, refs: refs.get(commit) ?? [] };
+        return { commit, message, body, author, email, time, refs: refs.get(commit) ?? [] };
       });
 
     return { total, items };

@@ -6,6 +6,8 @@ import {
   DownAppResponse,
   GetAppRequest,
   GetAppResponse,
+  HistoryAppRequest,
+  HistoryAppResponse,
   ListAppRequest,
   ListAppResponse,
   LogsAppRequest,
@@ -58,6 +60,13 @@ export class AppApi extends Api {
 
   public async logs(request: LogsAppRequest) {
     const response = await this.request.get<LogsAppResponse>(`/api/apps/${request.name}/logs`, {
+      params: request,
+    });
+    return response.data;
+  }
+
+  public async history(request: HistoryAppRequest) {
+    const response = await this.request.get<HistoryAppResponse>(`/api/apps/${request.name}/history`, {
       params: request,
     });
     return response.data;

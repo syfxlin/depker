@@ -4,7 +4,7 @@ import { LoginRequest, LoginResponse } from "../views/auth.view";
 import { Setting } from "../entities/setting.entity";
 import { AuthService } from "./auth.service";
 
-@Controller("/auth")
+@Controller("/api/auth")
 export class AuthController {
   constructor(private readonly auths: AuthService) {}
 

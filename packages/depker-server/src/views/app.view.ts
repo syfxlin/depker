@@ -392,9 +392,11 @@ export type HistoryAppResponse = {
   total: number;
   items: Array<{
     message: string;
+    body: string;
     commit: string;
     refs: string[];
     author: string;
+    email: string;
     time: number;
   }>;
 };

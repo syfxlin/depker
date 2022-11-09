@@ -67,6 +67,10 @@ export const AppList: React.FC = () => {
                     padding: ${t.spacing.md}px ${t.spacing.lg}px;
                     border-radius: ${t.radius.sm}px;
                     overflow: visible;
+
+                    &:hover {
+                      background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
+                    }
                   `}
                 >
                   <Group>
