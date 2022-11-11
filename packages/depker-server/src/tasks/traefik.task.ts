@@ -55,8 +55,12 @@ export class TraefikTask implements OnModuleInit {
       }
 
       // values
-      // prettier-ignore
-      const ports = Array(setting.ports[1] - setting.ports[0] + 1).fill(setting.ports[0]).map((x, y) => x + y);
+      const ports = new Set<number>();
+      for (const [start, end] of setting.ports) {
+        for (let i = start; i <= end; i++) {
+          ports.add(i);
+        }
+      }
       const envs: Record<string, string> = {
         ...setting.tls.env,
         DEPKER_NAME: NAMES.TRAEFIK,
@@ -92,7 +96,7 @@ export class TraefikTask implements OnModuleInit {
           https: {
             address: ":443",
           },
-          ...ports.reduce(
+          ...Array.from(ports.values()).reduce(
             (a, p) => ({
               ...a,
               [`tcp${p}`]: { address: `:${p}/tcp` },
@@ -156,7 +160,7 @@ export class TraefikTask implements OnModuleInit {
           "443/tcp": {},
           "443/udp": {},
           ...(IS_DEV ? { "8080/tcp": {} } : {}),
-          ...ports.reduce(
+          ...Array.from(ports.values()).reduce(
             (a, p) => ({
               ...a,
               [`${p}/tcp`]: {},
@@ -173,7 +177,7 @@ export class TraefikTask implements OnModuleInit {
             "443/tcp": [{ HostPort: "443" }],
             "443/udp": [{ HostPort: "443" }],
             ...(IS_DEV ? { "8080/tcp": [{ HostPort: "8080" }] } : {}),
-            ...ports.reduce(
+            ...Array.from(ports).reduce(
               (a, p) => ({
                 ...a,
                 [`${p}/tcp`]: [{ HostPort: `${p}` }],

@@ -76,7 +76,12 @@ export class UpsertPortRequest {
   @IsInt()
   @IsValidate(async (value: number) => {
     const setting = await Setting.read();
-    return setting.ports[0] <= value && value <= setting.ports[1];
+    for (const [start, end] of setting.ports) {
+      if (start <= value && value <= end) {
+        return true;
+      }
+    }
+    return false;
   })
   port: number;
 }
