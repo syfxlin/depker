@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from "@nestjs/common";
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
+} from "@nestjs/common";
 import { Like } from "typeorm";
 import {
   ConnectVolumeRequest,
@@ -53,8 +64,26 @@ export class VolumeController {
   }
 
   @Post("/")
+  public async create(@Body() request: UpsertVolumeRequest): Promise<UpsertVolumeResponse> {
+    const count = await Volume.countBy({ name: request.name });
+    if (count) {
+      throw new ConflictException(`Found volume of ${request.name}.`);
+    }
+    await Volume.insert({
+      name: request.name,
+      path: request.path,
+      global: request.global,
+    });
+    return this.update(request);
+  }
+
   @Put("/")
-  public async upsert(@Body() request: UpsertVolumeRequest): Promise<UpsertVolumeResponse> {
+  public async update(@Body() request: UpsertVolumeRequest): Promise<UpsertVolumeResponse> {
+    const count = await Volume.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found volume of ${request.name}.`);
+    }
+
     const volume = new Volume();
     volume.name = request.name;
     volume.path = request.path;

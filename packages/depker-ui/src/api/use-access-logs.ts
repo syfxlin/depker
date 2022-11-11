@@ -9,6 +9,6 @@ export const useAccessLogs = (tail: number) => {
   return useSWRWrapper(
     query,
     (v) => v ?? [],
-    () => {}
+    () => ({})
   );
 };

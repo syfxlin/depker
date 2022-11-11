@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useMemo } from "react";
+import React, { ChangeEvent, forwardRef, useMemo } from "react";
 import { Main } from "../components/layout/Main";
 import {
   ActionIcon,
@@ -9,11 +9,13 @@ import {
   Grid,
   Group,
   Input,
+  Select,
   Text,
+  TextInput,
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
-import { TbApiApp, TbArrowUpRight, TbSearch, TbX } from "react-icons/all";
+import { TbApiApp, TbApps, TbArrowUpRight, TbPlus, TbSearch, TbX } from "react-icons/all";
 import { css } from "@emotion/react";
 import { Link } from "react-router-dom";
 import { useApps } from "../api/use-apps";
@@ -22,10 +24,99 @@ import { Pages } from "../components/layout/Pages";
 import { colors } from "../api/use-status";
 import { DateTime } from "luxon";
 import { client } from "../api/client";
+import { openModal } from "@mantine/modals";
+import { ObjectModal } from "../components/input/ObjectModal";
+import { useAllBuildpacks } from "../api/use-all-buildpacks";
 
 export const AppList: React.FC = () => {
   const t = useMantineTheme();
   const apps = useApps();
+  const buildpacks = useAllBuildpacks();
+
+  const Create = useMemo(
+    () => (
+      <Button
+        leftIcon={<TbPlus />}
+        onClick={() => {
+          openModal({
+            title: <>Create App</>,
+            children: (
+              <ObjectModal
+                value={{}}
+                onChange={async (value, actions) => {
+                  if (!value.name || !value.buildpack) {
+                    actions.failure(`Create app failure`, `Name, Buildpack must be not empty.`);
+                    return false;
+                  }
+                  try {
+                    await apps.actions.create({
+                      name: value.name,
+                      buildpack: value.buildpack,
+                    });
+                    actions.success(`Create volume successful`, `Close modals...`);
+                    return true;
+                  } catch (e: any) {
+                    actions.failure(`Create volume failure`, e);
+                    return false;
+                  }
+                }}
+              >
+                {(item, setItem) => [
+                  <TextInput
+                    key="name"
+                    required
+                    label="Name"
+                    description="Application name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
+                    placeholder="Application Name"
+                    icon={<TbApps />}
+                    value={item.name ?? ""}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
+                  />,
+                  <Select
+                    key="buildpack"
+                    required
+                    searchable
+                    label="Buildpack"
+                    description="Building application with build package."
+                    placeholder="Build Package"
+                    nothingFound="No packages"
+                    icon={<Avatar size="xs" src={client.asset.icon(buildpacks.data[item.buildpack]?.icon)} />}
+                    value={item.buildpack ?? ""}
+                    onChange={(value: string) => {
+                      const buildpack = buildpacks.data[value];
+                      if (!buildpack) {
+                        return;
+                      }
+                      setItem({ ...item, buildpack: value });
+                    }}
+                    data={Object.values(buildpacks.data).map((i) => ({
+                      value: i.name,
+                      label: i.label,
+                      group: i.group,
+                      icon: client.asset.icon(i.icon),
+                    }))}
+                    itemComponent={forwardRef<HTMLDivElement, any>(({ label, icon, ...props }, ref) => {
+                      return (
+                        <Group noWrap ref={ref} {...props}>
+                          <Avatar size="xs" src={icon}>
+                            <TbApiApp />
+                          </Avatar>
+                          <Text size="sm">{label}</Text>
+                        </Group>
+                      );
+                    })}
+                  />,
+                ]}
+              </ObjectModal>
+            ),
+          });
+        }}
+      >
+        Create
+      </Button>
+    ),
+    [buildpacks.data]
+  );
 
   const Search = useMemo(
     () => (
@@ -158,7 +249,7 @@ export const AppList: React.FC = () => {
       header={
         <Group>
           {Search}
-          <Button>New App</Button>
+          {Create}
         </Group>
       }
     >

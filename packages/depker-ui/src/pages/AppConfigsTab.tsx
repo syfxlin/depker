@@ -40,9 +40,7 @@ import { SelectArrayInput } from "../components/input/SelectArrayInput";
 import { useAllVolumes } from "../api/use-all-volumes";
 import { openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
-import { showNotification } from "@mantine/notifications";
 import { AppSettingContext } from "./AppSetting";
-import { error } from "../utils/message";
 import { ExtensionInput } from "../components/input/ExtensionInput";
 import { Heading } from "../components/parts/Heading";
 import { client } from "../api/client";
@@ -537,12 +535,9 @@ export const AppConfigsTab: React.FC = () => {
                 children: (
                   <ObjectModal
                     value={{ name: query }}
-                    onChange={async (value) => {
+                    onChange={async (value, actions) => {
                       if (!value.name || !value.proto || !value.port) {
-                        showNotification({
-                          title: "Create failure",
-                          message: "Name, Protocol, Port must be not empty.",
-                        });
+                        actions.failure(`Create port failure`, `Name, Protocol, Port must be not empty.`);
                         return false;
                       }
                       try {
@@ -557,17 +552,10 @@ export const AppConfigsTab: React.FC = () => {
                           hport: value.port,
                           cport: item?.cport ?? 3000,
                         });
-                        showNotification({
-                          title: "Create successful",
-                          message: "Close modals...",
-                          color: "green",
-                        });
+                        actions.success(`Create port successful`, `Close modals...`);
                         return true;
                       } catch (e: any) {
-                        showNotification({
-                          title: "Create failure",
-                          message: error(e),
-                        });
+                        actions.failure(`Create port failure`, e);
                         return false;
                       }
                     }}
@@ -674,12 +662,9 @@ export const AppConfigsTab: React.FC = () => {
                 children: (
                   <ObjectModal
                     value={{ name: query }}
-                    onChange={async (value) => {
+                    onChange={async (value, actions) => {
                       if (!value.name || !value.path || !value.global) {
-                        showNotification({
-                          title: "Create failure",
-                          message: "Name, Path, Global must be not empty.",
-                        });
+                        actions.failure(`Create volume failure`, `Name, Path, Global must be not empty.`);
                         return false;
                       }
                       try {
@@ -695,17 +680,10 @@ export const AppConfigsTab: React.FC = () => {
                           cpath: item?.cpath ?? "",
                           readonly: item?.readonly ?? false,
                         });
-                        showNotification({
-                          title: "Create successful",
-                          message: "Close modals...",
-                          color: "green",
-                        });
+                        actions.success(`Create volume successful`, `Close modals...`);
                         return true;
                       } catch (e: any) {
-                        showNotification({
-                          title: "Create failure",
-                          message: error(e),
-                        });
+                        actions.failure(`Create volume failure`, e);
                         return false;
                       }
                     }}

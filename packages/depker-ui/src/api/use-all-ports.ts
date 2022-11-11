@@ -17,7 +17,7 @@ export const useAllPorts = () => {
       ),
     (q) => ({
       create: async (request: UpsertPortRequest) => {
-        const response = await client.port.upsert(request);
+        const response = await client.port.create(request);
         await q.mutate();
         return response;
       },

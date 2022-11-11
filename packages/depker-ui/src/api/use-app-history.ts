@@ -13,7 +13,7 @@ export const useAppHistory = (name: string) => {
   const result = useSWRWrapper(
     query,
     (v) => v,
-    () => {}
+    () => ({})
   );
 
   return {

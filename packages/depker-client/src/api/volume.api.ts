@@ -22,8 +22,13 @@ export class VolumeApi extends Api {
     return response.data;
   }
 
-  public async upsert(request: UpsertVolumeRequest) {
+  public async create(request: UpsertVolumeRequest) {
     const response = await this.request.post<UpsertVolumeResponse>(`/api/volumes`, request);
+    return response.data;
+  }
+
+  public async update(request: UpsertVolumeRequest) {
+    const response = await this.request.put<UpsertVolumeResponse>(`/api/volumes/${request.name}`, request);
     return response.data;
   }
 

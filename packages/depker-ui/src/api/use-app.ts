@@ -23,7 +23,7 @@ export const useApp = (name: string) => {
           if (!value) {
             return value;
           }
-          return client.app.upsert({
+          return client.app.update({
             ...value,
             ports: value.ports.map((i) => ({
               name: i.name,

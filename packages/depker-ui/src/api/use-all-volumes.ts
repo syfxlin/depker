@@ -17,7 +17,7 @@ export const useAllVolumes = () => {
       ),
     (q) => ({
       create: async (request: UpsertVolumeRequest) => {
-        const response = await client.volume.upsert(request);
+        const response = await client.volume.create(request);
         await q.mutate();
         return response;
       },

@@ -18,11 +18,9 @@ import {
 } from "react-icons/all";
 import { colors, useStatus } from "../api/use-status";
 import { useApp } from "../api/use-app";
-import { showNotification } from "@mantine/notifications";
-import { error } from "../utils/message";
-import { useLoading } from "../hooks/use-loading";
 import { css } from "@emotion/react";
 import { NavLink } from "../components/core/NavLink";
+import { useCalling } from "../hooks/use-calling";
 
 export type AppSettingContext = {
   name: string;
@@ -35,7 +33,7 @@ export const AppSetting: React.FC = () => {
   const { app: name } = useParams<"app">();
   const app = useApp(name!);
   const status = useStatus(name!);
-  const running = useLoading();
+  const calling = useCalling();
 
   const Status = useMemo(
     () => (
@@ -61,131 +59,95 @@ export const AppSetting: React.FC = () => {
     () =>
       ["running", "restarting", "exited"].includes(status.data) && (
         <Button
-          loading={running.value}
+          loading={calling.loading}
           variant="light"
           color="red"
           leftIcon={<TbPlayerPause />}
           onClick={() => {
-            (async () => {
+            calling.calling(async (actions) => {
               try {
-                running.update(true);
                 await app.actions.stop();
-                running.update(false);
-                showNotification({
-                  title: "Stop successful",
-                  message: `Application stop successful.`,
-                  color: "green",
-                });
+                actions.success(`Stop successful`, `Application stop successful.`);
               } catch (e: any) {
-                showNotification({
-                  title: "Stop failure",
-                  message: error(e),
-                });
+                actions.failure(`Stop failure`, e);
               }
-            })();
+            });
           }}
         >
           Stop
         </Button>
       ),
-    [status.data, running.value]
+    [status.data, calling.loading]
   );
 
   const Restart = useMemo(
     () =>
       ["running", "restarting", "exited"].includes(status.data) && (
         <Button
-          loading={running.value}
+          loading={calling.loading}
           variant="light"
           leftIcon={<TbRefresh />}
           onClick={() => {
-            (async () => {
+            calling.calling(async (actions) => {
               try {
-                running.update(true);
                 await app.actions.restart();
-                running.update(false);
-                showNotification({
-                  title: "Restart successful",
-                  message: `Application restart successful.`,
-                  color: "green",
-                });
+                actions.success(`Restart successful`, `Application restart successful.`);
               } catch (e: any) {
-                showNotification({
-                  title: "Restart failure",
-                  message: error(e),
-                });
+                actions.failure(`Restart failure`, e);
               }
-            })();
+            });
           }}
         >
           Restart
         </Button>
       ),
-    [status.data, running.value]
+    [status.data, calling.loading]
   );
 
   const Deploy = useMemo(
     () => (
       <Button
-        loading={running.value}
+        loading={calling.loading}
         variant="light"
         leftIcon={status.data !== "stopped" ? <TbPlayerStop /> : <TbPlayerPlay />}
-        onClick={() => {
-          (async () => {
+        onClick={() =>
+          calling.calling(async (actions) => {
             try {
-              running.update(true);
               const deploy = await app.actions.deploy(status.data !== "stopped");
-              running.update(false);
-              showNotification({
-                title: "Deploy successful",
-                message: `Application create deploy #${deploy.id} successful.`,
-                color: "green",
-              });
+              actions.success(`Deploy successful`, `Application create deploy #${deploy.id} successful.`);
               navigate(`/apps/depker/deploys/${deploy.id}`);
             } catch (e: any) {
-              showNotification({
-                title: "Deploy failure",
-                message: error(e),
-              });
+              actions.failure(`Deploy failure`, e);
             }
-          })();
-        }}
+          })
+        }
       >
         {status.data !== "stopped" ? "Re-deploy" : "Deploy"}
       </Button>
     ),
-    [status.data, running.value]
+    [status.data, calling.loading]
   );
 
   const Save = useMemo(
     () => (
       <Button
-        loading={running.value}
+        loading={calling.loading}
         leftIcon={<TbDeviceFloppy />}
         onClick={() => {
-          (async () => {
+          calling.calling(async (actions) => {
             try {
-              running.update(true);
               await app.actions.save();
-              running.update(false);
-              showNotification({
-                title: "Save successful",
-                message: "Application save successful.",
-                color: "green",
-              });
+              actions.success(`Save successful`, `Application save successful.`);
             } catch (e: any) {
-              showNotification({
-                title: "Save failure",
-                message: error(e),
-              });
+              actions.failure(`Save failure`, e);
             }
-          })();
+          });
         }}
       >
         Save
       </Button>
     ),
-    [running.value]
+    [calling.loading]
   );
 
   const AppNav = useMemo(

@@ -17,6 +17,6 @@ export const useStatus = (name: string) => {
   return useSWRWrapper(
     query,
     (v) => v?.status ?? "stopped",
-    () => {}
+    () => ({})
   );
 };

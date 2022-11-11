@@ -7,6 +7,6 @@ export const useMetrics = () => {
   return useSWRWrapper(
     query,
     (v) => v,
-    () => {}
+    () => ({})
   );
 };

@@ -16,6 +16,7 @@ import { AppMetricsTab } from "./pages/AppMetricsTab";
 import { AppTerminalTab } from "./pages/AppTerminalTab";
 import { Files } from "./pages/Files";
 import { AppHistoryTab } from "./pages/AppHistoryTab";
+import { AppDangerTab } from "./pages/AppDangerTab";
 
 export const App: React.FC = () => {
   return (
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
                 <Route path="logs" element={<AppLogsTab />} />
                 <Route path="terminal" element={<AppTerminalTab />} />
                 <Route path="history" element={<AppHistoryTab />} />
+                <Route path="danger" element={<AppDangerTab />} />
                 <Route path="deploys" element={<AppDeploysTab />} />
                 <Route path="deploys/:deploy" element={<AppDeploysTab />} />
               </Route>

@@ -25,7 +25,7 @@ export const useDeployList = (name: string) => {
   const result = useSWRWrapper(
     query,
     (v) => v,
-    () => {}
+    () => ({})
   );
 
   return {

@@ -39,6 +39,9 @@ export const XTerm: React.FC<XTermProps> = ({ client, ...props }) => {
       );
     });
     // error
+    socket.on("error", (data) => {
+      term.writeln(`\n\r\u001b[31mERROR: ${data}\n\r`);
+    });
     socket.on("connect_error", (err) => {
       term.writeln(
         `\n\r\u001b[34mSession stopped.\u001b[0m\n\r  - \u001b[31mERROR: ${err.message}\n\r\u001b[0m  - Press \u001b[33m<return>\u001b[0m to restart session.`

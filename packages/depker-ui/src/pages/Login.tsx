@@ -11,14 +11,14 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { showNotification } from "@mantine/notifications";
 import { css } from "@emotion/react";
 import { client, login } from "../api/client";
 import { AnonymousView } from "../router/AnonymousView";
-import { error } from "../utils/message";
+import { useCalling } from "../hooks/use-calling";
 
 export const Login: React.FC = () => {
   const t = useMantineTheme();
+  const calling = useCalling();
   const form = useForm({
     initialValues: {
       username: "",
@@ -73,21 +73,16 @@ export const Login: React.FC = () => {
               box-shadow: ${t.shadows.sm};
             `}
             component="form"
-            onSubmit={form.onSubmit(async (values) => {
-              try {
-                const token = await client.auth.auth(values);
-                login(token);
-                showNotification({
-                  title: "Login successful",
-                  message: "Redirecting...",
-                  color: "green",
-                });
-              } catch (e: any) {
-                showNotification({
-                  title: "Login failure",
-                  message: error(e),
-                });
-              }
+            onSubmit={form.onSubmit((values) => {
+              calling.calling(async (actions) => {
+                try {
+                  const token = await client.auth.auth(values);
+                  login(token);
+                  actions.success(`Login successful`, `Redirecting...`);
+                } catch (e: any) {
+                  actions.failure(`Login failure`, e);
+                }
+              });
             })}
           >
             <TextInput label="Username" placeholder="Your username" required {...form.getInputProps("username")} />
@@ -98,7 +93,7 @@ export const Login: React.FC = () => {
               mt="md"
               {...form.getInputProps("password")}
             />
-            <Button fullWidth mt="xl" type="submit">
+            <Button fullWidth mt="xl" type="submit" loading={calling.loading}>
               Login
             </Button>
           </Paper>

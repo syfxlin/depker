@@ -33,8 +33,13 @@ export class AppApi extends Api {
     return response.data;
   }
 
-  public async upsert(request: UpsertAppRequest) {
+  public async create(request: UpsertAppRequest) {
     const response = await this.request.post<UpsertAppResponse>(`/api/apps`, request);
+    return response.data;
+  }
+
+  public async update(request: UpsertAppRequest) {
+    const response = await this.request.put<UpsertAppResponse>(`/api/apps/${request.name}`, request);
     return response.data;
   }
 

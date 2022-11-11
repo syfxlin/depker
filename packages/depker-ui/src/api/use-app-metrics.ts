@@ -9,6 +9,6 @@ export const useAppMetrics = (name: string) => {
   return useSWRWrapper(
     query,
     (v) => v,
-    () => {}
+    () => ({})
   );
 };

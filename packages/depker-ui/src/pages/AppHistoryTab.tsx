@@ -33,7 +33,7 @@ export const AppHistoryTab: React.FC = () => {
         height: 100%;
       `}
     >
-      <Heading>Application Logs</Heading>
+      <Heading>Application History</Heading>
       <Async query={history.query}>
         {history.data && (
           <Pages

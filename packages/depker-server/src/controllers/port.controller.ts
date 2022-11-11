@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from "@nestjs/common";
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
+} from "@nestjs/common";
 import {
   ConnectPortRequest,
   ConnectPortResponse,
@@ -53,8 +64,26 @@ export class PortController {
   }
 
   @Post("/")
-  @Put("/")
-  public async upsert(@Body() request: UpsertPortRequest): Promise<UpsertPortResponse> {
+  public async create(@Body() request: UpsertPortRequest): Promise<UpsertPortResponse> {
+    const count = await Port.countBy({ name: request.name });
+    if (count) {
+      throw new ConflictException(`Found port of ${request.name}.`);
+    }
+    await Port.insert({
+      name: request.name,
+      proto: request.proto,
+      port: request.port,
+    });
+    return this.update(request);
+  }
+
+  @Put("/:name")
+  public async update(@Body() request: UpsertPortRequest): Promise<UpsertPortResponse> {
+    const count = await Port.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found port of ${request.name}.`);
+    }
+
     const port = new Port();
     port.name = request.name;
     port.proto = request.proto;

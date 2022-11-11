@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -112,8 +113,22 @@ export class AppController {
   }
 
   @Post("/")
-  @Put("/")
-  public async upsert(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
+  public async create(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (count) {
+      throw new ConflictException(`Found application of ${request.name}.`);
+    }
+    await App.insert({ name: request.name, buildpack: request.buildpack });
+    return this.update(request);
+  }
+
+  @Put("/:name")
+  public async update(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
+      throw new NotFoundException(`Not found application of ${request.name}.`);
+    }
+
     const app = new App();
     app.name = request.name;
     app.buildpack = request.buildpack;
@@ -257,6 +272,7 @@ export class AppController {
     if (!result.affected) {
       throw new NotFoundException(`Not found application of ${request.name}.`);
     }
+    // TODO: remove container
     return { status: "success" };
   }
 
@@ -278,30 +294,49 @@ export class AppController {
       throw new NotFoundException(`Not found application of ${request.name}.`);
     }
 
-    const stats = await this.docker.getContainer(request.name).stats({ stream: false });
-    const cpu_delta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-    const system_cpu_delta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-    const number_cpus = stats.cpu_stats.online_cpus;
-    const cpu = (cpu_delta / system_cpu_delta) * number_cpus * 100;
-    const memory = stats.memory_stats.usage - stats.memory_stats.stats.cache;
-    const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
-    const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
-    return {
-      cpu: {
-        free: 100 - cpu,
-        used: cpu,
-        total: 100,
-      },
-      memory: {
-        free: stats.memory_stats.limit - memory,
-        used: memory,
-        total: stats.memory_stats.limit,
-      },
-      network: {
-        input,
-        output,
-      },
-    };
+    try {
+      const stats = await this.docker.getContainer(request.name).stats({ stream: false });
+      const cpu_delta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+      const system_cpu_delta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+      const number_cpus = stats.cpu_stats.online_cpus;
+      const cpu = (cpu_delta / system_cpu_delta) * number_cpus * 100;
+      const memory = stats.memory_stats.usage - stats.memory_stats.stats.cache;
+      const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
+      const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
+      return {
+        cpu: {
+          free: 100 - cpu,
+          used: cpu,
+          total: 100,
+        },
+        memory: {
+          free: stats.memory_stats.limit - memory,
+          used: memory,
+          total: stats.memory_stats.limit,
+        },
+        network: {
+          input,
+          output,
+        },
+      };
+    } catch (e: any) {
+      return {
+        cpu: {
+          free: 0,
+          used: 0,
+          total: 1,
+        },
+        memory: {
+          free: 0,
+          used: 0,
+          total: 1,
+        },
+        network: {
+          input: 0,
+          output: 0,
+        },
+      };
+    }
   }
 
   @Get("/:name/logs")
@@ -415,21 +450,28 @@ export class AppController {
 
     if (app.buildpack === "image") {
       deploy.commit = app.extensions.image;
+      if (!deploy.commit) {
+        throw new NotFoundException(`Not definition image of ${request.name}`);
+      }
     } else {
       const repo = await this.storage.repository(request.name);
       if (!repo) {
         throw new NotFoundException(`Not found application source of ${request.name}.`);
       }
+
       try {
         const commit = await repo.getMasterCommit();
         deploy.commit = commit.id().tostrS();
       } catch (e) {
         // ignore
       }
+      if (!deploy.commit) {
+        throw new NotFoundException(`Not found reference of ${request.name}`);
+      }
     }
 
     if (!deploy.commit) {
-      throw new NotFoundException(`Not found reference of ${request.name}`);
+      throw new NotFoundException(`Not found deploy commit of ${request.name}`);
     }
 
     const saved = await Deploy.save(deploy);
