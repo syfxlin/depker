@@ -31,7 +31,7 @@ export class TraefikTask implements OnModuleInit {
 
     const _traefik = async () => {
       await this.docker.pullImage(IMAGES.TRAEFIK, setting.upgrade);
-      const traefik = containers.find((c) => c.Names.find((n) => n.startsWith(`/${NAMES.TRAEFIK}`)));
+      const traefik = containers.find((c) => c.Names.includes(`/${NAMES.TRAEFIK}`));
 
       if (traefik) {
         if (force) {
@@ -201,7 +201,7 @@ export class TraefikTask implements OnModuleInit {
 
     const _logrotate = async () => {
       await this.docker.pullImage(IMAGES.LOGROTATE, setting.upgrade);
-      const logrotate = containers.find((c) => c.Names.find((n) => n.startsWith(`/${NAMES.LOGROTATE}`)));
+      const logrotate = containers.find((c) => c.Names.includes(`/${NAMES.LOGROTATE}`));
 
       if (logrotate) {
         if (force) {

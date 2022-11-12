@@ -6,9 +6,9 @@ import { useParams } from "react-router-dom";
 import { useAppHistory } from "../api/use-app-history";
 import { Pages } from "../components/layout/Pages";
 import { Async } from "../components/core/Async";
-import { DateTime } from "luxon";
 import { TbCheck, TbCopy } from "react-icons/all";
 import { useClipboard } from "@mantine/hooks";
+import { humanDate } from "../utils/human";
 
 const Copy: React.FC<{ commit: string }> = ({ commit }) => {
   const t = useMantineTheme();
@@ -66,7 +66,7 @@ export const AppHistoryTab: React.FC = () => {
                         <span>{item.author}</span>
                       </Tooltip>
                       <span> committed on </span>
-                      <span>{DateTime.fromMillis(item.time).toLocaleString(DateTime.DATETIME_SHORT)}</span>
+                      <span>{humanDate(item.time)}</span>
                     </Text>
                   </Stack>
                   <Group spacing="xs">

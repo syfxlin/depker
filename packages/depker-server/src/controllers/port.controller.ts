@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -31,6 +32,8 @@ import { PortBind } from "../entities/port-bind.entity";
 
 @Controller("/api/ports")
 export class PortController {
+  private readonly logger = new Logger(PortController.name);
+
   @Get("/")
   public async list(@Query() request: ListPortRequest): Promise<ListPortResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc", all = false } = request;
@@ -120,10 +123,18 @@ export class PortController {
 
   @Delete("/:name")
   public async delete(@Param() request: DeletePortRequest): Promise<DeletePortResponse> {
-    const result = await Port.delete(request.name);
-    if (!result.affected) {
+    const count = await Port.countBy({ name: request.name });
+    if (!count) {
       throw new NotFoundException(`Not found port of ${request.name}.`);
     }
+
+    // purge port
+    process.nextTick(async () => {
+      this.logger.log(`Port ${request.name} no need to purge.`);
+    });
+
+    // delete port
+    await Port.delete(request.name);
     return { status: "success" };
   }
 

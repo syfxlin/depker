@@ -33,7 +33,7 @@ export const DeployList: React.FC<DeployListProps> = ({ app }) => {
             return (
               <NavLink
                 key={`deploy-${deploy.id}`}
-                action={`/apps/depker/deploys/${deploy.id}`}
+                action={`/apps/${app}/deploys/${deploy.id}`}
                 label={
                   <Grid p={t.spacing.xs * 0.5}>
                     <Grid.Col

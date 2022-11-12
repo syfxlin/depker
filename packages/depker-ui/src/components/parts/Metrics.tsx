@@ -5,7 +5,7 @@ import { css } from "@emotion/react";
 import { useMetrics } from "../../api/use-metrics";
 import { TbActivity, TbArchive, TbCalendarStats, TbClock, TbCpu2, TbDatabase, TbDatabaseExport } from "react-icons/all";
 import { DateTime } from "luxon";
-import { humanBytes, humanCounts, humanTimes } from "../../utils/human";
+import { humanBytes, humanCounts, humanDate, humanTimes } from "../../utils/human";
 
 export const Metrics: React.FC = () => {
   const t = useMantineTheme();
@@ -27,9 +27,7 @@ export const Metrics: React.FC = () => {
         <TextStats
           title="Server Time"
           icon={TbClock}
-          value={DateTime.fromMillis(data?.time?.current ?? DateTime.utc().valueOf()).toLocaleString(
-            DateTime.DATETIME_SHORT
-          )}
+          value={humanDate(data?.time?.current ?? DateTime.utc().valueOf())}
         />
       </Grid.Col>
     ),
@@ -287,17 +285,13 @@ export const Metrics: React.FC = () => {
               name: "Failed",
               value: data?.traefik?.reload?.total_failure ?? 0,
               unit: humanCounts,
-              tooltip: `Last failed: ${DateTime.fromMillis(
-                data?.traefik?.reload?.last_failure ?? DateTime.utc().valueOf()
-              ).toLocaleString(DateTime.DATETIME_SHORT)}`,
+              tooltip: `Last failed: ${humanDate(data?.traefik?.reload?.last_failure ?? DateTime.utc().valueOf())}`,
             },
             {
               name: "Success",
               value: data?.traefik?.reload?.total_success ?? 0,
               unit: humanCounts,
-              tooltip: `Last success: ${DateTime.fromMillis(
-                data?.traefik?.reload?.last_success ?? DateTime.utc().valueOf()
-              ).toLocaleString(DateTime.DATETIME_SHORT)}`,
+              tooltip: `Last success: ${humanDate(data?.traefik?.reload?.last_success ?? DateTime.utc().valueOf())}`,
             },
           ]}
         />

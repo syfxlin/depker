@@ -22,11 +22,11 @@ import { useApps } from "../api/use-apps";
 import { Async } from "../components/core/Async";
 import { Pages } from "../components/layout/Pages";
 import { colors } from "../api/use-status";
-import { DateTime } from "luxon";
 import { client } from "../api/client";
 import { openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
 import { useAllBuildpacks } from "../api/use-all-buildpacks";
+import { humanDate } from "../utils/human";
 
 export const AppList: React.FC = () => {
   const t = useMantineTheme();
@@ -211,19 +211,16 @@ export const AppList: React.FC = () => {
                               font-family: ${t.fontFamilyMonospace};
                             `}
                           >
-                            Deployd in {DateTime.fromMillis(item.deploydAt).toLocaleString(DateTime.DATETIME_SHORT)}
+                            Deployd in {item.deploydAt !== 0 ? humanDate(item.deploydAt) : "No deployment"}
                             <br />
-                            Created in {DateTime.fromMillis(item.createdAt).toLocaleString(DateTime.DATETIME_SHORT)}
+                            Created in {humanDate(item.createdAt)}
                             <br />
-                            Updated in {DateTime.fromMillis(item.updatedAt).toLocaleString(DateTime.DATETIME_SHORT)}
+                            Updated in {humanDate(item.updatedAt)}
                           </Text>
                         }
                       >
                         <Text size="xs" color="dimmed">
-                          Uptime:{" "}
-                          {item.deploydAt === 0
-                            ? DateTime.fromMillis(item.deploydAt).toLocaleString(DateTime.DATETIME_SHORT)
-                            : "No deployment"}
+                          Uptime: {item.deploydAt !== 0 ? humanDate(item.deploydAt) : "No deployment"}
                         </Text>
                       </Tooltip>
                     </Link>

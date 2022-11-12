@@ -5,6 +5,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -57,9 +58,14 @@ import { stdcopy } from "../utils/docker.util";
 import { DateTime } from "luxon";
 import { Log } from "../entities/log.entity";
 import { Revwalk } from "nodegit";
+import fs from "fs-extra";
+import path from "path";
+import { PATHS } from "../constants/depker.constant";
 
 @Controller("/api/apps")
 export class AppController {
+  private readonly logger = new Logger(AppController.name);
+
   constructor(
     private readonly docker: DockerService,
     private readonly storage: StorageService,
@@ -268,11 +274,31 @@ export class AppController {
 
   @Delete("/:name")
   public async delete(@Param() request: DeleteAppRequest): Promise<DeleteAppResponse> {
-    const result = await App.delete(request.name);
-    if (!result.affected) {
+    const count = await App.countBy({ name: request.name });
+    if (!count) {
       throw new NotFoundException(`Not found application of ${request.name}.`);
     }
-    // TODO: remove container
+
+    // purge application
+    process.nextTick(async () => {
+      // delete container
+      try {
+        await this.docker.getContainer(request.name).remove({ force: true });
+        this.logger.log(`Purge application ${request.name} container successful.`);
+      } catch (e) {
+        this.logger.error(`Purge application ${request.name} container failed.`, e);
+      }
+      // delete source
+      try {
+        await fs.remove(path.join(PATHS.REPOS, `${request.name}.git`));
+        this.logger.log(`Purge application ${request.name} source successful.`);
+      } catch (e) {
+        this.logger.error(`Purge application ${request.name} source failed.`, e);
+      }
+    });
+
+    // delete application
+    await App.delete(request.name);
     return { status: "success" };
   }
 

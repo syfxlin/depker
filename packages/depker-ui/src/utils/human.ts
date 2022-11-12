@@ -1,4 +1,5 @@
 import humanFormat from "human-format";
+import { DateTime } from "luxon";
 
 export const humanTimes = (value: number) => {
   const scale = new humanFormat.Scale({
@@ -27,4 +28,8 @@ export const humanBytes = (value: number) => {
 
 export const humanCounts = (value: number) => {
   return humanFormat(value);
+};
+
+export const humanDate = (value: number) => {
+  return DateTime.fromMillis(value).toLocaleString(DateTime.DATETIME_SHORT);
 };

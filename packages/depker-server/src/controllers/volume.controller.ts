@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -28,9 +29,14 @@ import {
 import { Volume } from "../entities/volume.entity";
 import { Data } from "../decorators/data.decorator";
 import { VolumeBind } from "../entities/volume-bind.entity";
+import fs from "fs-extra";
+import path from "path";
+import { PATHS } from "../constants/depker.constant";
 
 @Controller("/api/volumes")
 export class VolumeController {
+  private readonly logger = new Logger(VolumeController.name);
+
   @Get("/")
   public async list(@Query() request: ListVolumeRequest): Promise<ListVolumeResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc", all = false } = request;
@@ -120,10 +126,24 @@ export class VolumeController {
 
   @Delete("/:name")
   public async delete(@Param() request: DeleteVolumeRequest): Promise<DeleteVolumeResponse> {
-    const result = await Volume.delete(request.name);
-    if (!result.affected) {
+    const count = await Volume.countBy({ name: request.name });
+    if (!count) {
       throw new NotFoundException(`Not found volume of ${request.name}.`);
     }
+
+    // delete volume
+    process.nextTick(async () => {
+      // delete volume
+      try {
+        await fs.remove(path.join(PATHS.VOLUMES, request.name));
+        this.logger.log(`Purge volume ${request.name} successful.`);
+      } catch (e) {
+        this.logger.error(`Purge volume ${request.name} failed.`, e);
+      }
+    });
+
+    // delete volume
+    await Volume.delete(request.name);
     return { status: "success" };
   }
 

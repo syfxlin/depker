@@ -115,7 +115,7 @@ export const AppSetting: React.FC = () => {
             try {
               const deploy = await app.actions.deploy(status.data !== "stopped");
               actions.success(`Deploy successful`, `Application create deploy #${deploy.id} successful.`);
-              navigate(`/apps/depker/deploys/${deploy.id}`);
+              navigate(`/apps/${name}/deploys/${deploy.id}`);
             } catch (e: any) {
               actions.failure(`Deploy failure`, e);
             }
@@ -125,7 +125,7 @@ export const AppSetting: React.FC = () => {
         {status.data !== "stopped" ? "Re-deploy" : "Deploy"}
       </Button>
     ),
-    [status.data, calling.loading]
+    [name, status.data, calling.loading]
   );
 
   const Save = useMemo(
