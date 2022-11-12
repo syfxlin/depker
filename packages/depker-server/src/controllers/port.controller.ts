@@ -129,9 +129,7 @@ export class PortController {
     }
 
     // purge port
-    process.nextTick(async () => {
-      this.logger.log(`Port ${request.name} no need to purge.`);
-    });
+    this.logger.log(`Port ${request.name} no need to purge.`);
 
     // delete port
     await Port.delete(request.name);

@@ -29,9 +29,6 @@ import {
 import { Volume } from "../entities/volume.entity";
 import { Data } from "../decorators/data.decorator";
 import { VolumeBind } from "../entities/volume-bind.entity";
-import fs from "fs-extra";
-import path from "path";
-import { PATHS } from "../constants/depker.constant";
 
 @Controller("/api/volumes")
 export class VolumeController {
@@ -131,16 +128,8 @@ export class VolumeController {
       throw new NotFoundException(`Not found volume of ${request.name}.`);
     }
 
-    // delete volume
-    process.nextTick(async () => {
-      // delete volume
-      try {
-        await fs.remove(path.join(PATHS.VOLUMES, request.name));
-        this.logger.log(`Purge volume ${request.name} successful.`);
-      } catch (e) {
-        this.logger.error(`Purge volume ${request.name} failed.`, e);
-      }
-    });
+    // purge volume
+    this.logger.log(`Volume ${request.name} no need to purge.`);
 
     // delete volume
     await Volume.delete(request.name);
