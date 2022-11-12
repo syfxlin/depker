@@ -3,7 +3,7 @@ import { client } from "./client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useAccessLogs = (tail: number) => {
-  const query = useSWR(["client.system.logs", tail], (key, lines) => client.systems.logs({ lines }), {
+  const query = useSWR(["client.systems.logs", tail], (key, lines) => client.systems.logs({ lines }), {
     refreshInterval: 5000,
   });
   return useSWRWrapper(

@@ -4,7 +4,7 @@ import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 import { GetAppResponse } from "@syfxlin/depker-client";
 
 export const useApp = (name: string) => {
-  const query = useSWR(["client.app.get", name], (key, name) => client.apps.get({ name }), {
+  const query = useSWR(["client.apps.get", name], (key, name) => client.apps.get({ name }), {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     refreshWhenHidden: false,

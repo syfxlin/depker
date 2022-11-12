@@ -6,7 +6,7 @@ import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 export const useAppHistory = (name: string) => {
   const page = usePageState({ page: 1, size: 10 });
 
-  const query = useSWR(["client.app.history", name, page.request], (key, name, request) =>
+  const query = useSWR(["client.apps.history", name, page.request], (key, name, request) =>
     client.apps.history({ ...request, name })
   );
 

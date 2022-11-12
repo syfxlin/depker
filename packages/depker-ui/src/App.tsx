@@ -17,6 +17,7 @@ import { AppTerminalTab } from "./pages/AppTerminalTab";
 import { Files } from "./pages/Files";
 import { AppHistoryTab } from "./pages/AppHistoryTab";
 import { AppDangerTab } from "./pages/AppDangerTab";
+import { Tokens } from "./pages/Tokens";
 
 export const App: React.FC = () => {
   return (
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
                 <Route path="deploys/:deploy" element={<AppDeploysTab />} />
               </Route>
               <Route path="/files" element={<Files />} />
+              <Route path="/tokens" element={<Tokens />} />
             </Route>
           </Routes>
         </React.Suspense>

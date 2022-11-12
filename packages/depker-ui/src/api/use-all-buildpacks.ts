@@ -4,7 +4,7 @@ import { ListBuildPackResponse } from "@syfxlin/depker-client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useAllBuildpacks = () => {
-  const query = useSWR(["client.buildpack.list"], () => client.buildpacks.list());
+  const query = useSWR(["client.buildpacks.list"], () => client.buildpacks.list());
   return useSWRWrapper(
     query,
     (v) => (v ?? []).reduce((a, i) => ({ ...a, [i.name]: i }), {} as Record<string, ListBuildPackResponse[number]>),

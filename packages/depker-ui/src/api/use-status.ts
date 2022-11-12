@@ -11,7 +11,7 @@ export const colors: Record<AppStatus, string> = {
 };
 
 export const useStatus = (name: string) => {
-  const query = useSWR(["client.app.status", name], (key, name) => client.apps.status({ name }), {
+  const query = useSWR(["client.apps.status", name], (key, name) => client.apps.status({ name }), {
     refreshInterval: 5000,
   });
   return useSWRWrapper(

@@ -32,7 +32,7 @@ export type ListTokenResponse = {
   }>;
 };
 
-export class CreateTokenRequest {
+export class UpsertTokenRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -40,7 +40,7 @@ export class CreateTokenRequest {
   name: string;
 }
 
-export type CreateTokenResponse = {
+export type UpsertTokenResponse = {
   name: string;
   identity: string;
   token: string;

@@ -1,11 +1,11 @@
-import { ConflictException, Controller, Delete, Get, NotFoundException, Post, Query } from "@nestjs/common";
+import { ConflictException, Controller, Delete, Get, NotFoundException, Post, Put, Query } from "@nestjs/common";
 import {
-  CreateTokenRequest,
-  CreateTokenResponse,
   DeleteTokenRequest,
   DeleteTokenResponse,
   ListTokenRequest,
   ListTokenResponse,
+  UpsertTokenRequest,
+  UpsertTokenResponse,
 } from "../views/token.view";
 import { Token } from "../entities/token.entity";
 import { Like } from "typeorm";
@@ -13,7 +13,7 @@ import { Data } from "../decorators/data.decorator";
 import { randomUUID } from "crypto";
 import { AuthService } from "../guards/auth.service";
 
-@Controller("/tokens")
+@Controller("/api/tokens")
 export class TokenController {
   constructor(private readonly auths: AuthService) {}
 
@@ -45,10 +45,10 @@ export class TokenController {
   }
 
   @Post("/")
-  public async create(@Data() request: CreateTokenRequest): Promise<CreateTokenResponse> {
+  public async create(@Data() request: UpsertTokenRequest): Promise<UpsertTokenResponse> {
     const count = await Token.countBy({ name: request.name });
     if (count) {
-      throw new ConflictException(`Found volume of ${request.name}.`);
+      throw new ConflictException(`Found token of ${request.name}.`);
     }
     const token = await Token.save({
       name: request.name,
@@ -67,11 +67,32 @@ export class TokenController {
     };
   }
 
+  @Put("/:name")
+  public async update(@Data() request: UpsertTokenRequest): Promise<UpsertTokenResponse> {
+    const count = await Token.countBy({ name: request.name });
+    if (!count) {
+      throw new ConflictException(`Found token of ${request.name}.`);
+    }
+    await Token.update(request.name, { identity: randomUUID() });
+    const token = await Token.findOneBy({ name: request.name });
+    const value = await this.auths.sign({
+      type: "api",
+      identity: token!.identity,
+    });
+    return {
+      name: token!.name,
+      identity: token!.identity,
+      token: value,
+      createdAt: token!.createdAt.getTime(),
+      updatedAt: token!.updatedAt.getTime(),
+    };
+  }
+
   @Delete("/:name")
   public async delete(@Data() request: DeleteTokenRequest): Promise<DeleteTokenResponse> {
     const count = await Token.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found volume of ${request.name}.`);
+      throw new NotFoundException(`Not found token of ${request.name}.`);
     }
 
     await Token.delete(request.name);

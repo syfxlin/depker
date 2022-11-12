@@ -4,7 +4,7 @@ import { ListPortResponse, UpsertPortRequest } from "@syfxlin/depker-client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useAllPorts = () => {
-  const query = useSWR(["client.port.all"], async () => {
+  const query = useSWR(["client.ports.all"], async () => {
     return await client.ports.list({ all: true });
   });
 

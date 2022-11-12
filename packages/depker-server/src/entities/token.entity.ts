@@ -1,13 +1,14 @@
-import { BaseEntity, CreateDateColumn, Entity, PrimaryColumn, Unique, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, Index, PrimaryColumn, Unique, UpdateDateColumn } from "typeorm";
 
 @Entity()
 @Unique(["name"])
 @Unique(["identity"])
+@Index(["identity"])
 export class Token extends BaseEntity {
   @PrimaryColumn({ length: 128, nullable: false })
   name: string;
 
-  @PrimaryColumn({ length: 128, nullable: false })
+  @Column({ length: 128, nullable: false })
   identity: string;
 
   // date

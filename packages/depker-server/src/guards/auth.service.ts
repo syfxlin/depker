@@ -14,7 +14,7 @@ export class AuthService {
   constructor(private readonly jwts: JwtService) {}
 
   public async sign(payload: TokenPayload) {
-    return this.jwts.sign(payload, { expiresIn: payload.type === "web" ? "1d" : undefined });
+    return this.jwts.sign(payload, payload.type === "web" ? { expiresIn: "1d" } : undefined);
   }
 
   public async verify(token: string, identity?: string) {

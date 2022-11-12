@@ -1,11 +1,11 @@
 import { Api } from "./client";
 import {
-  CreateTokenRequest,
-  CreateTokenResponse,
   DeleteTokenRequest,
   DeleteTokenResponse,
   ListTokenRequest,
   ListTokenResponse,
+  UpsertTokenRequest,
+  UpsertTokenResponse,
 } from "@syfxlin/depker-types";
 
 export class TokenApi extends Api {
@@ -14,8 +14,13 @@ export class TokenApi extends Api {
     return response.data;
   }
 
-  public async create(request: CreateTokenRequest) {
-    const response = await this.request.post<CreateTokenResponse>(`/api/tokens`, request);
+  public async create(request: UpsertTokenRequest) {
+    const response = await this.request.post<UpsertTokenResponse>(`/api/tokens`, request);
+    return response.data;
+  }
+
+  public async update(request: UpsertTokenRequest) {
+    const response = await this.request.put<UpsertTokenResponse>(`/api/tokens/${request.name}`);
     return response.data;
   }
 
