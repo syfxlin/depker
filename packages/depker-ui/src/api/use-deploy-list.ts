@@ -16,7 +16,7 @@ export const useDeployList = (name: string) => {
 
   const query = useSWR(
     ["client.deploy.list", name, page.request],
-    (key, name, request) => client.deploy.list({ ...request, name }),
+    (key, name, request) => client.deploys.list({ ...request, name }),
     {
       refreshInterval: 1000,
     }

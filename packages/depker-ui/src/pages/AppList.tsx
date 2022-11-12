@@ -80,7 +80,7 @@ export const AppList: React.FC = () => {
                     description="Building application with build package."
                     placeholder="Build Package"
                     nothingFound="No packages"
-                    icon={<Avatar size="xs" src={client.asset.icon(buildpacks.data[item.buildpack]?.icon)} />}
+                    icon={<Avatar size="xs" src={client.assets.icon(buildpacks.data[item.buildpack]?.icon)} />}
                     value={item.buildpack ?? ""}
                     onChange={(value: string) => {
                       const buildpack = buildpacks.data[value];
@@ -93,7 +93,7 @@ export const AppList: React.FC = () => {
                       value: i.name,
                       label: i.label,
                       group: i.group,
-                      icon: client.asset.icon(i.icon),
+                      icon: client.assets.icon(i.icon),
                     }))}
                     itemComponent={forwardRef<HTMLDivElement, any>(({ label, icon, ...props }, ref) => {
                       return (
@@ -165,7 +165,7 @@ export const AppList: React.FC = () => {
                   `}
                 >
                   <Group>
-                    <Avatar src={client.asset.icon(item.icon)}>
+                    <Avatar src={client.assets.icon(item.icon)}>
                       <TbApiApp />
                     </Avatar>
                     <Link

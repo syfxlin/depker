@@ -17,7 +17,7 @@ export const useDeployLogs = (name: string, id: number | string | undefined) => 
         return;
       }
       (async () => {
-        const response = await client.deploy.logs({
+        const response = await client.deploys.logs({
           name: name,
           id: typeof id === "number" ? id : parseInt(id),
           since: latest.current,

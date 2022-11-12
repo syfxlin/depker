@@ -1,14 +1,14 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { Box, Button, Space, Stack, Text } from "@mantine/core";
 import { css } from "@emotion/react";
 import { Heading } from "../components/parts/Heading";
 import { useCalling } from "../hooks/use-calling";
 import { openConfirmModal } from "@mantine/modals";
-import { client } from "../api/client";
+import { AppSettingContext } from "./AppSetting";
 
 export const AppDangerTab: React.FC = () => {
-  const { app } = useParams<"app">();
+  const { app } = useOutletContext<AppSettingContext>();
   const navigate = useNavigate();
   const calling = useCalling();
   return (
@@ -36,7 +36,7 @@ export const AppDangerTab: React.FC = () => {
               onConfirm: () =>
                 calling.calling(async (actions) => {
                   try {
-                    await client.app.delete({ name: app! });
+                    await app.actions.delete();
                     actions.success(`Delete application successful`, `Application delete successful.`);
                     navigate(`/apps`);
                   } catch (e: any) {

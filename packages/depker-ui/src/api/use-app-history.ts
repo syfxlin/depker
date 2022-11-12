@@ -7,7 +7,7 @@ export const useAppHistory = (name: string) => {
   const page = usePageState({ page: 1, size: 10 });
 
   const query = useSWR(["client.app.history", name, page.request], (key, name, request) =>
-    client.app.history({ ...request, name })
+    client.apps.history({ ...request, name })
   );
 
   const result = useSWRWrapper(

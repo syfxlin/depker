@@ -10,6 +10,7 @@ import { VolumeApi } from "./api/volume.api";
 import { AssetApi } from "./api/asset.api";
 import { DeployApi } from "./api/deploy.api";
 import { FilesApi } from "./api/files.api";
+import { TokenApi } from "./api/token.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -23,15 +24,16 @@ export class DepkerClient {
   public readonly endpoint: string;
   public readonly token: () => string | null | undefined;
   public readonly request: AxiosInstance;
-  public readonly auth: AuthApi;
-  public readonly system: SystemApi;
-  public readonly app: AppApi;
-  public readonly buildpack: BuildpackApi;
-  public readonly port: PortApi;
-  public readonly volume: VolumeApi;
-  public readonly asset: AssetApi;
-  public readonly deploy: DeployApi;
+  public readonly auths: AuthApi;
+  public readonly systems: SystemApi;
+  public readonly apps: AppApi;
+  public readonly buildpacks: BuildpackApi;
+  public readonly ports: PortApi;
+  public readonly volumes: VolumeApi;
+  public readonly assets: AssetApi;
+  public readonly deploys: DeployApi;
   public readonly files: FilesApi;
+  public readonly tokens: TokenApi;
 
   constructor(options: DepkerClientOptions) {
     this.endpoint = options.endpoint;
@@ -52,14 +54,15 @@ export class DepkerClient {
     });
 
     // apis
-    this.auth = new AuthApi(this);
-    this.system = new SystemApi(this);
-    this.app = new AppApi(this);
-    this.buildpack = new BuildpackApi(this);
-    this.port = new PortApi(this);
-    this.volume = new VolumeApi(this);
-    this.asset = new AssetApi(this);
-    this.deploy = new DeployApi(this);
+    this.auths = new AuthApi(this);
+    this.systems = new SystemApi(this);
+    this.apps = new AppApi(this);
+    this.buildpacks = new BuildpackApi(this);
+    this.ports = new PortApi(this);
+    this.volumes = new VolumeApi(this);
+    this.assets = new AssetApi(this);
+    this.deploys = new DeployApi(this);
     this.files = new FilesApi(this);
+    this.tokens = new TokenApi(this);
   }
 }

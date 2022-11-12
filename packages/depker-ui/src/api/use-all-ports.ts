@@ -5,7 +5,7 @@ import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useAllPorts = () => {
   const query = useSWR(["client.port.all"], async () => {
-    return await client.port.list({ all: true });
+    return await client.ports.list({ all: true });
   });
 
   return useSWRWrapper(
@@ -17,7 +17,7 @@ export const useAllPorts = () => {
       ),
     (q) => ({
       create: async (request: UpsertPortRequest) => {
-        const response = await client.port.create(request);
+        const response = await client.ports.create(request);
         await q.mutate();
         return response;
       },

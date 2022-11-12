@@ -17,6 +17,7 @@ export * from "../views/common.view";
 export * from "../views/port.view";
 export * from "../views/system.view";
 export * from "../views/volume.view";
+export * from "../views/token.view";
 
 // plugins
 export * from "../plugins/plugin.types";

@@ -17,7 +17,7 @@ export const useAppLogs = (name: string, tail: number) => {
         return;
       }
       (async () => {
-        const response = await client.app.logs({
+        const response = await client.apps.logs({
           name: name,
           tail: tail <= 0 ? undefined : tail,
           since: latest.current,

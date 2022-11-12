@@ -5,7 +5,7 @@ import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useAllVolumes = () => {
   const query = useSWR(["client.volume.all"], async () => {
-    return await client.volume.list({ all: true });
+    return await client.volumes.list({ all: true });
   });
 
   return useSWRWrapper(
@@ -17,7 +17,7 @@ export const useAllVolumes = () => {
       ),
     (q) => ({
       create: async (request: UpsertVolumeRequest) => {
-        const response = await client.volume.create(request);
+        const response = await client.volumes.create(request);
         await q.mutate();
         return response;
       },

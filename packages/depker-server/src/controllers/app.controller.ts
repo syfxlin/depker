@@ -561,7 +561,7 @@ export class AppController {
       relations: { app: true },
       skip: offset,
       take: limit,
-      order: { [by]: axis },
+      order: { [by]: axis ? axis : "asc" },
     });
 
     const total: ListAppDeployResponse["total"] = count;

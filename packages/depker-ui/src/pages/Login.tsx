@@ -76,7 +76,7 @@ export const Login: React.FC = () => {
             onSubmit={form.onSubmit((values) => {
               calling.calling(async (actions) => {
                 try {
-                  const token = await client.auth.auth(values);
+                  const token = await client.auths.auth(values);
                   login(token);
                   actions.success(`Login successful`, `Redirecting...`);
                 } catch (e: any) {

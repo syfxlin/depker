@@ -28,7 +28,7 @@ export class AuthService {
         throw new UnauthorizedException(`401 Unauthorized`);
       }
     } else {
-      const entity = await Token.findOneBy({ token: payload.identity });
+      const entity = await Token.findOneBy({ identity: payload.identity });
       if (!entity) {
         throw new UnauthorizedException(`401 Unauthorized`);
       }

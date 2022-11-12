@@ -21,6 +21,7 @@ import { VolumeController } from "./controllers/volume.controller";
 import { BuildpackController } from "./controllers/buildpack.controller";
 import { TerminalGateway } from "./ws/terminal.gateway";
 import { FileController } from "./controllers/file.controller";
+import { TokenController } from "./controllers/token.controller";
 
 // entity
 export const entities = [Setting, Token, App, Deploy, Log, Volume, Port, PortBind, VolumeBind];
@@ -35,6 +36,7 @@ export const controllers = [
   VolumeController,
   BuildpackController,
   FileController,
+  TokenController,
 ];
 export const gateways = [TerminalGateway];
 export const services = [DeployService, DockerService, StorageService];

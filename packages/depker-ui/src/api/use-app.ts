@@ -4,7 +4,7 @@ import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 import { GetAppResponse } from "@syfxlin/depker-client";
 
 export const useApp = (name: string) => {
-  const query = useSWR(["client.app.get", name], (key, name) => client.app.get({ name }), {
+  const query = useSWR(["client.app.get", name], (key, name) => client.apps.get({ name }), {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     refreshWhenHidden: false,
@@ -23,7 +23,7 @@ export const useApp = (name: string) => {
           if (!value) {
             return value;
           }
-          return client.app.update({
+          return client.apps.update({
             ...value,
             ports: value.ports.map((i) => ({
               name: i.name,
@@ -38,13 +38,16 @@ export const useApp = (name: string) => {
         }, false);
       },
       deploy: async (force: boolean = false) => {
-        return await client.app.up({ name, force });
+        return await client.apps.up({ name, force });
       },
       stop: async () => {
-        return await client.app.down({ name });
+        return await client.apps.down({ name });
       },
       restart: async () => {
-        return await client.app.restart({ name });
+        return await client.apps.restart({ name });
+      },
+      delete: async () => {
+        return await client.apps.delete({ name });
       },
     })
   );

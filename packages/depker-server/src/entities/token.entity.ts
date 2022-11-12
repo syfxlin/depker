@@ -2,13 +2,13 @@ import { BaseEntity, CreateDateColumn, Entity, PrimaryColumn, Unique, UpdateDate
 
 @Entity()
 @Unique(["name"])
-@Unique(["token"])
+@Unique(["identity"])
 export class Token extends BaseEntity {
   @PrimaryColumn({ length: 128, nullable: false })
   name: string;
 
   @PrimaryColumn({ length: 128, nullable: false })
-  token: string;
+  identity: string;
 
   // date
   @CreateDateColumn({ nullable: false })

@@ -80,7 +80,7 @@ export const AppConfigsTab: React.FC = () => {
           description="Building application with build package."
           placeholder="Build Package"
           nothingFound="No packages"
-          icon={<Avatar size="xs" src={client.asset.icon(buildpacks.data[app.data.buildpack]?.icon)} />}
+          icon={<Avatar size="xs" src={client.assets.icon(buildpacks.data[app.data.buildpack]?.icon)} />}
           value={app.data.buildpack}
           onChange={(value: string) => {
             const buildpack = buildpacks.data[value];
@@ -93,7 +93,7 @@ export const AppConfigsTab: React.FC = () => {
             value: i.name,
             label: i.label,
             group: i.group,
-            icon: client.asset.icon(i.icon),
+            icon: client.assets.icon(i.icon),
           }))}
           itemComponent={forwardRef<HTMLDivElement, any>(({ label, icon, ...props }, ref) => {
             return (

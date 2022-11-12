@@ -8,7 +8,7 @@ import { client } from "../api/client";
 
 export const AppTerminalTab: React.FC = () => {
   const { app } = useParams<"app">();
-  const socket = useMemo(() => () => client.app.terminal(app!), [app]);
+  const socket = useMemo(() => () => client.apps.terminal(app!), [app]);
   return (
     <Stack
       css={css`
