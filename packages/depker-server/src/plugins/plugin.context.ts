@@ -16,28 +16,24 @@ import { Volume } from "../entities/volume.entity";
 import { Port } from "../entities/port.entity";
 import { VolumeBind } from "../entities/volume-bind.entity";
 import { PortBind } from "../entities/port-bind.entity";
+import { StorageService } from "../services/storage.service";
+import { PluginService } from "../services/plugin.service";
+import { AuthService } from "../guards/auth.service";
 
 export interface PluginOptions {
   readonly name: string;
-  readonly http: HttpService;
-  readonly events: EventEmitter2;
   readonly docker: DockerService;
-  readonly schedule: SchedulerRegistry;
-  readonly entities: {
-    readonly Setting: typeof Setting;
-    readonly Token: typeof Token;
-    readonly App: typeof App;
-    readonly Log: typeof Log;
-    readonly Volume: typeof Volume;
-    readonly Port: typeof Port;
-    readonly VolumeBind: typeof VolumeBind;
-    readonly PortBind: typeof PortBind;
-  };
+  readonly https: HttpService;
+  readonly events: EventEmitter2;
+  readonly schedules: SchedulerRegistry;
+  readonly storages: StorageService;
+  readonly plugins: PluginService;
+  readonly auths: AuthService;
 }
 
 export interface PackOptions extends PluginOptions {
-  deploy: Deploy;
   project: string;
+  deploy: Deploy;
 }
 
 export interface RouteOptions extends PluginOptions {
@@ -46,29 +42,45 @@ export interface RouteOptions extends PluginOptions {
 }
 
 export class PluginContext {
+  // constants
+  public static readonly NAMES: Readonly<typeof NAMES> = NAMES;
+  public static readonly PATHS: Readonly<typeof PATHS> = PATHS;
+
+  // entity
+  public readonly App = App;
+  public readonly Deploy = Deploy;
+  public readonly Log = Log;
+  public readonly Port = Port;
+  public readonly PortBind = PortBind;
+  public readonly Setting = Setting;
+  public readonly Token = Token;
+  public readonly Volume = Volume;
+  public readonly VolumeBind = VolumeBind;
+
   // logger
   public readonly logger: Logger;
 
   // values
   public readonly name: string;
-  public readonly names: Readonly<typeof NAMES> = NAMES;
-  public readonly paths: Readonly<typeof PATHS> = PATHS;
 
   // services
-  public readonly http: PluginOptions["http"];
-  public readonly events: PluginOptions["events"];
-  public readonly docker: PluginOptions["docker"];
-  public readonly schedule: PluginOptions["schedule"];
-  public readonly entities: PluginOptions["entities"];
+  public readonly docker: DockerService;
+  public readonly https: HttpService;
+  public readonly events: EventEmitter2;
+  public readonly schedules: SchedulerRegistry;
+  public readonly storages: StorageService;
+  public readonly plugins: PluginService;
+  public readonly auths: AuthService;
 
   constructor(options: PluginOptions) {
     this.logger = new Logger(`Plugin-${options.name}`);
-    this.name = options.name;
-    this.http = options.http;
-    this.events = options.events;
     this.docker = options.docker;
-    this.schedule = options.schedule;
-    this.entities = options.entities;
+    this.https = options.https;
+    this.events = options.events;
+    this.schedules = options.schedules;
+    this.storages = options.storages;
+    this.plugins = options.plugins;
+    this.auths = options.auths;
   }
 
   public async options(name?: string, value?: any) {
@@ -89,15 +101,18 @@ export class PluginContext {
 }
 
 export class PackContext extends PluginContext {
-  public readonly deploy: Deploy;
-  public readonly project: string;
+  // logger
   public readonly log: DeployLogger;
+
+  // values
+  public readonly project: string;
+  public readonly deploy: Deploy;
 
   constructor(options: PackOptions) {
     super(options);
     this.deploy = options.deploy;
     this.project = options.project;
-    this.log = options.entities.Log.logger(options.deploy);
+    this.log = this.Log.logger(options.deploy);
   }
 
   public dockerfile(data: string) {

@@ -53,7 +53,7 @@ export const AppList: React.FC = () => {
                       name: value.name,
                       buildpack: value.buildpack,
                     });
-                    actions.success(`Create volume successful`, `Close modals...`);
+                    actions.success(`Create volume successful`, `Volume need to bind to the application to use.`);
                     return true;
                   } catch (e: any) {
                     actions.failure(`Create volume failure`, e);

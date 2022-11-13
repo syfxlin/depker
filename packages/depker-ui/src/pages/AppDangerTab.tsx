@@ -20,8 +20,7 @@ export const AppDangerTab: React.FC = () => {
       <Heading>Delete Application</Heading>
       <Box>
         <Text color="dimmed" size="sm">
-          The application will be permanently deleted, including its deployments and logs. This action is irreversible
-          and can not be undone.
+          The application will be permanently deleted, including its deployments and logs. This action is irreversible.
         </Text>
         <Space pt="xs" />
         <Button
@@ -30,10 +29,10 @@ export const AppDangerTab: React.FC = () => {
           onClick={() => {
             openConfirmModal({
               title: "Delete Application",
-              children: <Text size="sm">This action is irreversible and can not be undone. Confirm delete?</Text>,
+              children: <Text size="sm">This action is irreversible. Confirm delete?</Text>,
               labels: { confirm: "Delete", cancel: "No don't delete it" },
               confirmProps: { color: "red" },
-              onConfirm: () =>
+              onConfirm: () => {
                 calling.calling(async (actions) => {
                   try {
                     await app.actions.delete();
@@ -42,7 +41,8 @@ export const AppDangerTab: React.FC = () => {
                   } catch (e: any) {
                     actions.failure(`Delete application failure`, e);
                   }
-                }),
+                });
+              },
             });
           }}
         >

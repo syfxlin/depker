@@ -7,7 +7,7 @@ import { Async } from "../components/core/Async";
 import { Pages } from "../components/layout/Pages";
 import { css } from "@emotion/react";
 import { humanDate } from "../utils/human";
-import { openModal } from "@mantine/modals";
+import { openConfirmModal, openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
 import { showNotification } from "@mantine/notifications";
 import { useClipboard } from "@mantine/hooks";
@@ -62,13 +62,28 @@ const Actions: React.FC<{ name: string; actions: ReturnType<typeof useTokens>["a
           color="red"
           loading={calling.loading}
           onClick={() => {
-            calling.calling(async (a) => {
-              try {
-                await actions.delete({ name });
-                a.success(`Delete token successful`, `The generated token has expired.`);
-              } catch (e: any) {
-                a.failure(`Delete token failure`, e);
-              }
+            openConfirmModal({
+              title: "Delete Token",
+              children: (
+                <>
+                  <Text size="sm" color="red">
+                    Programs using this token will no longer be able to access.
+                  </Text>
+                  <Text size="sm">This action is irreversible. Confirm delete?</Text>
+                </>
+              ),
+              labels: { confirm: "Delete", cancel: "No don't delete it" },
+              confirmProps: { color: "red" },
+              onConfirm: () => {
+                calling.calling(async (a) => {
+                  try {
+                    await actions.delete({ name });
+                    a.success(`Delete token successful`, `The generated token has expired.`);
+                  } catch (e: any) {
+                    a.failure(`Delete token failure`, e);
+                  }
+                });
+              },
             });
           }}
         >

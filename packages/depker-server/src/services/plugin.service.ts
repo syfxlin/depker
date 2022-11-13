@@ -5,21 +5,15 @@ import path from "path";
 import { PATHS } from "../constants/depker.constant";
 import { pathToFileURL } from "url";
 import { PluginContext } from "../plugins/plugin.context";
-import { HttpService } from "nestjs-http-promise";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { DockerService } from "./docker.service";
-import { SchedulerRegistry } from "@nestjs/schedule";
-import { Setting } from "../entities/setting.entity";
-import { Token } from "../entities/token.entity";
-import { App } from "../entities/app.entity";
-import { Log } from "../entities/log.entity";
-import { Volume } from "../entities/volume.entity";
-import { Port } from "../entities/port.entity";
-import { VolumeBind } from "../entities/volume-bind.entity";
-import { PortBind } from "../entities/port-bind.entity";
 import * as example from "../plugins/example";
 import * as dockerfile from "../plugins/dockerfile";
 import { image } from "../plugins/image";
+import { DockerService } from "./docker.service";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { StorageService } from "./storage.service";
+import { HttpService } from "nestjs-http-promise";
+import { AuthService } from "../guards/auth.service";
+import { SchedulerRegistry } from "@nestjs/schedule";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
@@ -28,10 +22,12 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
   private readonly _plugins: Record<string, DepkerPlugin> = {};
 
   constructor(
-    private readonly http: HttpService,
-    private readonly events: EventEmitter2,
     private readonly docker: DockerService,
-    private readonly schedule: SchedulerRegistry
+    private readonly https: HttpService,
+    private readonly events: EventEmitter2,
+    private readonly schedules: SchedulerRegistry,
+    private readonly storages: StorageService,
+    private readonly auths: AuthService
   ) {}
 
   public async load(): Promise<Record<string, DepkerPlugin>> {
@@ -71,20 +67,13 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       await plugin?.init?.(
         new PluginContext({
           name: plugin.name,
-          http: this.http,
-          events: this.events,
+          plugins: this,
           docker: this.docker,
-          schedule: this.schedule,
-          entities: {
-            Setting: Setting,
-            Token: Token,
-            App: App,
-            Log: Log,
-            Volume: Volume,
-            Port: Port,
-            VolumeBind: VolumeBind,
-            PortBind: PortBind,
-          },
+          https: this.https,
+          events: this.events,
+          schedules: this.schedules,
+          storages: this.storages,
+          auths: this.auths,
         })
       );
     }
@@ -96,20 +85,13 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       await plugin?.destroy?.(
         new PluginContext({
           name: plugin.name,
-          http: this.http,
-          events: this.events,
+          plugins: this,
           docker: this.docker,
-          schedule: this.schedule,
-          entities: {
-            Setting: Setting,
-            Token: Token,
-            App: App,
-            Log: Log,
-            Volume: Volume,
-            Port: Port,
-            VolumeBind: VolumeBind,
-            PortBind: PortBind,
-          },
+          https: this.https,
+          events: this.events,
+          schedules: this.schedules,
+          storages: this.storages,
+          auths: this.auths,
         })
       );
     }

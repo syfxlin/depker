@@ -70,7 +70,7 @@ export class Log extends BaseEntity {
       log: (line: string) => Log.log(deploy, line),
       step: (line: string) => Log.step(deploy, line),
       success: (line: string) => Log.success(deploy, line),
-      failed: (line: string, error?: Error) => Log.error(deploy, line, error),
+      error: (line: string, error?: Error) => Log.error(deploy, line, error),
     };
   }
 }

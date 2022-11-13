@@ -11,28 +11,24 @@ import { In, LessThan, Not } from "typeorm";
 import pAll from "p-all";
 import { PluginService } from "./plugin.service";
 import { PackContext } from "../plugins/plugin.context";
-import { HttpService } from "nestjs-http-promise";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { SchedulerRegistry } from "@nestjs/schedule";
 import { Setting } from "../entities/setting.entity";
-import { Token } from "../entities/token.entity";
-import { App } from "../entities/app.entity";
 import { Log } from "../entities/log.entity";
-import { Volume } from "../entities/volume.entity";
-import { Port } from "../entities/port.entity";
-import { VolumeBind } from "../entities/volume-bind.entity";
-import { PortBind } from "../entities/port-bind.entity";
 import fs from "fs-extra";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { HttpService } from "nestjs-http-promise";
+import { AuthService } from "../guards/auth.service";
+import { SchedulerRegistry } from "@nestjs/schedule";
 
 @Injectable()
 export class DeployService {
   constructor(
     private readonly docker: DockerService,
+    private readonly https: HttpService,
+    private readonly events: EventEmitter2,
+    private readonly schedules: SchedulerRegistry,
     private readonly storages: StorageService,
     private readonly plugins: PluginService,
-    private readonly http: HttpService,
-    private readonly events: EventEmitter2,
-    private readonly schedule: SchedulerRegistry
+    private readonly auths: AuthService
   ) {}
 
   public async task() {
@@ -154,20 +150,13 @@ export class DeployService {
         name: buildpack.name,
         deploy: deploy,
         project: project,
-        http: this.http,
-        events: this.events,
+        plugins: this.plugins,
         docker: this.docker,
-        schedule: this.schedule,
-        entities: {
-          Setting: Setting,
-          Token: Token,
-          App: App,
-          Log: Log,
-          Volume: Volume,
-          Port: Port,
-          VolumeBind: VolumeBind,
-          PortBind: PortBind,
-        },
+        https: this.https,
+        events: this.events,
+        schedules: this.schedules,
+        storages: this.storages,
+        auths: this.auths,
       })
     );
     return project;
@@ -184,9 +173,6 @@ export class DeployService {
     const commands: string[] = [`DOCKER_BUILDKIT=1`, `docker`, `build`, `--progress=plain`, `--tag=${tag}`];
     if (app.pull) {
       commands.push(`--pull`);
-    }
-    if (deploy.force) {
-      commands.push(`--no-cache`);
     }
     for (const [k, v] of Object.entries(app.buildArgs)) {
       commands.push(`--build-arg=${k}=${v}`);

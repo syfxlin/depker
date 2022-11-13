@@ -552,7 +552,7 @@ export const AppConfigsTab: React.FC = () => {
                           hport: value.port,
                           cport: item?.cport ?? 3000,
                         });
-                        actions.success(`Create port successful`, `Close modals...`);
+                        actions.success(`Create port successful`, `Port need to bind to the application to use.`);
                         return true;
                       } catch (e: any) {
                         actions.failure(`Create port failure`, e);
@@ -680,7 +680,7 @@ export const AppConfigsTab: React.FC = () => {
                           cpath: item?.cpath ?? "",
                           readonly: item?.readonly ?? false,
                         });
-                        actions.success(`Create volume successful`, `Close modals...`);
+                        actions.success(`Create volume successful`, `Volume need to bind to the application to use.`);
                         return true;
                       } catch (e: any) {
                         actions.failure(`Create volume failure`, e);

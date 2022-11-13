@@ -56,6 +56,9 @@ export class App extends BaseEntity {
   @Column({ length: 128, nullable: false })
   buildpack: string;
 
+  @Column({ nullable: false, default: "" })
+  image: string;
+
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   commands: string[];
 

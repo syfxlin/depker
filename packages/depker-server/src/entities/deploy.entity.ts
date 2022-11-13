@@ -33,9 +33,6 @@ export class Deploy extends BaseEntity {
   @Column({ nullable: false })
   trigger: DeployTrigger;
 
-  @Column({ nullable: false, default: false })
-  force: boolean;
-
   @ManyToOne(() => App, (app) => app.deploys, {
     nullable: false,
     onDelete: "CASCADE",
@@ -66,7 +63,6 @@ export class Deploy extends BaseEntity {
       commit: this.commit,
       status: this.status,
       trigger: this.trigger,
-      force: this.force,
       createdAt: this.createdAt.getTime(),
       updatedAt: this.updatedAt.getTime(),
     };

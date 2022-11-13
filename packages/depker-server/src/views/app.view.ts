@@ -15,7 +15,7 @@ import {
   Length,
   Matches,
   Max,
-  Min,
+  Min
 } from "class-validator";
 import {
   AppHealthCheck,
@@ -24,7 +24,7 @@ import {
   AppMiddleware,
   AppRestart,
   AppSecret,
-  AppStatus,
+  AppStatus
 } from "../entities/app.entity";
 import { PortProtocol } from "../entities/port.entity";
 import { ArrayEach } from "../validation/array-each.validation";
@@ -412,10 +412,6 @@ export class UpAppRequest {
   @IsString()
   @IsIn(["manual", "depker", "git"])
   trigger?: DeployTrigger;
-
-  @IsOptional()
-  @IsBoolean()
-  force?: boolean;
 }
 
 export type UpAppResponse = {
@@ -424,7 +420,6 @@ export type UpAppResponse = {
   commit: string;
   status: DeployStatus;
   trigger: DeployTrigger;
-  force: boolean;
   createdAt: number;
   updatedAt: number;
 };
@@ -489,7 +484,6 @@ export type ListAppDeployResponse = {
     commit: string;
     status: DeployStatus;
     trigger: DeployTrigger;
-    force: boolean;
     createdAt: number;
     updatedAt: number;
   }>;

@@ -113,7 +113,7 @@ export const AppSetting: React.FC = () => {
         onClick={() =>
           calling.calling(async (actions) => {
             try {
-              const deploy = await app.actions.deploy(status.data !== "stopped");
+              const deploy = await app.actions.deploy();
               actions.success(`Deploy successful`, `Application create deploy #${deploy.id} successful.`);
               navigate(`/apps/${name}/deploys/${deploy.id}`);
             } catch (e: any) {

@@ -471,7 +471,6 @@ export class AppController {
     const deploy = new Deploy();
     deploy.app = app;
     deploy.status = "queued";
-    deploy.force = request.force ?? false;
     deploy.trigger = request.trigger ?? "manual";
 
     if (app.buildpack === "image") {
