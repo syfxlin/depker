@@ -1,26 +1,15 @@
 import useSWR from "swr";
 import { client } from "./client";
-import { ListVolumeResponse, UpsertVolumeRequest } from "@syfxlin/depker-client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
 export const useAllVolumes = () => {
   const query = useSWR(["client.volumes.all"], async () => {
-    return await client.volumes.list({ all: true });
+    return await client.volumes.list();
   });
 
   return useSWRWrapper(
     query,
-    (v) =>
-      (v?.items ?? []).reduce(
-        (a, i) => ({ ...a, [i.name]: i }),
-        {} as Record<string, ListVolumeResponse["items"][number]>
-      ),
-    (q) => ({
-      create: async (request: UpsertVolumeRequest) => {
-        const response = await client.volumes.create(request);
-        await q.mutate();
-        return response;
-      },
-    })
+    (v) => v ?? [],
+    () => ({})
   );
 };

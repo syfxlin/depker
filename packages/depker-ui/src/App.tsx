@@ -18,7 +18,6 @@ import { Files } from "./pages/Files";
 import { AppHistoryTab } from "./pages/AppHistoryTab";
 import { AppDangerTab } from "./pages/AppDangerTab";
 import { Tokens } from "./pages/Tokens";
-import { Ports } from "./pages/Ports";
 
 export const App: React.FC = () => {
   return (
@@ -43,7 +42,6 @@ export const App: React.FC = () => {
               </Route>
               <Route path="/files" element={<Files />} />
               <Route path="/tokens" element={<Tokens />} />
-              <Route path="/ports" element={<Ports />} />
             </Route>
           </Routes>
         </React.Suspense>

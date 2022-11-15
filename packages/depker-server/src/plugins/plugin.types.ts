@@ -1,4 +1,6 @@
-import { PackContext, PluginContext, RouteContext } from "./plugin.context";
+import { PackContext } from "./pack.context";
+import { PluginContext } from "./plugin.context";
+import { RouteContext } from "./route.context";
 
 export interface BaseOption<T> {
   type: T;
@@ -83,8 +85,7 @@ export interface DepkerPlugin {
   destroy?: (ctx: PluginContext) => Promise<void> | void;
   routes?: (ctx: RouteContext) => Promise<any> | any;
   buildpack?: {
-    image?: boolean;
     options?: DepkerPluginOption[];
-    handle?: (ctx: PackContext) => Promise<void> | void;
+    handler?: (ctx: PackContext) => Promise<void> | void;
   };
 }

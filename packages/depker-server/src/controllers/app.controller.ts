@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -44,13 +43,8 @@ import {
 } from "../views/app.view";
 import { DockerService } from "../services/docker.service";
 import { App } from "../entities/app.entity";
-import { In, Like, MoreThanOrEqual } from "typeorm";
-import { Port } from "../entities/port.entity";
-import { Volume } from "../entities/volume.entity";
-import { PortBind } from "../entities/port-bind.entity";
-import { VolumeBind } from "../entities/volume-bind.entity";
+import { Like, MoreThanOrEqual } from "typeorm";
 import { PluginService } from "../services/plugin.service";
-import { diff } from "../utils/save.util";
 import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
 import { Data } from "../decorators/data.decorator";
@@ -144,10 +138,7 @@ export class AppController {
     app.port = request.port!;
     app.scheme = request.scheme!;
     app.tls = request.tls!;
-    app.middlewares =
-      request.middlewares
-        ?.filter((v) => v.name && v.type)
-        ?.map((v) => ({ name: v.name, type: v.type, options: v.options ?? {} })) ?? [];
+    app.middlewares = request.middlewares!.map((i) => ({ name: i.name, type: i.type, options: i.options }));
     // extensions
     app.commands = request.commands!;
     app.entrypoints = request.entrypoints!;
@@ -162,92 +153,16 @@ export class AppController {
     // values
     app.buildArgs = request.buildArgs!;
     app.networks = request.networks!;
-    app.labels = request.labels!;
-    app.secrets = request.secrets!;
-    app.hosts = request.hosts!;
+    app.labels = request.labels!.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
+    app.secrets = request.secrets!.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
+    app.hosts = request.hosts!.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
+    app.ports = request.ports!.map((i) => ({ hport: i.hport, cport: i.cport, proto: i.proto }));
+    app.volumes = request.volumes!.map((i) => ({ hpath: i.hpath, cpath: i.cpath, readonly: i.readonly }));
     app.extensions = request.extensions!;
-    // ports
-    const ports: PortBind[] = [];
-    if (request.ports && request.ports.length) {
-      const names = request.ports.map((v) => v.name);
-      const items = await Port.find({ where: { name: In(names) } });
-      if (names.length !== items.length) {
-        throw new BadRequestException("Port not created，unable to create app.");
-      }
-      const maps = items.reduce((m, i) => m.set(i.name, i), new Map<string, Port>());
-      for (const port of request.ports) {
-        const bind = new PortBind();
-        bind.port = port.port;
-        bind.bind = maps.get(port.name) as Port;
-        ports.push(bind);
-      }
-    }
-    // volumes
-    const volumes: VolumeBind[] = [];
-    if (request.volumes && request.volumes.length) {
-      const names = request.volumes.map((v) => v.name);
-      const items = await Volume.find({ where: { name: In(names) } });
-      if (names.length !== items.length) {
-        throw new BadRequestException("Volume not created，unable to create app.");
-      }
-      const maps = items.reduce((m, i) => m.set(i.name, i), new Map<string, Volume>());
-      for (const volume of request.volumes) {
-        const bind = new VolumeBind();
-        bind.path = volume.path;
-        bind.readonly = volume.readonly;
-        bind.bind = maps.get(volume.name) as Volume;
-        volumes.push(bind);
-      }
-    }
 
     // save app
     await App.save(app, { reload: false });
-    const saved = await App.findOne({
-      where: {
-        name: app.name,
-      },
-      relations: {
-        ports: {
-          bind: true,
-        },
-        volumes: {
-          bind: true,
-        },
-      },
-    });
-    // save ports or volumes
-    if (ports.length && saved) {
-      const value = diff([ports, saved.ports], (v) => v.bind.name);
-      await PortBind.save(
-        value.upsert.map((v) => {
-          v.app = saved;
-          return v;
-        })
-      );
-      await PortBind.remove(
-        value.remove.map((v) => {
-          v.app = saved;
-          return v;
-        })
-      );
-      saved.ports = ports;
-    }
-    if (volumes.length && saved) {
-      const value = diff([volumes, saved.volumes], (v) => v.bind.name);
-      await VolumeBind.save(
-        value.upsert.map((v) => {
-          v.app = saved!;
-          return v;
-        })
-      );
-      await VolumeBind.remove(
-        value.remove.map((v) => {
-          v.app = saved!;
-          return v;
-        })
-      );
-      saved.volumes = volumes;
-    }
+    const saved = await App.findOneBy({ name: app.name });
     return saved!.toView();
   }
 
@@ -256,14 +171,6 @@ export class AppController {
     const app = await App.findOne({
       where: {
         name: request.name,
-      },
-      relations: {
-        ports: {
-          bind: true,
-        },
-        volumes: {
-          bind: true,
-        },
       },
     });
     if (!app) {
@@ -473,30 +380,16 @@ export class AppController {
     deploy.status = "queued";
     deploy.trigger = request.trigger ?? "manual";
 
-    if (app.buildpack === "image") {
-      deploy.commit = app.extensions.image;
-      if (!deploy.commit) {
-        throw new NotFoundException(`Not definition image of ${request.name}`);
-      }
-    } else {
-      const repo = await this.storage.repository(request.name);
-      if (!repo) {
-        throw new NotFoundException(`Not found application source of ${request.name}.`);
-      }
-
+    const repo = await this.storage.repository(request.name);
+    if (repo) {
       try {
         const commit = await repo.getMasterCommit();
         deploy.commit = commit.id().tostrS();
       } catch (e) {
-        // ignore
+        throw new NotFoundException(`Found application source but not found commit of ${request.name}`);
       }
-      if (!deploy.commit) {
-        throw new NotFoundException(`Not found reference of ${request.name}`);
-      }
-    }
-
-    if (!deploy.commit) {
-      throw new NotFoundException(`Not found deploy commit of ${request.name}`);
+    } else {
+      deploy.commit = "unknown";
     }
 
     const saved = await Deploy.save(deploy);

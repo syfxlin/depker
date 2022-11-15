@@ -57,7 +57,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
   public async buildpacks(): Promise<Record<string, DepkerPlugin>> {
     const plugins = await this.load();
     return Object.entries(plugins)
-      .filter(([, p]) => p.buildpack?.handle)
+      .filter(([, p]) => p.buildpack?.handler)
       .reduce((a, [n, p]) => ({ ...a, [n]: p }), {});
   }
 

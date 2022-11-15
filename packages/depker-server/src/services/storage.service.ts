@@ -16,14 +16,18 @@ export class StorageService {
     return await git.Repository.open(target);
   }
 
-  public async checkout(name: string, id: string) {
+  public async project(name: string, id: string) {
     const source = path.join(PATHS.REPOS, `${name}.git`);
     const target = path.join(os.tmpdir(), `${name}-${randomUUID()}`);
     fs.removeSync(target);
-    await git.Clone.clone(source, target);
-    const repo = await git.Repository.open(source);
-    const commit = await repo.getCommit(id);
-    repo.setHeadDetached(commit.id());
+    if (fs.pathExistsSync(target)) {
+      await git.Clone.clone(source, target);
+      const repo = await git.Repository.open(source);
+      const commit = await repo.getCommit(id);
+      repo.setHeadDetached(commit.id());
+    } else {
+      fs.ensureDirSync(target);
+    }
     return target;
   }
 

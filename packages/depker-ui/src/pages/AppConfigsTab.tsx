@@ -38,8 +38,6 @@ import { Async } from "../components/core/Async";
 import { useAllPorts } from "../api/use-all-ports";
 import { SelectArrayInput } from "../components/input/SelectArrayInput";
 import { useAllVolumes } from "../api/use-all-volumes";
-import { openModal } from "@mantine/modals";
-import { ObjectModal } from "../components/input/ObjectModal";
 import { AppSettingContext } from "./AppSetting";
 import { ExtensionInput } from "../components/input/ExtensionInput";
 import { Heading } from "../components/parts/Heading";
@@ -108,20 +106,6 @@ export const AppConfigsTab: React.FC = () => {
         />
       ),
     [app.data?.buildpack, buildpacks.data]
-  );
-
-  const Image = useMemo(
-    () =>
-      app.data?.buildpack === "image" && (
-        <ExtensionInput
-          options={buildpacks.data[app.data.buildpack]?.options}
-          value={app.data.extensions}
-          onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, extensions: value }));
-          }}
-        />
-      ),
-    [app.data?.buildpack, app.data?.extensions]
   );
 
   const BasicRow = useMemo(
@@ -511,95 +495,18 @@ export const AppConfigsTab: React.FC = () => {
             app.actions.update((prev) => ({ ...prev, ports: value }));
           }}
           items={Object.values(ports.data).map((i) => ({
-            value: i.name,
-            label: i.name,
-            // prettier-ignore
-            description: `${i.proto.toUpperCase()}:${i.port}. ${i.binds.length ? `Used by ${i.binds.join(", ")}` : `No used`}.`,
+            value: String(i),
+            label: String(i),
           }))}
           select={(item, setItem) => ({
-            value: item?.name,
+            limit: 100,
+            value: item?.hport ? String(item?.hport) : undefined,
             onChange: (value: string) => {
-              const port = ports.data[value];
-              if (port) {
-                setItem({
-                  name: port.name,
-                  proto: port.proto,
-                  hport: port.port,
-                  cport: item?.cport ?? 3000,
-                });
-              }
-            },
-            onCreate: (query: string) => {
-              openModal({
-                title: <>Create Port {query}</>,
-                children: (
-                  <ObjectModal
-                    value={{ name: query }}
-                    onChange={async (value, actions) => {
-                      if (!value.name || !value.proto || !value.port) {
-                        actions.failure(`Create port failure`, `Name, Protocol, Port must be not empty.`);
-                        return false;
-                      }
-                      try {
-                        await ports.actions.create({
-                          name: value.name,
-                          proto: value.proto,
-                          port: value.port,
-                        });
-                        setItem({
-                          name: value.name,
-                          proto: value.proto,
-                          hport: value.port,
-                          cport: item?.cport ?? 3000,
-                        });
-                        actions.success(`Create port successful`, `Port need to bind to the application to use.`);
-                        return true;
-                      } catch (e: any) {
-                        actions.failure(`Create port failure`, e);
-                        return false;
-                      }
-                    }}
-                  >
-                    {(item, setItem) => [
-                      <TextInput
-                        key="name"
-                        required
-                        label="Host Port Name"
-                        description="The name used by host port proxy."
-                        placeholder="Host Port Name"
-                        icon={<TbSignature />}
-                        value={item.name ?? ""}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
-                      />,
-                      <Select
-                        key="protocol"
-                        label="Host Port Protocol."
-                        description="The protocol used by host port proxy."
-                        placeholder="Host Port Protocol"
-                        icon={<TbCertificate />}
-                        value={item.proto}
-                        onChange={(value) => setItem({ ...item, proto: value })}
-                        data={[
-                          { label: "TCP", value: "tcp" },
-                          { label: "UDP", value: "udp" },
-                        ]}
-                      />,
-                      <NumberInput
-                        key="hport"
-                        label="Host Port Number"
-                        description="The port used by host port proxy."
-                        placeholder="Host Port Number"
-                        icon={<TbCircleDot />}
-                        min={1}
-                        max={65535}
-                        value={item.port}
-                        onChange={(value) => setItem({ ...item, port: value ?? 3000 })}
-                      />,
-                    ]}
-                  </ObjectModal>
-                ),
+              setItem({
+                hport: parseInt(value),
+                cport: item?.cport ?? 3000,
+                proto: item?.proto ?? "tcp",
               });
-              return null;
             },
           })}
           modals={(item, setItem) => [
@@ -616,6 +523,22 @@ export const AppConfigsTab: React.FC = () => {
                   setItem({ ...item, cport: value ?? 3000 });
                 }
               }}
+            />,
+            <Select
+              key="readonly"
+              placeholder="Read Only"
+              icon={<TbCertificate />}
+              readOnly={!item}
+              value={item?.proto}
+              onChange={(value) => {
+                if (item) {
+                  setItem({ ...item, proto: value as "tcp" | "udp" });
+                }
+              }}
+              data={[
+                { label: "Protocol: TCP", value: "tcp" },
+                { label: "Protocol: UDP", value: "udp" },
+              ]}
             />,
           ]}
         />
@@ -637,96 +560,18 @@ export const AppConfigsTab: React.FC = () => {
             app.actions.update((prev) => ({ ...prev, volumes: value }));
           }}
           items={Object.values(volumes.data).map((i) => ({
-            value: i.name,
-            label: i.name,
-            // prettier-ignore
-            description: `${!i.global ? "@" : ""}${i.path}. ${i.binds.length ? `Used by ${i.binds.join(", ")}` : `No used`}.`,
+            value: i,
+            label: i,
           }))}
           select={(item, setItem) => ({
-            value: item?.name,
+            limit: 100,
+            value: item?.hpath,
             onChange: (value: string) => {
-              const volume = volumes.data[value];
-              if (volume) {
-                setItem({
-                  name: volume.name,
-                  global: volume.global,
-                  hpath: volume.path,
-                  cpath: item?.cpath ?? "",
-                  readonly: item?.readonly ?? false,
-                });
-              }
-            },
-            onCreate: (query: string) => {
-              openModal({
-                title: <>Create Volume {query}</>,
-                children: (
-                  <ObjectModal
-                    value={{ name: query }}
-                    onChange={async (value, actions) => {
-                      if (!value.name || !value.path || !value.global) {
-                        actions.failure(`Create volume failure`, `Name, Path, Global must be not empty.`);
-                        return false;
-                      }
-                      try {
-                        await volumes.actions.create({
-                          name: value.name,
-                          path: value.path,
-                          global: value.global,
-                        });
-                        setItem({
-                          name: value.name,
-                          global: value.global,
-                          hpath: value.path,
-                          cpath: item?.cpath ?? "",
-                          readonly: item?.readonly ?? false,
-                        });
-                        actions.success(`Create volume successful`, `Volume need to bind to the application to use.`);
-                        return true;
-                      } catch (e: any) {
-                        actions.failure(`Create volume failure`, e);
-                        return false;
-                      }
-                    }}
-                  >
-                    {(item, setItem) => [
-                      <TextInput
-                        key="name"
-                        required
-                        label="Host Volume Name"
-                        description="The name used by host volume."
-                        placeholder="Host Volume Name"
-                        icon={<TbSignature />}
-                        value={item.name ?? ""}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
-                      />,
-                      <Select
-                        key="global"
-                        label="Host Volume Global."
-                        description="Whether it is a global volume, that is, no mapping."
-                        placeholder="Host Volume Global"
-                        icon={<TbCertificate />}
-                        value={item.global}
-                        onChange={(value) => setItem({ ...item, global: value === "true" })}
-                        data={[
-                          { label: "Yes", value: "true" },
-                          { label: "No", value: "false" },
-                        ]}
-                      />,
-                      <TextInput
-                        key="hpath"
-                        required
-                        label="Host Volume Path"
-                        description="The path used by host volume."
-                        placeholder="Host Volume Path"
-                        icon={<TbFolder />}
-                        value={item.path ?? ""}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, path: e.target.value })}
-                      />,
-                    ]}
-                  </ObjectModal>
-                ),
+              setItem({
+                hpath: value,
+                cpath: item?.cpath ?? "",
+                readonly: item?.readonly ?? false,
               });
-              return null;
             },
           })}
           modals={(item, setItem) => [
@@ -1005,7 +850,6 @@ export const AppConfigsTab: React.FC = () => {
       <Stack>
         <Heading>General</Heading>
         {BasicRow}
-        {Image}
         {PolicyRow}
         {HealthCheck}
         <Heading>Requests</Heading>

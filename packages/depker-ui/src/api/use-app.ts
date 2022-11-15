@@ -23,18 +23,7 @@ export const useApp = (name: string) => {
           if (!value) {
             return value;
           }
-          return client.apps.update({
-            ...value,
-            ports: value.ports.map((i) => ({
-              name: i.name,
-              port: i.cport,
-            })),
-            volumes: value.volumes.map((i) => ({
-              name: i.name,
-              path: i.cpath,
-              readonly: i.readonly,
-            })),
-          });
+          return client.apps.update(value);
         }, false);
       },
       deploy: async () => {

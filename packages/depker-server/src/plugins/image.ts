@@ -17,9 +17,9 @@ export const image: DepkerPlugin = {
         required: true,
       },
     ],
-    handle: async (ctx) => {
-      const image = await ctx.values("image");
-      ctx.dockerfile(`FROM ${image}`);
+    handler: async (ctx) => {
+      const image = await ctx.extensions("image");
+      await ctx.deployment(image);
     },
   },
 };

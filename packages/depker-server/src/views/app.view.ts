@@ -2,6 +2,7 @@ import {
   isBoolean,
   IsBoolean,
   isFQDN,
+  isIn,
   IsIn,
   IsInt,
   isNotEmpty,
@@ -15,18 +16,19 @@ import {
   Length,
   Matches,
   Max,
-  Min
+  Min,
 } from "class-validator";
 import {
   AppHealthCheck,
   AppHost,
   AppLabel,
   AppMiddleware,
+  AppPort,
   AppRestart,
   AppSecret,
-  AppStatus
+  AppStatus,
+  AppVolume,
 } from "../entities/app.entity";
-import { PortProtocol } from "../entities/port.entity";
 import { ArrayEach } from "../validation/array-each.validation";
 import { objectEach } from "../validation/object-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
@@ -220,28 +222,22 @@ export class UpsertAppRequest {
   @IsOptional()
   @ArrayEach([
     objectEach({
-      name: [isString, isNotEmpty],
-      port: [isNumber, (v) => v >= 1 && v <= 65535],
+      hport: [isNumber, (v) => v >= 1 && v <= 65535],
+      cport: [isNumber, (v) => v >= 1 && v <= 65535],
+      proto: [isString, (v) => isIn(v, ["tcp", "udp"])],
     }),
   ])
-  ports?: Array<{
-    name: string;
-    port: number;
-  }>;
+  ports?: Array<AppPort>;
 
   @IsOptional()
   @ArrayEach([
     objectEach({
-      name: [isString, isNotEmpty],
-      path: [isString],
+      hpath: [isString, isNotEmpty],
+      cpath: [isString, isNotEmpty],
       readonly: [isBoolean],
     }),
   ])
-  volumes?: Array<{
-    name: string;
-    path: string;
-    readonly: boolean;
-  }>;
+  volumes?: Array<AppVolume>;
 
   @IsOptional()
   @RecordEach([isString, isNotEmpty])
@@ -282,22 +278,11 @@ export type GetAppResponse = {
   labels: Array<AppLabel>;
   secrets: Array<AppSecret>;
   hosts: Array<AppHost>;
+  ports: Array<AppPort>;
+  volumes: Array<AppVolume>;
   createdAt: number;
   updatedAt: number;
   extensions: Record<string, any>;
-  ports: Array<{
-    name: string;
-    proto: PortProtocol;
-    hport: number;
-    cport: number;
-  }>;
-  volumes: Array<{
-    name: string;
-    global: boolean;
-    hpath: string;
-    cpath: string;
-    readonly: boolean;
-  }>;
 };
 
 export class DeleteAppRequest {

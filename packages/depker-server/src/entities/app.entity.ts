@@ -9,8 +9,6 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Deploy } from "./deploy.entity";
-import { PortBind } from "./port-bind.entity";
-import { VolumeBind } from "./volume-bind.entity";
 
 export type AppRestart = "no" | "always" | "on-failure";
 
@@ -48,6 +46,18 @@ export type AppHost = {
   onbuild: boolean;
 };
 
+export type AppPort = {
+  proto: "tcp" | "udp";
+  hport: number;
+  cport: number;
+};
+
+export type AppVolume = {
+  hpath: string;
+  cpath: string;
+  readonly: boolean;
+};
+
 @Entity()
 export class App extends BaseEntity {
   @PrimaryColumn({ length: 128, nullable: false, unique: true })
@@ -55,9 +65,6 @@ export class App extends BaseEntity {
 
   @Column({ length: 128, nullable: false })
   buildpack: string;
-
-  @Column({ nullable: false, default: "" })
-  image: string;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   commands: string[];
@@ -126,22 +133,15 @@ export class App extends BaseEntity {
   @Column({ nullable: false, default: "[]", type: "simple-json" })
   hosts: AppHost[];
 
+  @Column({ nullable: false, default: "[]", type: "simple-json" })
+  ports: AppPort[];
+
+  @Column({ nullable: false, default: "[]", type: "simple-json" })
+  volumes: AppVolume[];
+
   // extensions
   @Column({ nullable: false, default: "{}", type: "simple-json" })
   extensions: Record<string, any>;
-
-  // relations
-  @OneToMany(() => PortBind, (bind) => bind.app, {
-    cascade: false,
-    persistence: false,
-  })
-  ports: Relation<PortBind[]>;
-
-  @OneToMany(() => VolumeBind, (bind) => bind.app, {
-    cascade: false,
-    persistence: false,
-  })
-  volumes: Relation<VolumeBind[]>;
 
   // deploy
   @OneToMany(() => Deploy, (deploy) => deploy.app, {
@@ -183,19 +183,8 @@ export class App extends BaseEntity {
       labels: this.labels,
       secrets: this.secrets,
       hosts: this.hosts,
-      ports: this.ports.map((i) => ({
-        name: i.bind.name,
-        proto: i.bind.proto,
-        hport: i.bind.port,
-        cport: i.port,
-      })),
-      volumes: this.volumes.map((i) => ({
-        name: i.bind.name,
-        global: i.bind.global,
-        hpath: i.bind.path,
-        cpath: i.path,
-        readonly: i.readonly,
-      })),
+      ports: this.ports,
+      volumes: this.volumes,
       createdAt: this.createdAt.getTime(),
       updatedAt: this.updatedAt.getTime(),
       extensions: this.extensions,

@@ -1,15 +1,14 @@
 import {
   ActionIcon,
-  Box,
   Button,
   Grid,
   Group,
   Input,
   InputWrapperProps,
   Select,
+  SelectItem,
   SelectProps,
   Stack,
-  Text,
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
@@ -18,18 +17,12 @@ import { useFilterState } from "../../hooks/use-filter-state";
 import { css } from "@emotion/react";
 import { TbCodeMinus, TbCodePlus, TbX } from "react-icons/all";
 
-export type SelectDataItem = {
-  value: string;
-  label: string;
-  description: string;
-};
-
 export type SelectArrayInputProps<T> = Omit<InputWrapperProps, "children" | "onChange"> & {
   icon?: ReactNode;
   placeholder?: string;
   value?: Array<T>;
   onChange?: (value: Array<T>) => void;
-  items: Array<SelectDataItem>;
+  items: Array<SelectItem>;
   select: (value: T | undefined, setValue: (value: T | undefined) => void) => Partial<SelectProps>;
   modals: (value: T | undefined, setValue: (value: T | undefined) => void) => Array<ReactNode>;
 };
@@ -70,17 +63,9 @@ const SelectArrayInputInner = <T,>(
                 <Select
                   data={items}
                   {...select(item, setItem)}
-                  creatable
                   searchable
                   icon={icon}
                   placeholder={placeholder}
-                  getCreateLabel={(query) => <Text color={t.primaryColor}>+ Create {query}</Text>}
-                  itemComponent={forwardRef(({ label, description, ...props }, ref) => (
-                    <Box {...props} ref={ref}>
-                      <Text size="sm">{label}</Text>
-                      <Text size="xs">{description}</Text>
-                    </Box>
-                  ))}
                   rightSection={
                     <Tooltip label="Delete">
                       <ActionIcon
