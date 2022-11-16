@@ -74,31 +74,8 @@ export class DeployService {
         // update status to running
         await Deploy.update(deploy.id, { status: "running" });
 
-        // find buildpack
-        const buildpack = (await this.plugins.buildpacks())[app.buildpack];
-        if (!buildpack?.buildpack?.handler) {
-          throw new Error(`Not found buildpack ${app.buildpack}`);
-        }
-
-        // init project
-        const project = await this.storages.project(app.name, deploy.commit);
-
-        // init context
-        const context = new PackContext({
-          name: buildpack.name,
-          deploy: deploy,
-          project: project,
-          plugins: this.plugins,
-          docker: this.docker,
-          https: this.https,
-          events: this.events,
-          schedules: this.schedules,
-          storages: this.storages,
-          auths: this.auths,
-        });
-
-        // deployment containers
-        await buildpack.buildpack.handler(context);
+        // deploy container
+        await this.deploy(deploy);
 
         // purge containers
         await this.purge(deploy);
@@ -126,6 +103,37 @@ export class DeployService {
     });
 
     await pAll(actions, { concurrency: setting.concurrency });
+  }
+
+  public async deploy(deploy: Deploy) {
+    // values
+    const app = deploy.app;
+
+    // find buildpack
+    const buildpack = (await this.plugins.buildpacks())[app.buildpack];
+    if (!buildpack?.buildpack?.handler) {
+      throw new Error(`Not found buildpack ${app.buildpack}`);
+    }
+
+    // init project
+    const project = await this.storages.project(app.name, deploy.commit);
+
+    // init context
+    const context = new PackContext({
+      name: buildpack.name,
+      deploy: deploy,
+      project: project,
+      plugins: this.plugins,
+      docker: this.docker,
+      https: this.https,
+      events: this.events,
+      schedules: this.schedules,
+      storages: this.storages,
+      auths: this.auths,
+    });
+
+    // deployment containers
+    await buildpack.buildpack.handler(context);
   }
 
   public async purge(deploy: Deploy) {
