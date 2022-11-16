@@ -25,13 +25,13 @@ import { colors } from "../api/use-status";
 import { client } from "../api/client";
 import { openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
-import { useAllBuildpacks } from "../api/use-all-buildpacks";
+import { useBuildpacks } from "../api/use-buildpacks";
 import { humanDate } from "../utils/human";
 
 export const AppList: React.FC = () => {
   const t = useMantineTheme();
   const apps = useApps();
-  const buildpacks = useAllBuildpacks();
+  const buildpacks = useBuildpacks();
 
   const Create = useMemo(
     () => (

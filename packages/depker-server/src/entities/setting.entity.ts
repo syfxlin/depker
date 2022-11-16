@@ -34,7 +34,7 @@ export class Setting extends BaseEntity {
   dashboard: string;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  ports: Array<[number, number]>;
+  ports: Array<number>;
 
   // plugins extension config
   @Column({ nullable: false, default: "{}", type: "simple-json" })

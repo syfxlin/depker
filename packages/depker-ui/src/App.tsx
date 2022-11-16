@@ -1,6 +1,4 @@
 import React from "react";
-import BrowserRouter from "./router/BrowserRouter";
-import { history } from "./router/history";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Login } from "./pages/Login";
 import { Box } from "@mantine/core";
@@ -18,34 +16,37 @@ import { Files } from "./pages/Files";
 import { AppHistoryTab } from "./pages/AppHistoryTab";
 import { AppDangerTab } from "./pages/AppDangerTab";
 import { Tokens } from "./pages/Tokens";
+import { Ports } from "./pages/Ports";
+import { Volumes } from "./pages/Volumes";
 
 export const App: React.FC = () => {
   return (
     <Box className="App">
-      <BrowserRouter history={history}>
-        <React.Suspense fallback={<Loading />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<Dashboard />}>
-              <Route index element={<Navigate to="/home" />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/apps" element={<AppList />} />
-              <Route path="/apps/:app" element={<AppSetting />}>
-                <Route index element={<AppConfigsTab />} />
-                <Route path="metrics" element={<AppMetricsTab />} />
-                <Route path="logs" element={<AppLogsTab />} />
-                <Route path="terminal" element={<AppTerminalTab />} />
-                <Route path="history" element={<AppHistoryTab />} />
-                <Route path="danger" element={<AppDangerTab />} />
-                <Route path="deploys" element={<AppDeploysTab />} />
-                <Route path="deploys/:deploy" element={<AppDeploysTab />} />
-              </Route>
-              <Route path="/files" element={<Files />} />
-              <Route path="/tokens" element={<Tokens />} />
+      <React.Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Dashboard />}>
+            <Route index element={<Navigate to="/home" />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/apps" element={<AppList />} />
+            <Route path="/apps/:app" element={<AppSetting />}>
+              <Route index element={<AppConfigsTab />} />
+              <Route path="metrics" element={<AppMetricsTab />} />
+              <Route path="logs" element={<AppLogsTab />} />
+              <Route path="terminal" element={<AppTerminalTab />} />
+              <Route path="history" element={<AppHistoryTab />} />
+              <Route path="danger" element={<AppDangerTab />} />
+              <Route path="deploys" element={<AppDeploysTab />} />
+              <Route path="deploys/:deploy" element={<AppDeploysTab />} />
             </Route>
-          </Routes>
-        </React.Suspense>
-      </BrowserRouter>
+            <Route path="/tokens" element={<Tokens />} />
+            <Route path="/ports" element={<Ports />} />
+            <Route path="/volumes" element={<Volumes />} />
+            <Route path="/files" element={<Files />} />
+            <Route path="/files/*" element={<Files />} />
+          </Route>
+        </Routes>
+      </React.Suspense>
     </Box>
   );
 };

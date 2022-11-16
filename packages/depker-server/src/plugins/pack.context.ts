@@ -350,7 +350,7 @@ export class PackContext extends PluginContext {
       // volumes
       for (const volume of options.volumes ?? []) {
         const binds = args.HostConfig?.Binds as string[];
-        const hpath = volume.hpath.replace(/^@\//, path.join(PATHS.VOLUMES));
+        const hpath = path.join(PATHS.VOLUMES, volume.hpath.replace(/^@\//, ""));
         const cpath = volume.cpath;
         const ro = volume.readonly ? "ro" : "rw";
         binds.push(`${hpath}:${cpath}:${ro}`);

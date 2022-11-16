@@ -1,13 +1,12 @@
 import {
   ActionIcon,
+  Autocomplete,
+  AutocompleteProps,
   Button,
   Grid,
   Group,
   Input,
   InputWrapperProps,
-  Select,
-  SelectItem,
-  SelectProps,
   Stack,
   Tooltip,
   useMantineTheme,
@@ -17,18 +16,18 @@ import { useFilterState } from "../../hooks/use-filter-state";
 import { css } from "@emotion/react";
 import { TbCodeMinus, TbCodePlus, TbX } from "react-icons/all";
 
-export type SelectArrayInputProps<T> = Omit<InputWrapperProps, "children" | "onChange"> & {
+export type AutocompleteArrayInputProps<T> = Omit<InputWrapperProps, "children" | "onChange"> & {
   icon?: ReactNode;
   placeholder?: string;
   value?: Array<T>;
   onChange?: (value: Array<T>) => void;
-  items: Array<SelectItem>;
-  select: (value: T | undefined, setValue: (value: T | undefined) => void) => Partial<SelectProps>;
+  items: Array<string>;
+  select: (value: T | undefined, setValue: (value: T | undefined) => void) => Partial<AutocompleteProps>;
   modals: (value: T | undefined, setValue: (value: T | undefined) => void) => Array<ReactNode>;
 };
 
-const SelectArrayInputInner = <T,>(
-  { icon, placeholder, value, onChange, items, select, modals, ...props }: SelectArrayInputProps<T>,
+const AutocompleteArrayInputInner = <T,>(
+  { icon, placeholder, value, onChange, items, select, modals, ...props }: AutocompleteArrayInputProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) => {
   const t = useMantineTheme();
@@ -60,10 +59,9 @@ const SelectArrayInputInner = <T,>(
           return (
             <Grid key={`selected-array-input-${index}`}>
               <Grid.Col span={4}>
-                <Select
+                <Autocomplete
                   data={items}
                   {...select(item, setItem)}
-                  searchable
                   icon={icon}
                   placeholder={placeholder}
                   rightSection={
@@ -107,6 +105,6 @@ const SelectArrayInputInner = <T,>(
   );
 };
 
-export const SelectArrayInput = forwardRef(SelectArrayInputInner) as <T>(
-  props: PropsWithoutRef<SelectArrayInputProps<T>>
-) => ReturnType<typeof SelectArrayInputInner>;
+export const AutocompleteArrayInput = forwardRef(AutocompleteArrayInputInner) as <T>(
+  props: PropsWithoutRef<AutocompleteArrayInputProps<T>>
+) => ReturnType<typeof AutocompleteArrayInputInner>;

@@ -3,7 +3,7 @@ import { client } from "./client";
 import { ListBuildPackResponse } from "@syfxlin/depker-client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
 
-export const useAllBuildpacks = () => {
+export const useBuildpacks = () => {
   const query = useSWR(["client.buildpacks.list"], () => client.buildpacks.list());
   return useSWRWrapper(
     query,

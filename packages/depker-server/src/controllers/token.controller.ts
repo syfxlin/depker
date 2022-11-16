@@ -8,7 +8,7 @@ import {
   UpsertTokenResponse,
 } from "../views/token.view";
 import { Token } from "../entities/token.entity";
-import { Like } from "typeorm";
+import { ILike } from "typeorm";
 import { Data } from "../decorators/data.decorator";
 import { randomUUID } from "crypto";
 import { AuthService } from "../guards/auth.service";
@@ -23,8 +23,8 @@ export class TokenController {
     const [by, axis] = sort.split(":");
     const [tokens, count] = await Token.findAndCount({
       where: {
-        name: search ? Like(`%${search}%`) : undefined,
-        identity: search ? Like(`%${search}%`) : undefined,
+        name: search ? ILike(`%${search}%`) : undefined,
+        identity: search ? ILike(`%${search}%`) : undefined,
       },
       order: {
         [by]: axis ? axis : "asc",

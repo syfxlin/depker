@@ -1,7 +1,7 @@
-import { Alert, Box, Center, Pagination, useMantineTheme } from "@mantine/core";
+import { Box, Pagination, useMantineTheme } from "@mantine/core";
 import React, { ReactNode } from "react";
 import { css } from "@emotion/react";
-import { TbCircle } from "react-icons/all";
+import { Empty } from "../core/Empty";
 
 export type PagesProps = {
   page: number;
@@ -24,23 +24,7 @@ export const Pages: React.FC<PagesProps> = ({ children, page, size, total, onCha
           flex-direction: column;
         `}
       >
-        {total ? (
-          children
-        ) : (
-          <Center>
-            <Alert
-              icon={<TbCircle />}
-              color="gray"
-              title="No Items"
-              css={css`
-                margin: 0 ${t.spacing.md}px;
-                max-width: ${t.fontSizes.md * 25}px;
-              `}
-            >
-              The list is empty.
-            </Alert>
-          </Center>
-        )}
+        {total ? children : <Empty />}
       </Box>
       <Pagination
         page={page}

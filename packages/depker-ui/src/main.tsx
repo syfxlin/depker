@@ -5,16 +5,20 @@ import { dequal } from "dequal";
 import { SWROutside } from "./utils/swr-outside";
 import { App } from "./App";
 import { ThemeProvider } from "./theme/ThemeProvider";
+import { history } from "./router/history";
+import BrowserRouter from "./router/BrowserRouter";
 
 export const Root: React.FC = () => {
   return (
     <React.StrictMode>
-      <SWRConfig value={{ compare: dequal }}>
-        <SWROutside />
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
-      </SWRConfig>
+      <BrowserRouter history={history}>
+        <SWRConfig value={{ compare: dequal }}>
+          <SWROutside />
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
+        </SWRConfig>
+      </BrowserRouter>
     </React.StrictMode>
   );
 };

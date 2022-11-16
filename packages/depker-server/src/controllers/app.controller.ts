@@ -43,7 +43,7 @@ import {
 } from "../views/app.view";
 import { DockerService } from "../services/docker.service";
 import { App } from "../entities/app.entity";
-import { Like, MoreThanOrEqual } from "typeorm";
+import { ILike, MoreThanOrEqual } from "typeorm";
 import { PluginService } from "../services/plugin.service";
 import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
@@ -79,8 +79,8 @@ export class AppController {
         updatedAt: true,
       },
       where: {
-        name: search ? Like(`%${search}%`) : undefined,
-        domain: search ? Like(`%${search}%`) : undefined,
+        name: search ? ILike(`%${search}%`) : undefined,
+        domain: search ? ILike(`%${search}%`) : undefined,
       },
       order: {
         [by]: axis ? axis : "asc",
@@ -446,9 +446,9 @@ export class AppController {
     const [deploys, count] = await Deploy.findAndCount({
       where: {
         app: { name },
-        commit: search ? Like(`%${search}%`) : undefined,
-        status: search ? (Like(`%${search}%`) as any) : undefined,
-        trigger: search ? (Like(`%${search}%`) as any) : undefined,
+        commit: search ? ILike(`%${search}%`) : undefined,
+        status: search ? (ILike(`%${search}%`) as any) : undefined,
+        trigger: search ? (ILike(`%${search}%`) as any) : undefined,
       },
       relations: { app: true },
       skip: offset,

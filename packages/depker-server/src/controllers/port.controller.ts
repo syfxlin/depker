@@ -1,18 +1,49 @@
-import { Controller, Get } from "@nestjs/common";
-import { ListPortResponse } from "../views/port.view";
+import { Controller, Delete, Get, Post } from "@nestjs/common";
+import {
+  BindsPortRequest,
+  BindsPortResponse,
+  CreatePortRequest,
+  CreatePortResponse,
+  DeletePortRequest,
+  DeletePortResponse,
+  ListPortResponse,
+} from "../views/port.view";
 import { Setting } from "../entities/setting.entity";
+import { Data } from "../decorators/data.decorator";
+import { App } from "../entities/app.entity";
+import { ILike } from "typeorm";
 
 @Controller("/api/ports")
 export class PortController {
   @Get("/")
   public async list(): Promise<ListPortResponse> {
     const setting = await Setting.read();
-    const ports = new Set<number>();
-    for (const [start, end] of setting.ports) {
-      for (let i = start; i <= end; i++) {
-        ports.add(i);
-      }
-    }
-    return Array.from(ports.values());
+    return setting.ports;
+  }
+
+  @Post("/")
+  public async create(@Data() request: CreatePortRequest): Promise<CreatePortResponse> {
+    const setting = await Setting.read();
+    const ports = new Set(setting.ports);
+    ports.add(request.port);
+    setting.ports = Array.from(ports.values());
+    await Setting.write(setting);
+    return { status: "success" };
+  }
+
+  @Delete("/")
+  public async delete(@Data() request: DeletePortRequest): Promise<DeletePortResponse> {
+    const setting = await Setting.read();
+    const ports = new Set(setting.ports);
+    ports.delete(request.port);
+    setting.ports = Array.from(ports.values());
+    await Setting.write(setting);
+    return { status: "success" };
+  }
+
+  @Get("/:port/binds")
+  public async binds(@Data() request: BindsPortRequest): Promise<BindsPortResponse> {
+    const apps = await App.findBy({ ports: ILike(`%${request.port}%`) });
+    return apps.filter((a) => a.ports.find((i) => i.hport === request.port)).map((a) => a.name);
   }
 }

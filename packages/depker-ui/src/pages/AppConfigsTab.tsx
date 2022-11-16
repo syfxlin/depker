@@ -1,6 +1,6 @@
 import React, { ChangeEvent, forwardRef, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { useAllBuildpacks } from "../api/use-all-buildpacks";
+import { useBuildpacks } from "../api/use-buildpacks";
 import { Avatar, Grid, Group, NumberInput, Select, Stack, Text, TextInput } from "@mantine/core";
 import {
   TbActivity,
@@ -35,9 +35,9 @@ import { ObjectInput } from "../components/input/ObjectInput";
 import { RecordInput } from "../components/input/RecordInput";
 import { RecordOnbuildInput } from "../components/input/RecordOnbuildInput";
 import { Async } from "../components/core/Async";
-import { useAllPorts } from "../api/use-all-ports";
-import { SelectArrayInput } from "../components/input/SelectArrayInput";
-import { useAllVolumes } from "../api/use-all-volumes";
+import { usePorts } from "../api/use-ports";
+import { AutocompleteArrayInput } from "../components/input/AutocompleteArrayInput";
+import { useVolumes } from "../api/use-volumes";
 import { AppSettingContext } from "./AppSetting";
 import { ExtensionInput } from "../components/input/ExtensionInput";
 import { Heading } from "../components/parts/Heading";
@@ -45,9 +45,9 @@ import { client } from "../api/client";
 
 export const AppConfigsTab: React.FC = () => {
   const { app } = useOutletContext<AppSettingContext>();
-  const buildpacks = useAllBuildpacks();
-  const ports = useAllPorts();
-  const volumes = useAllVolumes();
+  const buildpacks = useBuildpacks();
+  const ports = usePorts();
+  const volumes = useVolumes();
 
   // general
   const Name = useMemo(
@@ -485,7 +485,7 @@ export const AppConfigsTab: React.FC = () => {
   const Ports = useMemo(
     () =>
       app.data && (
-        <SelectArrayInput
+        <AutocompleteArrayInput
           label="Ports"
           description="Publish a container's port(s) to the host."
           icon={<TbCircleDot />}
@@ -494,10 +494,7 @@ export const AppConfigsTab: React.FC = () => {
           onChange={(value) => {
             app.actions.update((prev) => ({ ...prev, ports: value }));
           }}
-          items={Object.values(ports.data).map((i) => ({
-            value: String(i),
-            label: String(i),
-          }))}
+          items={ports.data.map((i) => String(i))}
           select={(item, setItem) => ({
             limit: 100,
             value: item?.hport ? String(item?.hport) : undefined,
@@ -550,7 +547,7 @@ export const AppConfigsTab: React.FC = () => {
   const Volumes = useMemo(
     () =>
       app.data && (
-        <SelectArrayInput
+        <AutocompleteArrayInput
           label="Volumes"
           description="Bind mount a volume."
           icon={<TbFolder />}
@@ -559,10 +556,7 @@ export const AppConfigsTab: React.FC = () => {
           onChange={(value) => {
             app.actions.update((prev) => ({ ...prev, volumes: value }));
           }}
-          items={Object.values(volumes.data).map((i) => ({
-            value: i,
-            label: i,
-          }))}
+          items={volumes.data}
           select={(item, setItem) => ({
             limit: 100,
             value: item?.hpath,
