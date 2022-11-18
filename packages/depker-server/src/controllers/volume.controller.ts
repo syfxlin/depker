@@ -1,4 +1,4 @@
-import { Controller, Delete, ForbiddenException, Get, Post } from "@nestjs/common";
+import { ConflictException, Controller, Delete, ForbiddenException, Get, Post } from "@nestjs/common";
 import {
   BindsVolumeRequest,
   BindsVolumeResponse,
@@ -36,7 +36,12 @@ export class VolumeController {
 
   @Delete("/")
   public async delete(@Data() request: DeleteVolumeRequest): Promise<DeleteVolumeResponse> {
-    // TODO: 存在 binds 时不允许删除
+    const req = new BindsVolumeRequest();
+    req.volume = request.volume;
+    const binds = await this.binds(req);
+    if (binds.length) {
+      throw new ConflictException(`Found binds of volume ${request.volume}, need to remove all binds before delete.`);
+    }
     const location = path.join(PATHS.VOLUMES, request.volume.replace(/^@\//, ""));
     const relative = path.relative(PATHS.VOLUMES, location);
     if (relative && !relative.startsWith("..") && !path.isAbsolute(relative)) {

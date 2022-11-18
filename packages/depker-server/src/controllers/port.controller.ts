@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Post } from "@nestjs/common";
+import { ConflictException, Controller, Delete, Get, Post } from "@nestjs/common";
 import {
   BindsPortRequest,
   BindsPortResponse,
@@ -33,7 +33,12 @@ export class PortController {
 
   @Delete("/")
   public async delete(@Data() request: DeletePortRequest): Promise<DeletePortResponse> {
-    // TODO: 存在 binds 时不允许删除
+    const req = new BindsPortRequest();
+    req.port = request.port;
+    const binds = await this.binds(req);
+    if (binds.length) {
+      throw new ConflictException(`Found binds of port ${request.port}, need to remove all binds before delete.`);
+    }
     const setting = await Setting.read();
     const ports = new Set(setting.ports);
     ports.delete(request.port);

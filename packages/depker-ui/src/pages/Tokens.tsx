@@ -13,9 +13,28 @@ import { showNotification } from "@mantine/notifications";
 import { useClipboard } from "@mantine/hooks";
 import { useCalling } from "../hooks/use-calling";
 
-const Actions: React.FC<{ name: string; actions: ReturnType<typeof useTokens>["actions"] }> = ({ name, actions }) => {
+const Copy: React.FC<{ token: string }> = ({ token }) => {
   const t = useMantineTheme();
   const clipboard = useClipboard({ timeout: 500 });
+  return (
+    <Stack spacing="xs">
+      <Text>Make sure to copy your personal access token now. You won’t be able to see it again!</Text>
+      <Group spacing="xs" noWrap>
+        <Text size="xs" color={t.primaryColor}>
+          {token}
+        </Text>
+        <Tooltip label={clipboard.copied ? "Copied!" : "Copy"}>
+          <ActionIcon color={t.primaryColor} onClick={() => clipboard.copy(token)}>
+            {clipboard.copied ? <TbCheck /> : <TbCopy />}
+          </ActionIcon>
+        </Tooltip>
+      </Group>
+    </Stack>
+  );
+};
+
+const Actions: React.FC<{ name: string; actions: ReturnType<typeof useTokens>["actions"] }> = ({ name, actions }) => {
+  const t = useMantineTheme();
   const calling = useCalling();
   return (
     <>
@@ -31,21 +50,7 @@ const Actions: React.FC<{ name: string; actions: ReturnType<typeof useTokens>["a
                 showNotification({
                   autoClose: false,
                   title: `Re-create token successful`,
-                  message: (
-                    <Stack spacing="xs">
-                      <Text>Make sure to copy your personal access token now. You won’t be able to see it again!</Text>
-                      <Group spacing="xs" noWrap>
-                        <Text size="xs" color={t.primaryColor}>
-                          {result.token}
-                        </Text>
-                        <Tooltip label={clipboard.copied ? "Copied!" : "Copy"}>
-                          <ActionIcon color={t.primaryColor} onClick={() => clipboard.copy(result.token)}>
-                            {clipboard.copied ? <TbCheck /> : <TbCopy />}
-                          </ActionIcon>
-                        </Tooltip>
-                      </Group>
-                    </Stack>
-                  ),
+                  message: <Copy token={result.token} />,
                 });
               } catch (e: any) {
                 a.failure(`Re-create token failure`, e);

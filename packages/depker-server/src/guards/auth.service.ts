@@ -17,7 +17,7 @@ export class AuthService {
     return this.jwts.sign(payload, payload.type === "web" ? { expiresIn: "1d" } : undefined);
   }
 
-  public async verify(token?: string, identity?: string) {
+  public async verify(token?: string, user?: string) {
     if (!token) {
       throw new UnauthorizedException(`401 Unauthorized`);
     }
@@ -27,16 +27,21 @@ export class AuthService {
       if (entity.username !== payload.identity) {
         throw new UnauthorizedException(`401 Unauthorized`);
       }
-      if (payload.identity !== identity) {
-        throw new UnauthorizedException(`401 Unauthorized`);
+      if (user) {
+        if (entity.username !== user) {
+          throw new UnauthorizedException(`401 Unauthorized`);
+        }
       }
     } else {
       const entity = await Token.findOneBy({ identity: payload.identity });
       if (!entity) {
         throw new UnauthorizedException(`401 Unauthorized`);
       }
-      if (payload.identity !== identity) {
-        throw new UnauthorizedException(`401 Unauthorized`);
+      if (user) {
+        const entity = await Setting.read();
+        if (entity.username !== user) {
+          throw new UnauthorizedException(`401 Unauthorized`);
+        }
       }
     }
     return payload;
