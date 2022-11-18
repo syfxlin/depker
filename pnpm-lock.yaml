@@ -80,6 +80,7 @@ importers:
       '@types/luxon': ^3.0.2
       '@types/node': ^18.11.5
       '@types/nodegit': ^0.27.10
+      '@types/tail': ^2.2.1
       '@types/tar-fs': ^2.0.1
       bcrypt: ^5.1.0
       better-sqlite3: ^7.6.2
@@ -96,13 +97,13 @@ importers:
       nodegit: ^0.28.0-alpha.18
       p-all: ^4.0.0
       parse-prometheus-text-format: ^1.1.1
-      read-last-lines-ts: ^1.2.1
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: ^7.5.7
       simple-icons: ^7.17.0
       socket.io: ^4.5.3
       systeminformation: ^5.12.10
+      tail: ^2.2.4
       tar-fs: ^2.1.1
       typeorm: ^0.3.10
       typeorm-naming-strategies: ^4.1.0
@@ -136,13 +137,13 @@ importers:
       nodegit: 0.28.0-alpha.18
       p-all: 4.0.0
       parse-prometheus-text-format: 1.1.1
-      read-last-lines-ts: 1.2.1
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 7.5.7
       simple-icons: 7.17.0
       socket.io: 4.5.3
       systeminformation: 5.12.10
+      tail: 2.2.4
       tar-fs: 2.1.1
       typeorm: 0.3.10_better-sqlite3@7.6.2
       typeorm-naming-strategies: 4.1.0_typeorm@0.3.10
@@ -160,6 +161,7 @@ importers:
       '@types/luxon': 3.0.2
       '@types/node': 18.11.5
       '@types/nodegit': 0.27.10
+      '@types/tail': 2.2.1
       typescript: 4.8.4
 
   packages/depker-types:
@@ -4568,6 +4570,10 @@ packages:
 
   /@types/stack-utils/2.0.1:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
+    dev: true
+
+  /@types/tail/2.2.1:
+    resolution: {integrity: sha512-j75Gs5MiIpNR14wztQ4vtViUqxZi+lcgflyXC7P9iMgNnMab7XcV5p+2590IO3njsWWn5l8C+55ILk2CDDyaHg==}
     dev: true
 
   /@types/tar-fs/2.0.1:
@@ -11397,10 +11403,6 @@ packages:
       loose-envify: 1.4.0
     dev: false
 
-  /read-last-lines-ts/1.2.1:
-    resolution: {integrity: sha512-1VcCrAU38DILYiF4sbNY13zdrMGwrFqjGQnXJy28G1zLJItvnWtgCbqoAJlnZZSiEICMKdM4Ol7LYvVMEoKrAg==}
-    dev: false
-
   /read-pkg-up/7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
     engines: {node: '>=8'}
@@ -12854,6 +12856,11 @@ packages:
       slice-ansi: 4.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+    dev: false
+
+  /tail/2.2.4:
+    resolution: {integrity: sha512-PX8klSxW1u3SdgDrDeewh5GNE+hkJ4h02JvHfV6YrHqWOVJ88nUdSQqtsUf/gWhgZlPAws3fiZ+F1f8euspcuQ==}
+    engines: {node: '>= 6.0.0'}
     dev: false
 
   /tapable/2.2.1:

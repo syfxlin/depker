@@ -18,6 +18,8 @@ import { BuildpackController } from "./controllers/buildpack.controller";
 import { TerminalGateway } from "./ws/terminal.gateway";
 import { FileController } from "./controllers/file.controller";
 import { TokenController } from "./controllers/token.controller";
+import { LogsGateway } from "./ws/logs.gateway";
+import { AccessLogsGateway } from "./ws/access-logs.gateway";
 
 // entity
 export const entities = [Setting, Token, App, Deploy, Log];
@@ -34,6 +36,6 @@ export const controllers = [
   FileController,
   TokenController,
 ];
-export const gateways = [TerminalGateway];
+export const gateways = [TerminalGateway, LogsGateway, AccessLogsGateway];
 export const services = [DeployService, DockerService, StorageService];
 export const tasks = [TraefikTask, DeployTask];

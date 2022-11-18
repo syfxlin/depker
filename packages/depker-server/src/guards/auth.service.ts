@@ -17,7 +17,10 @@ export class AuthService {
     return this.jwts.sign(payload, payload.type === "web" ? { expiresIn: "1d" } : undefined);
   }
 
-  public async verify(token: string, identity?: string) {
+  public async verify(token?: string, identity?: string) {
+    if (!token) {
+      throw new UnauthorizedException(`401 Unauthorized`);
+    }
     const payload = this.jwts.verify(token) as TokenPayload;
     if (payload.type === "web") {
       const entity = await Setting.read();

@@ -13,15 +13,15 @@ export class WebSocketAdapter extends IoAdapter {
     super(app);
   }
 
-  public create(port: number, options?: WebSocketOptions): Server {
-    const server = super.create(port, options);
+  public create(port: number, options: WebSocketOptions): Server {
+    const server = super.create(port, { ...options, cors: { origin: "*", ...options.cors } });
     server.use(async (socket, next) => {
       if (!options?.auth) {
         next();
       } else {
         const auth = this.app.get(AuthService);
         try {
-          await auth.verify(socket.handshake.auth.token);
+          await auth.verify(socket.handshake.auth._token);
           next();
         } catch (e: any) {
           next(e);

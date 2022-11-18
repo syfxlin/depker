@@ -36,6 +36,7 @@ export class VolumeController {
 
   @Delete("/")
   public async delete(@Data() request: DeleteVolumeRequest): Promise<DeleteVolumeResponse> {
+    // TODO: 存在 binds 时不允许删除
     const location = path.join(PATHS.VOLUMES, request.volume.replace(/^@\//, ""));
     const relative = path.relative(PATHS.VOLUMES, location);
     if (relative && !relative.startsWith("..") && !path.isAbsolute(relative)) {

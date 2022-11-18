@@ -33,6 +33,7 @@ export class PortController {
 
   @Delete("/")
   public async delete(@Data() request: DeletePortRequest): Promise<DeletePortResponse> {
+    // TODO: 存在 binds 时不允许删除
     const setting = await Setting.read();
     const ports = new Set(setting.ports);
     ports.delete(request.port);

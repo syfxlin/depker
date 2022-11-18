@@ -1,43 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { client } from "./client";
-import { LogsAppResponse } from "@syfxlin/depker-client";
+import { LogLevel } from "@syfxlin/depker-client";
+import { DateTime } from "luxon";
 
 export const useAppLogs = (name: string, tail: number) => {
-  const latest = useRef<number>(0);
-  const [logs, setLogs] = useState<LogsAppResponse["logs"] | null>(null);
+  const [logs, setLogs] = useState<Array<[LogLevel, number, string]> | null>(null);
 
   useEffect(() => {
-    latest.current = 0;
     setLogs(null);
-  }, [name, tail, latest]);
+    const socket = client.apps.logs(name, tail);
 
-  useEffect(() => {
-    const fn = () => {
-      if (!name || latest.current < 0) {
-        return;
-      }
-      (async () => {
-        const response = await client.apps.logs({
-          name: name,
-          tail: tail <= 0 ? undefined : tail,
-          since: latest.current,
-        });
-        latest.current = response.since ?? latest.current;
-        if (response.logs.length) {
-          setLogs((prev) => {
-            const data = [...(prev ?? []), ...response.logs];
-            if (tail <= 0 || data.length - tail <= 0) {
-              return data;
-            } else {
-              return data.slice(Math.max(0, data.length - tail));
-            }
-          });
-        }
-      })();
+    socket.on("disconnect", () => {
+      setLogs((prev) => [...(prev ?? []), ["error", DateTime.utc().valueOf(), `Logs stopped.`]]);
+    });
+    socket.on("error", (data) => {
+      setLogs((prev) => [...(prev ?? []), ["error", DateTime.utc().valueOf(), `Logs error: ${data}`]]);
+    });
+    socket.on("connect_error", (err) => {
+      setLogs((prev) => [...(prev ?? []), ["error", DateTime.utc().valueOf(), `Logs connect error: ${err.message}`]]);
+    });
+
+    socket.on("data", (item) => {
+      setLogs((prev) => [...(prev ?? []), item]);
+    });
+
+    return () => {
+      socket.disconnect();
     };
-    const interval = window.setInterval(fn, 1000);
-    return () => window.clearInterval(interval);
-  }, [name, tail, latest]);
+  }, [name, tail]);
 
   return {
     empty: name && logs ? "No Logs." : "Loading...",

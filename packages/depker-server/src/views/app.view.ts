@@ -334,27 +334,6 @@ export type MetricsAppResponse = {
   };
 };
 
-export class LogsAppRequest {
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 128)
-  @Matches(/^[a-zA-Z0-9._-]+$/)
-  name: string;
-
-  @IsNumber()
-  @IsOptional()
-  since?: number;
-
-  @IsInt()
-  @IsOptional()
-  tail?: number;
-}
-
-export type LogsAppResponse = {
-  logs: Array<[LogLevel, number, string]>;
-  since: number;
-};
-
 export class HistoryAppRequest {
   @IsString()
   @IsNotEmpty()

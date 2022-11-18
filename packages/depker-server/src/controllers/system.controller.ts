@@ -1,14 +1,11 @@
-import { Controller, Get, NotFoundException, Query, StreamableFile } from "@nestjs/common";
+import { Controller, Get } from "@nestjs/common";
 import s, { Systeminformation } from "systeminformation";
 import pjson from "../../package.json" assert { type: "json" };
 import { HttpService } from "nestjs-http-promise";
-import { PATHS, URLS } from "../constants/depker.constant";
+import { URLS } from "../constants/depker.constant";
 // @ts-ignore
 import parser from "parse-prometheus-text-format";
-import path from "path";
-import fs from "fs-extra";
-import { readLastLinesEnc } from "read-last-lines-ts";
-import { LogsRequest, LogsResponse, MetricsResponse, VersionResponse } from "../views/system.view";
+import { MetricsResponse, VersionResponse } from "../views/system.view";
 import { HealthCheck, HealthCheckService, TypeOrmHealthIndicator } from "@nestjs/terminus";
 import TimeData = Systeminformation.TimeData;
 import MemData = Systeminformation.MemData;
@@ -108,26 +105,5 @@ export class SystemController {
         ),
       },
     };
-  }
-
-  @Get("/logs")
-  public async logs(@Query() request: LogsRequest): Promise<LogsResponse | StreamableFile> {
-    const file = path.join(PATHS.CONFIG, "traefik-access.log");
-    const exist = fs.pathExistsSync(file);
-    if (!request.download) {
-      if (!exist) {
-        return [];
-      }
-      const lines = readLastLinesEnc("utf-8")(file, Math.max(1, request.lines ?? 1000)).split("\n");
-      lines.pop();
-      return lines;
-    } else {
-      if (!exist) {
-        throw new NotFoundException("Not found access-log files, may not have been generated.");
-      }
-      return new StreamableFile(fs.createReadStream(file, "utf-8"), {
-        disposition: `attachment; filename="access-log.log"`,
-      });
-    }
   }
 }

@@ -65,7 +65,7 @@ export const XTerm: React.FC<XTermProps> = ({ client, ...props }) => {
     });
 
     return () => {
-      socket.close();
+      socket.disconnect();
       term.dispose();
       fit.dispose();
     };

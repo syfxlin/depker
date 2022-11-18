@@ -1,5 +1,3 @@
-import { IsBoolean, IsInt, IsOptional, Min } from "class-validator";
-
 export type VersionResponse = {
   name: string;
   description: string;
@@ -52,16 +50,3 @@ export type MetricsResponse = {
     };
   };
 };
-
-export class LogsRequest {
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  lines?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  download?: boolean;
-}
-
-export type LogsResponse = Array<string>;

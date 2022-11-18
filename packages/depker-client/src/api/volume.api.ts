@@ -11,22 +11,22 @@ import {
 
 export class VolumeApi extends Api {
   public async list() {
-    const response = await this.request.get<ListVolumeResponse>(`/api/volumes`);
+    const response = await this.client.client.get<ListVolumeResponse>(`/api/volumes`);
     return response.data;
   }
 
   public async create(request: CreateVolumeRequest) {
-    const response = await this.request.post<CreateVolumeResponse>(`/api/volumes`, request);
+    const response = await this.client.client.post<CreateVolumeResponse>(`/api/volumes`, request);
     return response.data;
   }
 
   public async delete(request: DeleteVolumeRequest) {
-    const response = await this.request.delete<DeleteVolumeResponse>(`/api/volumes`, { params: request });
+    const response = await this.client.client.delete<DeleteVolumeResponse>(`/api/volumes`, { params: request });
     return response.data;
   }
 
   public async binds(request: BindsVolumeRequest) {
-    const response = await this.request.get<BindsVolumeResponse>(`/api/volumes/${request.volume}/binds`);
+    const response = await this.client.client.get<BindsVolumeResponse>(`/api/volumes/${request.volume}/binds`);
     return response.data;
   }
 }

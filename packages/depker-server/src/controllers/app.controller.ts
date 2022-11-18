@@ -28,8 +28,6 @@ import {
   ListAppResponse,
   LogsAppDeployRequest,
   LogsAppDeployResponse,
-  LogsAppRequest,
-  LogsAppResponse,
   MetricsAppRequest,
   MetricsAppResponse,
   RestartAppRequest,
@@ -48,7 +46,6 @@ import { PluginService } from "../services/plugin.service";
 import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
 import { Data } from "../decorators/data.decorator";
-import { stdcopy } from "../utils/docker.util";
 import { DateTime } from "luxon";
 import { Log } from "../entities/log.entity";
 import { Revwalk } from "nodegit";
@@ -269,51 +266,6 @@ export class AppController {
           output: 0,
         },
       };
-    }
-  }
-
-  @Get("/:name/logs")
-  public async logs(@Data() request: LogsAppRequest): Promise<LogsAppResponse> {
-    const count = await App.countBy({ name: request.name });
-    if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
-    }
-
-    try {
-      const since = DateTime.now().toUnixInteger();
-      const container = this.docker.getContainer(request.name);
-      // @ts-ignore
-      const buffer: Buffer = await container.logs({
-        stdout: true,
-        stderr: true,
-        timestamps: true,
-        since: request.since,
-        until: since,
-        tail: request.tail,
-      });
-      const output = stdcopy(buffer);
-      return {
-        since: since,
-        logs: output.map(([type, buffer]) => {
-          const level = type ? "error" : "log";
-          const data = buffer.toString();
-          const time = data.substring(0, 30);
-          const line = data.substring(31).replace("\n", "");
-          return [level, DateTime.fromISO(time).valueOf(), line];
-        }),
-      };
-    } catch (e: any) {
-      if (e.statusCode === 404) {
-        return {
-          since: -1,
-          logs: [["error", DateTime.utc().valueOf(), `Not found container of ${request.name}.`]],
-        };
-      } else {
-        return {
-          since: -1,
-          logs: [["error", DateTime.utc().valueOf(), `Logs container ${request.name} has error. ${e.message}`]],
-        };
-      }
     }
   }
 

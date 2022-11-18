@@ -9,7 +9,7 @@ export const AccessLogs: React.FC = () => {
   const tail = useTailLogs(1000);
   const logs = useAccessLogs(tail.debounced);
   return (
-    <Logs title="Access Logs" empty={logs.loading ? "Loading..." : "No logs."} data={logs.data}>
+    <Logs title="Access Logs" empty={logs.empty} data={logs.data}>
       <NumberInput
         size="xs"
         min={0}
