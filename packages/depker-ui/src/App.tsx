@@ -18,6 +18,8 @@ import { AppDangerTab } from "./pages/AppDangerTab";
 import { Tokens } from "./pages/Tokens";
 import { Ports } from "./pages/Ports";
 import { Volumes } from "./pages/Volumes";
+import { Settings } from "./pages/Settings";
+import { SettingMainTab } from "./pages/SettingMainTab";
 
 export const App: React.FC = () => {
   return (
@@ -44,6 +46,9 @@ export const App: React.FC = () => {
             <Route path="/volumes" element={<Volumes />} />
             <Route path="/files" element={<Files />} />
             <Route path="/files/*" element={<Files />} />
+            <Route path="/settings" element={<Settings />}>
+              <Route index element={<SettingMainTab />} />
+            </Route>
           </Route>
         </Routes>
       </React.Suspense>

@@ -12,6 +12,7 @@ import { DeployApi } from "./api/deploy.api";
 import { FilesApi } from "./api/files.api";
 import { TokenApi } from "./api/token.api";
 import { io, ManagerOptions, Socket } from "socket.io-client";
+import { SettingApi } from "./api/setting.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -39,6 +40,7 @@ export class DepkerClient {
   public readonly deploys: DeployApi;
   public readonly files: FilesApi;
   public readonly tokens: TokenApi;
+  public readonly settings: SettingApi;
 
   constructor(options: DepkerClientOptions) {
     this.endpoint = options.endpoint;
@@ -83,5 +85,6 @@ export class DepkerClient {
     this.deploys = new DeployApi(this);
     this.files = new FilesApi(this);
     this.tokens = new TokenApi(this);
+    this.settings = new SettingApi(this);
   }
 }

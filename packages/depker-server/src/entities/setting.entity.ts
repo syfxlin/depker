@@ -1,5 +1,6 @@
 import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { hashSync } from "bcrypt";
+import { GetSettingResponse } from "../views/setting.view";
 
 @Entity()
 export class Setting extends BaseEntity {
@@ -14,9 +15,6 @@ export class Setting extends BaseEntity {
 
   @Column({ nullable: false })
   password: string;
-
-  @Column({ nullable: false, default: false })
-  debug: boolean;
 
   @Column({ nullable: false, default: true })
   upgrade: boolean;
@@ -46,6 +44,22 @@ export class Setting extends BaseEntity {
 
   @UpdateDateColumn({ nullable: false })
   updatedAt: Date;
+
+  // method
+  public toView(): GetSettingResponse {
+    return {
+      email: this.email,
+      username: this.username,
+      upgrade: this.upgrade,
+      purge: this.purge,
+      concurrency: this.concurrency,
+      dashboard: this.dashboard,
+      tls: {
+        type: this.tls.type,
+        env: this.tls.env,
+      },
+    };
+  }
 
   // repository
   public static async read() {

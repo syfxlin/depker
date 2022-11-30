@@ -20,6 +20,7 @@ import { FileController } from "./controllers/file.controller";
 import { TokenController } from "./controllers/token.controller";
 import { LogsGateway } from "./ws/logs.gateway";
 import { AccessLogsGateway } from "./ws/access-logs.gateway";
+import { SettingController } from "./controllers/setting.controller";
 
 // entity
 export const entities = [Setting, Token, App, Deploy, Log];
@@ -35,6 +36,7 @@ export const controllers = [
   BuildpackController,
   FileController,
   TokenController,
+  SettingController,
 ];
 export const gateways = [TerminalGateway, LogsGateway, AccessLogsGateway];
 export const services = [DeployService, DockerService, StorageService];
