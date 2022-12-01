@@ -8,12 +8,7 @@ import { PluginContext } from "../plugins/plugin.context";
 import * as example from "../plugins/example";
 import * as dockerfile from "../plugins/dockerfile";
 import { image } from "../plugins/image";
-import { DockerService } from "./docker.service";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { StorageService } from "./storage.service";
-import { HttpService } from "nestjs-http-promise";
-import { AuthService } from "../guards/auth.service";
-import { SchedulerRegistry } from "@nestjs/schedule";
+import { ModuleRef } from "@nestjs/core";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
@@ -21,14 +16,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
   private readonly _internal: DepkerPlugin[] = [image, example as DepkerPlugin, dockerfile as DepkerPlugin];
   private readonly _plugins: Record<string, DepkerPlugin> = {};
 
-  constructor(
-    private readonly docker: DockerService,
-    private readonly https: HttpService,
-    private readonly events: EventEmitter2,
-    private readonly schedules: SchedulerRegistry,
-    private readonly storages: StorageService,
-    private readonly auths: AuthService
-  ) {}
+  constructor(private readonly ref: ModuleRef) {}
 
   public async load(): Promise<Record<string, DepkerPlugin>> {
     if (!this._loaded) {
@@ -67,13 +55,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       await plugin?.init?.(
         new PluginContext({
           name: plugin.name,
-          plugins: this,
-          docker: this.docker,
-          https: this.https,
-          events: this.events,
-          schedules: this.schedules,
-          storages: this.storages,
-          auths: this.auths,
+          ref: this.ref,
         })
       );
     }
@@ -85,13 +67,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       await plugin?.destroy?.(
         new PluginContext({
           name: plugin.name,
-          plugins: this,
-          docker: this.docker,
-          https: this.https,
-          events: this.events,
-          schedules: this.schedules,
-          storages: this.storages,
-          auths: this.auths,
+          ref: this.ref,
         })
       );
     }

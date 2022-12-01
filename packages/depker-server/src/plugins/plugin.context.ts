@@ -1,7 +1,7 @@
 import { NAMES, PATHS } from "../constants/depker.constant";
 import { Setting } from "../entities/setting.entity";
 import { Token } from "../entities/token.entity";
-import { App } from "../entities/app.entity";
+import { Service } from "../entities/service.entity";
 import { Deploy } from "../entities/deploy.entity";
 import { Log } from "../entities/log.entity";
 import { DockerService } from "../services/docker.service";
@@ -12,16 +12,12 @@ import { StorageService } from "../services/storage.service";
 import { PluginService } from "../services/plugin.service";
 import { AuthService } from "../guards/auth.service";
 import { Logger } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
+import { DeployService } from "../services/deploy.service";
 
 export interface PluginOptions {
   readonly name: string;
-  readonly docker: DockerService;
-  readonly https: HttpService;
-  readonly events: EventEmitter2;
-  readonly schedules: SchedulerRegistry;
-  readonly storages: StorageService;
-  readonly plugins: PluginService;
-  readonly auths: AuthService;
+  readonly ref: ModuleRef;
 }
 
 export class PluginContext {
@@ -30,7 +26,7 @@ export class PluginContext {
   public static readonly PATHS: Readonly<typeof PATHS> = PATHS;
 
   // entity
-  public readonly App = App;
+  public readonly Service = Service;
   public readonly Deploy = Deploy;
   public readonly Log = Log;
   public readonly Setting = Setting;
@@ -41,6 +37,7 @@ export class PluginContext {
 
   // values
   public readonly name: string;
+  public readonly ref: ModuleRef;
 
   // services
   public readonly docker: DockerService;
@@ -50,17 +47,20 @@ export class PluginContext {
   public readonly storages: StorageService;
   public readonly plugins: PluginService;
   public readonly auths: AuthService;
+  public readonly deploys: DeployService;
 
   constructor(options: PluginOptions) {
     this.logger = new Logger(`Plugin-${options.name}`);
     this.name = options.name;
-    this.docker = options.docker;
-    this.https = options.https;
-    this.events = options.events;
-    this.schedules = options.schedules;
-    this.storages = options.storages;
-    this.plugins = options.plugins;
-    this.auths = options.auths;
+    this.ref = options.ref;
+    this.docker = this.ref.get(DeployService, { strict: false });
+    this.https = this.ref.get(HttpService, { strict: false });
+    this.events = this.ref.get(EventEmitter2, { strict: false });
+    this.schedules = this.ref.get(SchedulerRegistry, { strict: false });
+    this.storages = this.ref.get(StorageService, { strict: false });
+    this.plugins = this.ref.get(PluginService, { strict: false });
+    this.auths = this.ref.get(AuthService, { strict: false });
+    this.deploys = this.ref.get(DeployService, { strict: false });
   }
 
   public async options(name?: string, value?: any) {

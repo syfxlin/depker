@@ -46,7 +46,7 @@ export class Setting extends BaseEntity {
   updatedAt: Date;
 
   // method
-  public toView(): GetSettingResponse {
+  public get view(): GetSettingResponse {
     return {
       email: this.email,
       username: this.username,

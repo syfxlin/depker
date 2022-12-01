@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 import { Heading } from "../components/parts/Heading";
 import { ActionIcon, Badge, Group, Stack, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { useParams } from "react-router-dom";
-import { useAppHistory } from "../api/use-app-history";
+import { useServiceHistory } from "../api/use-service-history";
 import { Pages } from "../components/layout/Pages";
 import { Async } from "../components/core/Async";
 import { TbCheck, TbCopy } from "react-icons/all";
@@ -22,10 +22,10 @@ const Copy: React.FC<{ commit: string }> = ({ commit }) => {
   );
 };
 
-export const AppHistoryTab: React.FC = () => {
+export const ServiceHistoryTab: React.FC = () => {
   const t = useMantineTheme();
-  const { app } = useParams<"app">();
-  const history = useAppHistory(app!);
+  const { service } = useParams<"service">();
+  const history = useServiceHistory(service!);
 
   return (
     <Stack
@@ -33,7 +33,7 @@ export const AppHistoryTab: React.FC = () => {
         height: 100%;
       `}
     >
-      <Heading>Application History</Heading>
+      <Heading>Service History</Heading>
       <Async query={history.query}>
         {history.data && (
           <Pages

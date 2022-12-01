@@ -10,12 +10,12 @@ import { Async } from "../core/Async";
 import { TimeRefresh } from "../core/TimeRefresh";
 
 export type DeployListProps = {
-  app: string;
+  service: string;
 };
 
-export const DeployList: React.FC<DeployListProps> = ({ app }) => {
+export const DeployList: React.FC<DeployListProps> = ({ service }) => {
   const t = useMantineTheme();
-  const deploys = useDeployList(app);
+  const deploys = useDeployList(service);
 
   return (
     <Async query={deploys.query}>
@@ -33,7 +33,7 @@ export const DeployList: React.FC<DeployListProps> = ({ app }) => {
             return (
               <NavLink
                 key={`deploy-${deploy.id}`}
-                action={`/apps/${app}/deploys/${deploy.id}`}
+                action={`/services/${service}/deploys/${deploy.id}`}
                 label={
                   <Grid p={t.spacing.xs * 0.5}>
                     <Grid.Col
@@ -48,14 +48,11 @@ export const DeployList: React.FC<DeployListProps> = ({ app }) => {
                       `}
                     >
                       <Stack spacing={t.spacing.xs * 0.5}>
-                        <Tooltip label={deploy.commit}>
+                        <Tooltip label={deploy.target}>
                           <Text size="md" weight={500} inline>
-                            {deploy.commit.substring(0, 7)}
+                            {deploy.target.substring(0, 7)}
                           </Text>
                         </Tooltip>
-                        <Text size="xs" inline>
-                          {deploy.trigger}
-                        </Text>
                         <Badge color={colors[deploy.status]} size="sm">
                           {deploy.status}
                         </Badge>

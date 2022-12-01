@@ -10,7 +10,7 @@ import {
 } from "../views/port.view";
 import { Setting } from "../entities/setting.entity";
 import { Data } from "../decorators/data.decorator";
-import { App } from "../entities/app.entity";
+import { Service } from "../entities/service.entity";
 import { ILike } from "typeorm";
 
 @Controller("/api/ports")
@@ -49,7 +49,7 @@ export class PortController {
 
   @Get("/:port/binds")
   public async binds(@Data() request: BindsPortRequest): Promise<BindsPortResponse> {
-    const apps = await App.findBy({ ports: ILike(`%${request.port}%`) });
-    return apps.filter((a) => a.ports.find((i) => i.hport === request.port)).map((a) => a.name);
+    const services = await Service.findBy({ ports: ILike(`%${request.port}%`) });
+    return services.filter((a) => a.ports.find((i) => i.hport === request.port)).map((a) => a.name);
   }
 }

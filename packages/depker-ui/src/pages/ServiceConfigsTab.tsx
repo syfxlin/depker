@@ -21,6 +21,7 @@ import {
   TbInfinity,
   TbLink,
   TbList,
+  TbMoon,
   TbPinnedOff,
   TbRefreshAlert,
   TbSeparator,
@@ -38,13 +39,13 @@ import { Async } from "../components/core/Async";
 import { usePorts } from "../api/use-ports";
 import { AutocompleteArrayInput } from "../components/input/AutocompleteArrayInput";
 import { useVolumes } from "../api/use-volumes";
-import { AppSettingContext } from "./AppSetting";
+import { ServiceSettingContext } from "./ServiceSetting";
 import { ExtensionInput } from "../components/input/ExtensionInput";
 import { Heading } from "../components/parts/Heading";
 import { client } from "../api/client";
 
-export const AppConfigsTab: React.FC = () => {
-  const { app } = useOutletContext<AppSettingContext>();
+export const ServiceConfigsTab: React.FC = () => {
+  const { service } = useOutletContext<ServiceSettingContext>();
   const buildpacks = useBuildpacks();
   const ports = usePorts();
   const volumes = useVolumes();
@@ -52,40 +53,69 @@ export const AppConfigsTab: React.FC = () => {
   // general
   const Name = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <TextInput
           required
           label="Name"
-          description="Application name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
-          placeholder="Application Name"
+          description="Service name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
+          placeholder="Service Name"
           icon={<TbApps />}
-          value={app.data.name}
+          value={service.data.name}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.actions.update((prev) => ({ ...prev, name: e.target.value }));
+            service.actions.update((prev) => ({ ...prev, name: e.target.value }));
           }}
         />
       ),
-    [app.data?.name]
+    [service.data?.name]
+  );
+
+  const Type = useMemo(
+    () =>
+      service.data && (
+        <Select
+          key="type"
+          required
+          label="Type"
+          description="Service type, App is a resident service, and Job is a scheduled or one-time service"
+          placeholder="Type"
+          icon={<TbMoon />}
+          value={service.data.type}
+          onChange={(value: string) => {
+            service.actions.update((prev) => ({ ...prev, type: value as any }));
+          }}
+          data={[
+            {
+              value: "app",
+              label: "App",
+            },
+            {
+              value: "job",
+              label: "Job",
+            },
+          ]}
+        />
+      ),
+    [service.data?.type]
   );
 
   const Buildpacks = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <Select
           required
           searchable
           label="Buildpack"
-          description="Building application with build package."
+          description="Building service with build package."
           placeholder="Build Package"
           nothingFound="No packages"
-          icon={<Avatar size="xs" src={client.assets.icon(buildpacks.data[app.data.buildpack]?.icon)} />}
-          value={app.data.buildpack}
+          icon={<Avatar size="xs" src={client.assets.icon(buildpacks.data[service.data.buildpack]?.icon)} />}
+          value={service.data.buildpack}
           onChange={(value: string) => {
             const buildpack = buildpacks.data[value];
             if (!buildpack) {
               return;
             }
-            app.actions.update((prev) => ({ ...prev, buildpack: value, extensions: {} }));
+            service.actions.update((prev) => ({ ...prev, buildpack: value, extensions: {} }));
           }}
           data={Object.values(buildpacks.data).map((i) => ({
             value: i.name,
@@ -105,7 +135,7 @@ export const AppConfigsTab: React.FC = () => {
           })}
         />
       ),
-    [app.data?.buildpack, buildpacks.data]
+    [service.data?.buildpack, buildpacks.data]
   );
 
   const BasicRow = useMemo(
@@ -115,24 +145,59 @@ export const AppConfigsTab: React.FC = () => {
           {Name}
         </Grid.Col>
         <Grid.Col span={12} md={6}>
-          {Buildpacks}
+          {Type}
         </Grid.Col>
       </Grid>
     ),
-    [Name, Buildpacks]
+    [Name, Type]
+  );
+
+  const PullImage = useMemo(
+    () =>
+      service.data && (
+        <Select
+          label="Pull Image"
+          description="Pull image before running."
+          placeholder="Pull Image"
+          icon={<TbDownload />}
+          value={service.data.pull ? "true" : "false"}
+          onChange={(value) => {
+            service.actions.update((prev) => ({ ...prev, pull: value === "true" }));
+          }}
+          data={[
+            { label: "Yes", value: "true" },
+            { label: "No", value: "false" },
+          ]}
+        />
+      ),
+    [service.data?.pull]
+  );
+
+  const InitRow = useMemo(
+    () => (
+      <Grid>
+        <Grid.Col span={12} md={6}>
+          {Buildpacks}
+        </Grid.Col>
+        <Grid.Col span={12} md={6}>
+          {PullImage}
+        </Grid.Col>
+      </Grid>
+    ),
+    [Buildpacks, PullImage]
   );
 
   const RestartPolicy = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <Select
           label="Restart Policy"
           description="Restart policy to apply when a container exits."
           placeholder="Restart Policy"
           icon={<TbRefreshAlert />}
-          value={app.data.restart}
+          value={service.data.restart}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, restart: value as any }));
+            service.actions.update((prev) => ({ ...prev, restart: value as any }));
           }}
           data={[
             { label: "No", value: "no" },
@@ -141,55 +206,20 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.restart]
-  );
-
-  const PullImage = useMemo(
-    () =>
-      app.data && (
-        <Select
-          label="Pull Image"
-          description="Pull image before running."
-          placeholder="Pull Image"
-          icon={<TbDownload />}
-          value={app.data.pull ? "true" : "false"}
-          onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, pull: value === "true" }));
-          }}
-          data={[
-            { label: "Yes", value: "true" },
-            { label: "No", value: "false" },
-          ]}
-        />
-      ),
-    [app.data?.pull]
-  );
-
-  const PolicyRow = useMemo(
-    () => (
-      <Grid>
-        <Grid.Col span={12} md={6}>
-          {RestartPolicy}
-        </Grid.Col>
-        <Grid.Col span={12} md={6}>
-          {PullImage}
-        </Grid.Col>
-      </Grid>
-    ),
-    [RestartPolicy, PullImage]
+    [service.data?.restart]
   );
 
   const HealthCheck = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <ObjectInput
           label="Health Check"
           description="Container Health Check Configurations."
           placeholder="Health Check"
           icon={<TbActivity />}
-          value={app.data.healthcheck}
+          value={service.data.healthcheck}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, healthcheck: value as any }));
+            service.actions.update((prev) => ({ ...prev, healthcheck: value as any }));
           }}
           modals={(item, setItem) => [
             <ArrayInput
@@ -240,38 +270,52 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.healthcheck]
+    [service.data?.healthcheck]
+  );
+
+  const PolicyRow = useMemo(
+    () => (
+      <Grid>
+        <Grid.Col span={12} md={6}>
+          {RestartPolicy}
+        </Grid.Col>
+        <Grid.Col span={12} md={6}>
+          {HealthCheck}
+        </Grid.Col>
+      </Grid>
+    ),
+    [RestartPolicy, HealthCheck]
   );
 
   // requests
   const Domains = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <ArrayInput
           label="Domains"
-          description="Domain name used to access the application."
+          description="Domain name used to access the service."
           placeholder="Domains Item"
           icon={<TbLink />}
-          value={app.data.domain}
+          value={service.data.domain}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, domain: value }));
+            service.actions.update((prev) => ({ ...prev, domain: value }));
           }}
         />
       ),
-    [app.data?.domain]
+    [service.data?.domain]
   );
 
   const EnableTLS = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <Select
           label="Enable TLS"
           description="Whether to enable tls support."
           placeholder="Enable TLS"
           icon={<TbCertificate />}
-          value={app.data.tls ? "true" : "false"}
+          value={service.data.tls ? "true" : "false"}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, tls: value === "true" }));
+            service.actions.update((prev) => ({ ...prev, tls: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -279,12 +323,12 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.tls]
+    [service.data?.tls]
   );
 
   const ProxyPort = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <NumberInput
           label="Proxy Port"
           description="Traefik reverse proxy access to the container port."
@@ -292,47 +336,47 @@ export const AppConfigsTab: React.FC = () => {
           icon={<TbCircleDot />}
           min={1}
           max={65535}
-          value={app.data.port}
+          value={service.data.port}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, port: value ?? 3000 }));
+            service.actions.update((prev) => ({ ...prev, port: value ?? 3000 }));
           }}
         />
       ),
-    [app.data?.port]
+    [service.data?.port]
   );
 
   const ProxyScheme = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <TextInput
           label="Proxy Scheme"
           description="Protocol used by Traefik Reverse Proxy to access containers."
           placeholder="Proxy Scheme"
           icon={<TbAtom2 />}
-          value={app.data.scheme}
+          value={service.data.scheme}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.actions.update((prev) => ({ ...prev, scheme: e.target.value }));
+            service.actions.update((prev) => ({ ...prev, scheme: e.target.value }));
           }}
         />
       ),
-    [app.data?.scheme]
+    [service.data?.scheme]
   );
 
   const ProxyRule = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <TextInput
           label="Proxy Rule"
           description="Traefik reverse proxy rules, mutually exclusive with domains."
           placeholder="Proxy Rule"
           icon={<TbAtom2 />}
-          value={app.data.rule}
+          value={service.data.rule}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.actions.update((prev) => ({ ...prev, rule: e.target.value }));
+            service.actions.update((prev) => ({ ...prev, rule: e.target.value }));
           }}
         />
       ),
-    [app.data?.rule]
+    [service.data?.rule]
   );
 
   const DomainRow = useMemo(
@@ -368,15 +412,15 @@ export const AppConfigsTab: React.FC = () => {
 
   const Middlewares = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <ObjectArrayInput
           label="Middlewares"
           description="Traefik middleware, for purposes such as authorization or flow restriction."
           placeholder="Middlewares Item"
           icon={<TbForbid />}
-          value={app.data.middlewares}
+          value={service.data.middlewares}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, middlewares: value as any }));
+            service.actions.update((prev) => ({ ...prev, middlewares: value as any }));
           }}
           modals={(item, setItem) => [
             <TextInput
@@ -411,13 +455,13 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.middlewares]
+    [service.data?.middlewares]
   );
 
   // parameters
   const Labels = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <RecordOnbuildInput
           label="Labels"
           description="Set metadata on a container."
@@ -425,21 +469,21 @@ export const AppConfigsTab: React.FC = () => {
           rightIcon={<TbEqual />}
           leftPlaceholder="Labels Item Name"
           rightPlaceholder="Labels Item Value"
-          value={app.data.labels.map((i) => [i.name, i.value, i.onbuild])}
+          value={service.data.labels.map((i) => [i.name, i.value, i.onbuild])}
           onChange={(value) => {
-            app.actions.update((prev) => ({
+            service.actions.update((prev) => ({
               ...prev,
               labels: value.map(([name, value, onbuild]) => ({ name, value, onbuild })),
             }));
           }}
         />
       ),
-    [app.data?.labels]
+    [service.data?.labels]
   );
 
   const Secrets = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <RecordOnbuildInput
           label="Secrets"
           description="Set secret on a container."
@@ -447,21 +491,21 @@ export const AppConfigsTab: React.FC = () => {
           rightIcon={<TbEqual />}
           leftPlaceholder="Secrets Item Name"
           rightPlaceholder="Secrets Item Alias"
-          value={app.data.secrets.map((i) => [i.name, i.value, i.onbuild])}
+          value={service.data.secrets.map((i) => [i.name, i.value, i.onbuild])}
           onChange={(value) => {
-            app.actions.update((prev) => ({
+            service.actions.update((prev) => ({
               ...prev,
               secrets: value.map(([name, value, onbuild]) => ({ name, value, onbuild })),
             }));
           }}
         />
       ),
-    [app.data?.secrets]
+    [service.data?.secrets]
   );
 
   const BuildArgs = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <RecordInput
           label="Build Args"
           description="Set build-time variables."
@@ -469,30 +513,30 @@ export const AppConfigsTab: React.FC = () => {
           rightIcon={<TbEqual />}
           leftPlaceholder="Build Args Item Name"
           rightPlaceholder="Build Args Item Value"
-          value={Object.entries(app.data.buildArgs)}
+          value={Object.entries(service.data.buildArgs)}
           onChange={(value) => {
-            app.actions.update((prev) => ({
+            service.actions.update((prev) => ({
               ...prev,
               buildArgs: value.reduce((a, [k, v]) => ({ ...a, [k]: v }), {}),
             }));
           }}
         />
       ),
-    [app.data?.buildArgs]
+    [service.data?.buildArgs]
   );
 
   // ports
   const Ports = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <AutocompleteArrayInput
           label="Ports"
           description="Publish a container's port(s) to the host."
           icon={<TbCircleDot />}
           placeholder="Host Port"
-          value={app.data.ports}
+          value={service.data.ports}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, ports: value }));
+            service.actions.update((prev) => ({ ...prev, ports: value }));
           }}
           items={ports.data.map((i) => String(i))}
           select={(item, setItem) => ({
@@ -540,21 +584,21 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.ports, ports.data]
+    [service.data?.ports, ports.data]
   );
 
   // volumes
   const Volumes = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <AutocompleteArrayInput
           label="Volumes"
           description="Bind mount a volume."
           icon={<TbFolder />}
           placeholder="Host Path"
-          value={app.data.volumes}
+          value={service.data.volumes}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, volumes: value }));
+            service.actions.update((prev) => ({ ...prev, volumes: value }));
           }}
           items={volumes.data}
           select={(item, setItem) => ({
@@ -600,57 +644,57 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.ports, ports.data]
+    [service.data?.ports, ports.data]
   );
 
   // extensions
   const Extensions = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <ExtensionInput
-          options={buildpacks.data[app.data.buildpack]?.options}
-          value={app.data.extensions}
+          options={buildpacks.data[service.data.buildpack]?.options}
+          value={service.data.extensions}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, extensions: value }));
+            service.actions.update((prev) => ({ ...prev, extensions: value }));
           }}
         />
       ),
-    [app.data?.buildpack, buildpacks.data, app.data?.extensions]
+    [service.data?.buildpack, buildpacks.data, service.data?.extensions]
   );
 
   // others
   const Commands = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <ArrayInput
           label="Commands"
-          description="Replace the application container start commands."
+          description="Replace the service container start commands."
           placeholder="Commands Item"
           icon={<TbTerminal />}
-          value={app.data.commands}
+          value={service.data.commands}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, commands: value }));
+            service.actions.update((prev) => ({ ...prev, commands: value }));
           }}
         />
       ),
-    [app.data?.commands]
+    [service.data?.commands]
   );
 
   const EntryPoints = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <ArrayInput
           label="Entry Points"
-          description="Replace the application container entry points."
+          description="Replace the service container entry points."
           placeholder="Entry Points Item"
           icon={<TbTerminal />}
-          value={app.data.entrypoints}
+          value={service.data.entrypoints}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, entrypoints: value }));
+            service.actions.update((prev) => ({ ...prev, entrypoints: value }));
           }}
         />
       ),
-    [app.data?.entrypoints]
+    [service.data?.entrypoints]
   );
 
   const CommandsRow = useMemo(
@@ -669,15 +713,15 @@ export const AppConfigsTab: React.FC = () => {
 
   const Init = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <Select
           label="Run an Init"
           description="Run an init inside the container that forwards signals."
           placeholder="Run an Init"
           icon={<TbInfinity />}
-          value={app.data.init ? "true" : "false"}
+          value={service.data.init ? "true" : "false"}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, init: value === "true" }));
+            service.actions.update((prev) => ({ ...prev, init: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -685,20 +729,20 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.init]
+    [service.data?.init]
   );
 
   const Remove = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <Select
           label="Automatically Remove"
           description="Automatically remove the container when it exits."
           placeholder="Automatically Remove"
           icon={<TbPinnedOff />}
-          value={app.data.rm ? "true" : "false"}
+          value={service.data.rm ? "true" : "false"}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, rm: value === "true" }));
+            service.actions.update((prev) => ({ ...prev, rm: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -706,20 +750,20 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.rm]
+    [service.data?.rm]
   );
 
   const Privileged = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <Select
           label="Give privileges"
           description="Give extended privileges to this container."
           placeholder="Give privileges"
           icon={<TbComet />}
-          value={app.data.privileged ? "true" : "false"}
+          value={service.data.privileged ? "true" : "false"}
           onChange={(value) => {
-            app.actions.update((prev) => ({ ...prev, privileged: value === "true" }));
+            service.actions.update((prev) => ({ ...prev, privileged: value === "true" }));
           }}
           data={[
             { label: "Yes", value: "true" },
@@ -727,7 +771,7 @@ export const AppConfigsTab: React.FC = () => {
           ]}
         />
       ),
-    [app.data?.privileged]
+    [service.data?.privileged]
   );
 
   const ModeRow = useMemo(
@@ -749,41 +793,41 @@ export const AppConfigsTab: React.FC = () => {
 
   const User = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <TextInput
           label="Username or UID"
           description="Username or UID (format: <name|uid>[:<group|gid>])."
           placeholder="Username or UID"
           icon={<TbUser />}
-          value={app.data.user}
+          value={service.data.user}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.actions.update((prev) => ({ ...prev, user: e.target.value }));
+            service.actions.update((prev) => ({ ...prev, user: e.target.value }));
           }}
         />
       ),
-    [app.data?.user]
+    [service.data?.user]
   );
 
   const Workdir = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <TextInput
           label="Working Directory"
           description="Working directory inside the container."
           placeholder="Working Directory"
           icon={<TbFolder />}
-          value={app.data.workdir}
+          value={service.data.workdir}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            app.actions.update((prev) => ({ ...prev, workdir: e.target.value }));
+            service.actions.update((prev) => ({ ...prev, workdir: e.target.value }));
           }}
         />
       ),
-    [app.data?.workdir]
+    [service.data?.workdir]
   );
 
   const Networks = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <RecordInput
           label="Networks"
           description="Connect a container to a network."
@@ -791,21 +835,21 @@ export const AppConfigsTab: React.FC = () => {
           rightIcon={<TbEqual />}
           leftPlaceholder="Networks Item Name"
           rightPlaceholder="Networks Item Alias"
-          value={Object.entries(app.data.networks)}
+          value={Object.entries(service.data.networks)}
           onChange={(value) => {
-            app.actions.update((prev) => ({
+            service.actions.update((prev) => ({
               ...prev,
               networks: value.reduce((a, [k, v]) => ({ ...a, [k]: v }), {}),
             }));
           }}
         />
       ),
-    [app.data?.networks]
+    [service.data?.networks]
   );
 
   const Hosts = useMemo(
     () =>
-      app.data && (
+      service.data && (
         <RecordOnbuildInput
           label="Hosts"
           description="Add a custom host-to-IP mapping."
@@ -813,16 +857,16 @@ export const AppConfigsTab: React.FC = () => {
           rightIcon={<TbEqual />}
           leftPlaceholder="Hosts Item Host"
           rightPlaceholder="Hosts Item IP"
-          value={app.data.hosts.map((i) => [i.name, i.value, i.onbuild])}
+          value={service.data.hosts.map((i) => [i.name, i.value, i.onbuild])}
           onChange={(value) => {
-            app.actions.update((prev) => ({
+            service.actions.update((prev) => ({
               ...prev,
               hosts: value.map(([name, value, onbuild]) => ({ name, value, onbuild })),
             }));
           }}
         />
       ),
-    [app.data?.hosts]
+    [service.data?.hosts]
   );
 
   const WorkingRow = useMemo(
@@ -840,12 +884,14 @@ export const AppConfigsTab: React.FC = () => {
   );
 
   return (
-    <Async query={app.query}>
+    <Async query={service.query}>
       <Stack>
         <Heading>General</Heading>
         {BasicRow}
+        {InitRow}
         {PolicyRow}
-        {HealthCheck}
+        <Heading>Extensions</Heading>
+        {Extensions}
         <Heading>Requests</Heading>
         {DomainRow}
         {ProxyRow}
@@ -857,8 +903,6 @@ export const AppConfigsTab: React.FC = () => {
         <Heading>Binds</Heading>
         {Ports}
         {Volumes}
-        <Heading>Extensions</Heading>
-        {Extensions}
         <Heading>Others</Heading>
         {CommandsRow}
         {WorkingRow}

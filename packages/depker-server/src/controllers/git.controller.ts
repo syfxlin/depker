@@ -3,7 +3,7 @@ import { FetchData, Git, PushData } from "node-git-server";
 import { HttpAdapterHost } from "@nestjs/core";
 import { Express } from "express";
 import { PATHS } from "../constants/depker.constant";
-import { App } from "../entities/app.entity";
+import { Service } from "../entities/service.entity";
 import { AuthService } from "../guards/auth.service";
 
 @Controller("/api/repos")
@@ -29,20 +29,20 @@ export class GitController {
           .header("WWW-Authenticate", 'Basic realm="authorization needed"')
           .send("401 Unauthorized");
       }
-      // find application
+      // find service
       const match = request.url?.match(/^\/api\/repos\/([^/]+)\/.+/);
       if (!match) {
         return response
           .status(400)
           .header("Content-Type", "text/plain")
-          .send("Application not found, should be create before push.");
+          .send("Service not found, should be create before push.");
       }
-      const count = await App.countBy({ name: match[1] });
+      const count = await Service.countBy({ name: match[1] });
       if (!count) {
         return response
           .status(400)
           .header("Content-Type", "text/plain")
-          .send("Application not found, should be create before push.");
+          .send("Service not found, should be create before push.");
       }
       // git server
       request.url = request.url?.replace(/^\/api\/repos\//, "/");

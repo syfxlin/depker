@@ -3,14 +3,14 @@ import { useParams } from "react-router-dom";
 import { Grid, Stack } from "@mantine/core";
 import { css } from "@emotion/react";
 import { Heading } from "../components/parts/Heading";
-import { useAppMetrics } from "../api/use-app-metrics";
+import { useServiceMetrics } from "../api/use-service-metrics";
 import { CardStats, PercStats } from "../components/core/Stats";
 import { TbCpu2, TbDatabase } from "react-icons/all";
 import { humanBytes } from "../utils/human";
 
-export const AppMetricsTab: React.FC = () => {
-  const { app } = useParams<"app">();
-  const metrics = useAppMetrics(app!);
+export const ServiceMetricsTab: React.FC = () => {
+  const { service } = useParams<"service">();
+  const metrics = useServiceMetrics(service!);
 
   const Cpu = useMemo(
     () => (
@@ -71,7 +71,7 @@ export const AppMetricsTab: React.FC = () => {
         height: 100%;
       `}
     >
-      <Heading>Application Metrics</Heading>
+      <Heading>Service Metrics</Heading>
       <Grid>
         {Cpu}
         {Memory}

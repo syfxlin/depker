@@ -6,8 +6,8 @@ import { css } from "@emotion/react";
 import { DeployLogs } from "../components/parts/DeployLogs";
 import { DeployList } from "../components/parts/DeployList";
 
-export const AppDeploysTab: React.FC = () => {
-  const { app, deploy } = useParams<"app" | "deploy">();
+export const ServiceDeploysTab: React.FC = () => {
+  const { service, deploy } = useParams<"service" | "deploy">();
 
   return (
     <Stack
@@ -28,10 +28,10 @@ export const AppDeploysTab: React.FC = () => {
         `}
       >
         <Grid.Col span={8}>
-          <DeployLogs app={app!} id={deploy!} />
+          <DeployLogs service={service!} id={deploy!} />
         </Grid.Col>
         <Grid.Col span={4}>
-          <DeployList app={app!} />
+          <DeployList service={service!} />
         </Grid.Col>
       </Grid>
     </Stack>

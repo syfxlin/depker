@@ -12,7 +12,7 @@ import fs from "fs-extra";
 import { PATHS } from "../constants/depker.constant";
 import path from "path";
 import { Data } from "../decorators/data.decorator";
-import { App } from "../entities/app.entity";
+import { Service } from "../entities/service.entity";
 import { ILike } from "typeorm";
 
 @Controller("/api/volumes")
@@ -53,7 +53,7 @@ export class VolumeController {
 
   @Get("/:volume/binds")
   public async binds(@Data() request: BindsVolumeRequest): Promise<BindsVolumeResponse> {
-    const apps = await App.findBy({ volumes: ILike(`%${request.volume}%`) });
-    return apps.filter((a) => a.volumes.find((i) => i.hpath === request.volume)).map((a) => a.name);
+    const services = await Service.findBy({ volumes: ILike(`%${request.volume}%`) });
+    return services.filter((a) => a.volumes.find((i) => i.hpath === request.volume)).map((a) => a.name);
   }
 }

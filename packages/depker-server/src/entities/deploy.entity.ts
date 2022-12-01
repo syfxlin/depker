@@ -10,37 +10,35 @@ import {
   Relation,
   UpdateDateColumn,
 } from "typeorm";
-import { App } from "./app.entity";
-import { Log } from "./log.entity";
+import { Service } from "./service.entity";
+import { DeployLogger, Log, LogLevel } from "./log.entity";
+import { Logger } from "@nestjs/common";
+import { DateTime } from "luxon";
 
 export type DeployStatus = "queued" | "running" | "failed" | "success";
 
-export type DeployTrigger = "manual" | "depker" | "git";
-
 @Entity()
 @Index(["status"])
-@Index(["trigger"])
 export class Deploy extends BaseEntity {
+  private static readonly _logger = new Logger("DEPLOY");
+
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ nullable: false })
-  commit: string;
+  target: string;
 
   @Column({ nullable: false, default: "queued" })
   status: DeployStatus;
 
-  @Column({ nullable: false })
-  trigger: DeployTrigger;
-
-  @ManyToOne(() => App, (app) => app.deploys, {
+  @ManyToOne(() => Service, (service) => service.deploys, {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
     cascade: false,
     persistence: false,
   })
-  app: Relation<App>;
+  service: Relation<Service>;
 
   @OneToMany(() => Log, (log) => log.deploy, {
     cascade: false,
@@ -55,14 +53,30 @@ export class Deploy extends BaseEntity {
   @UpdateDateColumn({ nullable: false })
   updatedAt: Date;
 
+  // repository
+  public get logger(): DeployLogger {
+    const upload = (level: LogLevel, message: string, error?: Error) => {
+      const time = DateTime.utc().toJSDate();
+      const line = message + (error ? `[ERROR] ${error.name}: ${error.message}, ${error.stack}` : ``);
+      Deploy._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${this.service.name}:${this.id} : ${line}`);
+      return Log.insert({ deploy: this, time, level, line });
+    };
+    return {
+      debug: (line: string) => upload("debug", line),
+      log: (line: string) => upload("log", line),
+      step: (line: string) => upload("step", line),
+      success: (line: string) => upload("success", line),
+      error: (line: string, error?: Error) => upload("error", line, error),
+    };
+  }
+
   // method
-  public toView() {
+  public get view() {
     return {
       id: this.id,
-      app: this.app.name,
-      commit: this.commit,
+      service: this.service.name,
+      target: this.target,
       status: this.status,
-      trigger: this.trigger,
       createdAt: this.createdAt.getTime(),
       updatedAt: this.updatedAt.getTime(),
     };

@@ -4,17 +4,17 @@ import { Login } from "./pages/Login";
 import { Box } from "@mantine/core";
 import { Home } from "./pages/Home";
 import { Dashboard } from "./pages/Dashboard";
-import { AppList } from "./pages/AppList";
-import { AppSetting } from "./pages/AppSetting";
+import { ServiceList } from "./pages/ServiceList";
+import { ServiceSetting } from "./pages/ServiceSetting";
 import { Loading } from "./components/core/Loading";
-import { AppConfigsTab } from "./pages/AppConfigsTab";
-import { AppDeploysTab } from "./pages/AppDeploysTab";
-import { AppLogsTab } from "./pages/AppLogsTab";
-import { AppMetricsTab } from "./pages/AppMetricsTab";
-import { AppTerminalTab } from "./pages/AppTerminalTab";
+import { ServiceConfigsTab } from "./pages/ServiceConfigsTab";
+import { ServiceDeploysTab } from "./pages/ServiceDeploysTab";
+import { ServiceLogsTab } from "./pages/ServiceLogsTab";
+import { ServiceMetricsTab } from "./pages/ServiceMetricsTab";
+import { ServiceTerminalTab } from "./pages/ServiceTerminalTab";
 import { Files } from "./pages/Files";
-import { AppHistoryTab } from "./pages/AppHistoryTab";
-import { AppDangerTab } from "./pages/AppDangerTab";
+import { ServiceHistoryTab } from "./pages/ServiceHistoryTab";
+import { ServiceDangerTab } from "./pages/ServiceDangerTab";
 import { Tokens } from "./pages/Tokens";
 import { Ports } from "./pages/Ports";
 import { Volumes } from "./pages/Volumes";
@@ -30,16 +30,16 @@ export const App: React.FC = () => {
           <Route element={<Dashboard />}>
             <Route index element={<Navigate to="/home" />} />
             <Route path="/home" element={<Home />} />
-            <Route path="/apps" element={<AppList />} />
-            <Route path="/apps/:app" element={<AppSetting />}>
-              <Route index element={<AppConfigsTab />} />
-              <Route path="metrics" element={<AppMetricsTab />} />
-              <Route path="logs" element={<AppLogsTab />} />
-              <Route path="terminal" element={<AppTerminalTab />} />
-              <Route path="history" element={<AppHistoryTab />} />
-              <Route path="danger" element={<AppDangerTab />} />
-              <Route path="deploys" element={<AppDeploysTab />} />
-              <Route path="deploys/:deploy" element={<AppDeploysTab />} />
+            <Route path="/services" element={<ServiceList />} />
+            <Route path="/services/:service" element={<ServiceSetting />}>
+              <Route index element={<ServiceConfigsTab />} />
+              <Route path="metrics" element={<ServiceMetricsTab />} />
+              <Route path="logs" element={<ServiceLogsTab />} />
+              <Route path="terminal" element={<ServiceTerminalTab />} />
+              <Route path="history" element={<ServiceHistoryTab />} />
+              <Route path="danger" element={<ServiceDangerTab />} />
+              <Route path="deploys" element={<ServiceDeploysTab />} />
+              <Route path="deploys/:deploy" element={<ServiceDeploysTab />} />
             </Route>
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/ports" element={<Ports />} />

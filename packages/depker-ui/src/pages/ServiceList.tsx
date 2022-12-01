@@ -15,10 +15,10 @@ import {
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
-import { TbApiApp, TbApps, TbArrowUpRight, TbPlus, TbSearch, TbX } from "react-icons/all";
+import { TbApiApp, TbApps, TbArrowUpRight, TbMoon, TbPlus, TbSearch, TbX } from "react-icons/all";
 import { css } from "@emotion/react";
 import { Link } from "react-router-dom";
-import { useApps } from "../api/use-apps";
+import { useServices } from "../api/use-services";
 import { Async } from "../components/core/Async";
 import { Pages } from "../components/layout/Pages";
 import { colors } from "../api/use-status";
@@ -28,9 +28,9 @@ import { ObjectModal } from "../components/input/ObjectModal";
 import { useBuildpacks } from "../api/use-buildpacks";
 import { humanDate } from "../utils/human";
 
-export const AppList: React.FC = () => {
+export const ServiceList: React.FC = () => {
   const t = useMantineTheme();
-  const apps = useApps();
+  const services = useServices();
   const buildpacks = useBuildpacks();
 
   const Create = useMemo(
@@ -39,24 +39,25 @@ export const AppList: React.FC = () => {
         leftIcon={<TbPlus />}
         onClick={() => {
           openModal({
-            title: <>Create App</>,
+            title: <>Create Service</>,
             children: (
               <ObjectModal
                 value={{}}
                 onChange={async (value, actions) => {
-                  if (!value.name || !value.buildpack) {
-                    actions.failure(`Create app failure`, `Name, Buildpack must be not empty.`);
+                  if (!value.name || !value.type || !value.buildpack) {
+                    actions.failure(`Create service failure`, `Name, Type, Buildpack must be not empty.`);
                     return false;
                   }
                   try {
-                    await apps.actions.create({
+                    await services.actions.create({
                       name: value.name,
+                      type: value.type,
                       buildpack: value.buildpack,
                     });
-                    actions.success(`Create volume successful`, `Volume need to bind to the application to use.`);
+                    actions.success(`Create service successful`, `Volume need to bind to the service to use.`);
                     return true;
                   } catch (e: any) {
-                    actions.failure(`Create volume failure`, e);
+                    actions.failure(`Create service failure`, e);
                     return false;
                   }
                 }}
@@ -66,18 +67,38 @@ export const AppList: React.FC = () => {
                     key="name"
                     required
                     label="Name"
-                    description="Application name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
-                    placeholder="Application Name"
+                    description="Service name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
+                    placeholder="Service Name"
                     icon={<TbApps />}
                     value={item.name ?? ""}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
+                  />,
+                  <Select
+                    key="type"
+                    required
+                    label="Type"
+                    description="Service type, App is a resident service, and Job is a scheduled or one-time service"
+                    placeholder="Type"
+                    icon={<TbMoon />}
+                    value={item.type ?? ""}
+                    onChange={(value: string) => setItem({ ...item, type: value })}
+                    data={[
+                      {
+                        value: "app",
+                        label: "App",
+                      },
+                      {
+                        value: "job",
+                        label: "Job",
+                      },
+                    ]}
                   />,
                   <Select
                     key="buildpack"
                     required
                     searchable
                     label="Buildpack"
-                    description="Building application with build package."
+                    description="Building service with build package."
                     placeholder="Build Package"
                     nothingFound="No packages"
                     icon={<Avatar size="xs" src={client.assets.icon(buildpacks.data[item.buildpack]?.icon)} />}
@@ -121,13 +142,13 @@ export const AppList: React.FC = () => {
   const Search = useMemo(
     () => (
       <Input
-        value={apps.values.search}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => apps.update.search(e.target.value)}
-        placeholder="Search apps"
+        value={services.values.search}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => services.update.search(e.target.value)}
+        placeholder="Search services"
         icon={<TbSearch />}
         rightSection={
-          apps.values.search ? (
-            <ActionIcon onClick={() => apps.update.search("")}>
+          services.values.search ? (
+            <ActionIcon onClick={() => services.update.search("")}>
               <TbX />
             </ActionIcon>
           ) : (
@@ -136,22 +157,22 @@ export const AppList: React.FC = () => {
         }
       />
     ),
-    [apps.values.search]
+    [services.values.search]
   );
 
   const List = useMemo(
     () =>
-      apps.data && (
+      services.data && (
         <Pages
           edges
-          page={apps.values.page}
-          size={apps.values.size}
-          total={apps.data.total}
-          onChange={apps.update.page}
+          page={services.values.page}
+          size={services.values.size}
+          total={services.data.total}
+          onChange={services.update.page}
         >
           <Grid>
-            {apps.data?.items?.map((item) => (
-              <Grid.Col key={`apps-${item.name}`} span={4}>
+            {services.data?.items?.map((item) => (
+              <Grid.Col key={`services-${item.name}`} span={4}>
                 <Card
                   withBorder
                   css={css`
@@ -169,7 +190,7 @@ export const AppList: React.FC = () => {
                       <TbApiApp />
                     </Avatar>
                     <Link
-                      to={`/apps/${item.name}`}
+                      to={`/services/${item.name}`}
                       css={css`
                         flex: 1;
                         text-decoration: none;
@@ -237,12 +258,12 @@ export const AppList: React.FC = () => {
           </Grid>
         </Pages>
       ),
-    [apps.data, apps.values.page, apps.values.size, apps.values.sort]
+    [services.data, services.values.page, services.values.size, services.values.sort]
   );
 
   return (
     <Main
-      title="Apps"
+      title="Services"
       header={
         <Group>
           {Search}
@@ -250,7 +271,7 @@ export const AppList: React.FC = () => {
         </Group>
       }
     >
-      <Async query={apps.query}>{List}</Async>
+      <Async query={services.query}>{List}</Async>
     </Main>
   );
 };

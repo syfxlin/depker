@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import Docker from "dockerode";
 import { IS_DOCKER, NAMES } from "../constants/depker.constant";
-import { AppStatus } from "../entities/app.entity";
+import { ServiceStatus } from "../entities/service.entity";
 
 @Injectable()
 export class DockerService extends Docker {
@@ -72,7 +72,7 @@ export class DockerService extends Docker {
   }
 
   public async listStatus(names: string[]) {
-    const results: Record<string, AppStatus> = {};
+    const results: Record<string, ServiceStatus> = {};
     const infos = await this.listContainers({ all: true });
     for (const name of names) {
       const info = infos.find((i) => i.Names.includes(`/${name}`));

@@ -3,23 +3,23 @@ import { useParams } from "react-router-dom";
 import { css } from "@emotion/react";
 import { Heading } from "../components/parts/Heading";
 import { NumberInput, Stack } from "@mantine/core";
-import { useAppLogs } from "../api/use-app-logs";
+import { useServiceLogs } from "../api/use-service-logs";
 import { Logs } from "../components/core/Logs";
 import { TbListNumbers } from "react-icons/all";
 import { useTailLogs } from "../hooks/use-tail-logs";
 
-export const AppLogsTab: React.FC = () => {
-  const { app } = useParams<"app">();
+export const ServiceLogsTab: React.FC = () => {
+  const { service } = useParams<"service">();
   const tail = useTailLogs(1000);
-  const logs = useAppLogs(app!, tail.debounced);
+  const logs = useServiceLogs(service!, tail.debounced);
   return (
     <Stack
       css={css`
         height: 100%;
       `}
     >
-      <Heading>Application Logs</Heading>
-      <Logs title="Application Logs" empty={logs.empty} data={logs.data}>
+      <Heading>Service Logs</Heading>
+      <Logs title="Service Logs" empty={logs.empty} data={logs.data}>
         <NumberInput
           size="xs"
           min={0}

@@ -1,10 +1,10 @@
 import { client } from "./client";
 import { useEffect, useRef, useState } from "react";
-import { LogsAppDeployResponse } from "@syfxlin/depker-client";
+import { LogsServiceDeployResponse } from "@syfxlin/depker-client";
 
 export const useDeployLogs = (name: string, id: number | string | undefined) => {
   const latest = useRef<number>(0);
-  const [logs, setLogs] = useState<LogsAppDeployResponse["logs"] | null>(null);
+  const [logs, setLogs] = useState<LogsServiceDeployResponse["logs"] | null>(null);
 
   useEffect(() => {
     latest.current = 0;

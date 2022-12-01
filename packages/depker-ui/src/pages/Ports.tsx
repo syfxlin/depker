@@ -25,7 +25,7 @@ const Binds: React.FC<{ port: number }> = ({ port }) => {
           icon={<TbApps />}
           action={() => {
             closeAllModals();
-            navigate(`/apps/${item}/`);
+            navigate(`/services/${item}/`);
           }}
         />
       ))}
@@ -65,7 +65,7 @@ const Actions: React.FC<{ port: number; actions: ReturnType<typeof usePorts>["ac
               children: (
                 <>
                   <Text size="sm" color="red">
-                    The port mapping will not be removed immediately, need to re-deploy application.
+                    The port mapping will not be removed immediately, need to re-deploy service.
                   </Text>
                   <Text size="sm">This action is irreversible. Confirm delete?</Text>
                 </>
@@ -115,7 +115,7 @@ export const Ports: React.FC = () => {
                       }
                       try {
                         await ports.actions.create({ port: value.port });
-                        actions.success(`Create port successful`, `Port need to bind to the application to use.`);
+                        actions.success(`Create port successful`, `Port need to bind to the service to use.`);
                         return true;
                       } catch (e: any) {
                         actions.failure(`Create port failure`, e);

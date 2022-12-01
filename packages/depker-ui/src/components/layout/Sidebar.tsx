@@ -34,7 +34,7 @@ export const Sidebar: React.FC = () => {
       <Navbar.Section grow mt={50}>
         <Stack justify="center" spacing="xs">
           <SidebarLink icon={TbHome2} label="Home" action="/home" />
-          <SidebarLink icon={TbApps} label="Apps" action="/apps" />
+          <SidebarLink icon={TbApps} label="Services" action="/services" />
           <SidebarLink icon={TbCode} label="Tokens" action="/tokens" />
           <SidebarLink icon={TbCircleDot} label="Ports" action="/ports" />
           <SidebarLink icon={TbFolders} label="Volumes" action="/volumes" />

@@ -8,13 +8,13 @@ export class SettingController {
   @Get("/")
   public async get(): Promise<GetSettingResponse> {
     const setting = await Setting.read();
-    return setting.toView();
+    return setting.view;
   }
 
   @Put("/")
   public async update(@Data() request: UpdateSettingRequest): Promise<UpdateSettingResponse> {
     await Setting.write(request);
     const setting = await Setting.read();
-    return setting.toView();
+    return setting.view;
   }
 }

@@ -6,21 +6,24 @@ import {
   OneToMany,
   PrimaryColumn,
   Relation,
+  Unique,
   UpdateDateColumn,
 } from "typeorm";
 import { Deploy } from "./deploy.entity";
 
-export type AppRestart = "no" | "always" | "on-failure";
+export type ServiceType = "app" | "job";
 
-export type AppStatus = "stopped" | "running" | "restarting" | "exited";
+export type ServiceStatus = "stopped" | "running" | "restarting" | "exited";
 
-export type AppMiddleware = {
+export type ServiceRestart = "no" | "always" | "on-failure";
+
+export type ServiceMiddleware = {
   name: string;
   type: string;
   options: Record<string, string>;
 };
 
-export type AppHealthCheck = {
+export type ServiceHealthCheck = {
   cmd?: string[];
   retries?: number;
   interval?: number;
@@ -28,40 +31,44 @@ export type AppHealthCheck = {
   timeout?: number;
 };
 
-export type AppLabel = {
+export type ServiceLabel = {
   name: string;
   value: string;
   onbuild: boolean;
 };
 
-export type AppSecret = {
+export type ServiceSecret = {
   name: string;
   value: string;
   onbuild: boolean;
 };
 
-export type AppHost = {
+export type ServiceHost = {
   name: string;
   value: string;
   onbuild: boolean;
 };
 
-export type AppPort = {
+export type ServicePort = {
   proto: "tcp" | "udp";
   hport: number;
   cport: number;
 };
 
-export type AppVolume = {
+export type ServiceVolume = {
   hpath: string;
   cpath: string;
   readonly: boolean;
 };
 
 @Entity()
-export class App extends BaseEntity {
-  @PrimaryColumn({ length: 128, nullable: false, unique: true })
+@Unique(["name"])
+export class Service extends BaseEntity {
+  @PrimaryColumn({ length: 128, nullable: false })
   name: string;
+
+  @Column({ length: 50, nullable: false })
+  type: ServiceType;
 
   @Column({ length: 128, nullable: false })
   buildpack: string;
@@ -73,7 +80,7 @@ export class App extends BaseEntity {
   entrypoints: string[];
 
   @Column({ nullable: false, default: "always" })
-  restart: AppRestart;
+  restart: ServiceRestart;
 
   @Column({ nullable: false, default: true })
   pull: boolean;
@@ -95,11 +102,11 @@ export class App extends BaseEntity {
   tls: boolean;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  middlewares: AppMiddleware[];
+  middlewares: ServiceMiddleware[];
 
   // healthcheck
   @Column({ nullable: false, default: "{}", type: "simple-json" })
-  healthcheck: AppHealthCheck;
+  healthcheck: ServiceHealthCheck;
 
   // extensions
   @Column({ nullable: false, default: false })
@@ -125,26 +132,26 @@ export class App extends BaseEntity {
   networks: Record<string, string>;
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  labels: AppLabel[];
+  labels: ServiceLabel[];
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  secrets: AppSecret[];
+  secrets: ServiceSecret[];
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  hosts: AppHost[];
+  hosts: ServiceHost[];
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  ports: AppPort[];
+  ports: ServicePort[];
 
   @Column({ nullable: false, default: "[]", type: "simple-json" })
-  volumes: AppVolume[];
+  volumes: ServiceVolume[];
 
   // extensions
   @Column({ nullable: false, default: "{}", type: "simple-json" })
   extensions: Record<string, any>;
 
   // deploy
-  @OneToMany(() => Deploy, (deploy) => deploy.app, {
+  @OneToMany(() => Deploy, (deploy) => deploy.service, {
     cascade: false,
     persistence: false,
   })
@@ -158,9 +165,10 @@ export class App extends BaseEntity {
   updatedAt: Date;
 
   // method
-  public toView() {
+  public get view() {
     return {
       name: this.name,
+      type: this.type,
       buildpack: this.buildpack,
       commands: this.commands,
       entrypoints: this.entrypoints,
@@ -194,10 +202,10 @@ export class App extends BaseEntity {
   // repository
   public static async listDeploydAt(names: string[]): Promise<Record<string, Date>> {
     const items = await Deploy.createQueryBuilder()
-      .select(["app_name AS appName", "MAX(updated_at) AS updatedAt"])
-      .where(`status = 'success' AND app_name IN (${names.map((i) => `'${i}'`).join(",")})`)
-      .groupBy("app_name")
-      .getRawMany<{ appName: string; updatedAt: string }>();
-    return items.reduce((a, i) => ({ ...a, [i.appName]: new Date(i.updatedAt) }), {});
+      .select(["service_name AS serviceName", "MAX(updated_at) AS updatedAt"])
+      .where(`status = 'success' AND service_name IN (${names.map((i) => `'${i}'`).join(",")})`)
+      .groupBy("service_name")
+      .getRawMany<{ serviceName: string; updatedAt: string }>();
+    return items.reduce((a, i) => ({ ...a, [i.serviceName]: new Date(i.updatedAt) }), {});
   }
 }

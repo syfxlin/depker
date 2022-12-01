@@ -1,7 +1,7 @@
 import { DockerService } from "./services/docker.service";
 import { StorageService } from "./services/storage.service";
 import { DeployService } from "./services/deploy.service";
-import { App } from "./entities/app.entity";
+import { Service } from "./entities/service.entity";
 import { Setting } from "./entities/setting.entity";
 import { TraefikTask } from "./tasks/traefik.task";
 import { Deploy } from "./entities/deploy.entity";
@@ -10,7 +10,7 @@ import { Log } from "./entities/log.entity";
 import { DeployTask } from "./tasks/deploy.task";
 import { SystemController } from "./controllers/system.controller";
 import { Token } from "./entities/token.entity";
-import { AppController } from "./controllers/app.controller";
+import { ServiceController } from "./controllers/service.controller";
 import { AssetController } from "./controllers/asset.controller";
 import { PortController } from "./controllers/port.controller";
 import { VolumeController } from "./controllers/volume.controller";
@@ -23,14 +23,14 @@ import { AccessLogsGateway } from "./ws/access-logs.gateway";
 import { SettingController } from "./controllers/setting.controller";
 
 // entity
-export const entities = [Setting, Token, App, Deploy, Log];
+export const entities = [Setting, Token, Service, Deploy, Log];
 
 // controller & service & task
 export const controllers = [
   SystemController,
   AssetController,
   GitController,
-  AppController,
+  ServiceController,
   PortController,
   VolumeController,
   BuildpackController,

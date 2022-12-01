@@ -3,7 +3,7 @@ import qs from "qs";
 import axiosRetry from "axios-retry";
 import { AuthApi } from "./api/auth.api";
 import { SystemApi } from "./api/system.api";
-import { AppApi } from "./api/app.api";
+import { ServiceApi } from "./api/service.api";
 import { BuildpackApi } from "./api/buildpack.api";
 import { PortApi } from "./api/port.api";
 import { VolumeApi } from "./api/volume.api";
@@ -32,7 +32,7 @@ export class DepkerClient {
   // apis
   public readonly auths: AuthApi;
   public readonly systems: SystemApi;
-  public readonly apps: AppApi;
+  public readonly services: ServiceApi;
   public readonly buildpacks: BuildpackApi;
   public readonly ports: PortApi;
   public readonly volumes: VolumeApi;
@@ -77,7 +77,7 @@ export class DepkerClient {
     // apis
     this.auths = new AuthApi(this);
     this.systems = new SystemApi(this);
-    this.apps = new AppApi(this);
+    this.services = new ServiceApi(this);
     this.buildpacks = new BuildpackApi(this);
     this.ports = new PortApi(this);
     this.volumes = new VolumeApi(this);

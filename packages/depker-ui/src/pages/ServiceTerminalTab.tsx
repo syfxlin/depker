@@ -6,16 +6,16 @@ import { Heading } from "../components/parts/Heading";
 import { XTerm } from "../components/core/XTerm";
 import { client } from "../api/client";
 
-export const AppTerminalTab: React.FC = () => {
-  const { app } = useParams<"app">();
-  const socket = useMemo(() => () => client.apps.terminal(app!), [app]);
+export const ServiceTerminalTab: React.FC = () => {
+  const { service } = useParams<"service">();
+  const socket = useMemo(() => () => client.services.terminal(service!), [service]);
   return (
     <Stack
       css={css`
         height: 100%;
       `}
     >
-      <Heading>Application Terminal</Heading>
+      <Heading>Service Terminal</Heading>
       <XTerm client={socket} />
     </Stack>
   );

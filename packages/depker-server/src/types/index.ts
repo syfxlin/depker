@@ -1,12 +1,12 @@
 // entities
-export * from "../entities/app.entity";
+export * from "../entities/service.entity";
 export * from "../entities/deploy.entity";
 export * from "../entities/log.entity";
 export * from "../entities/setting.entity";
 export * from "../entities/token.entity";
 
 // views
-export * from "../views/app.view";
+export * from "../views/service.view";
 export * from "../views/auth.view";
 export * from "../views/buildpack.view";
 export * from "../views/common.view";

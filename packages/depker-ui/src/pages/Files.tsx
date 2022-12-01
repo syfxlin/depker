@@ -31,7 +31,7 @@ export const Files: React.FC = () => {
     >
       <iframe
         key={counter}
-        title="Application Files"
+        title="Service Files"
         src={client.files.iframe() + location.pathname.substring(location.pathname.indexOf("/files") + 6)}
         css={css`
           flex: 1;

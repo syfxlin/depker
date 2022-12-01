@@ -3,12 +3,12 @@ import { client } from "./client";
 import { LogLevel } from "@syfxlin/depker-client";
 import { DateTime } from "luxon";
 
-export const useAppLogs = (name: string, tail: number) => {
+export const useServiceLogs = (name: string, tail: number) => {
   const [logs, setLogs] = useState<Array<[LogLevel, number, string]> | null>(null);
 
   useEffect(() => {
     setLogs(null);
-    const socket = client.apps.logs(name, tail);
+    const socket = client.services.logs(name, tail);
 
     socket.on("disconnect", () => {
       setLogs((prev) => [...(prev ?? []), ["error", DateTime.utc().valueOf(), `Logs stopped.`]]);

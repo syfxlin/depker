@@ -12,35 +12,35 @@ import {
   Query,
 } from "@nestjs/common";
 import {
-  CancelAppDeployRequest,
-  CancelAppDeployResponse,
-  DeleteAppRequest,
-  DeleteAppResponse,
-  DownAppRequest,
-  DownAppResponse,
-  GetAppRequest,
-  GetAppResponse,
-  HistoryAppRequest,
-  HistoryAppResponse,
-  ListAppDeployRequest,
-  ListAppDeployResponse,
-  ListAppRequest,
-  ListAppResponse,
-  LogsAppDeployRequest,
-  LogsAppDeployResponse,
-  MetricsAppRequest,
-  MetricsAppResponse,
-  RestartAppRequest,
-  RestartAppResponse,
-  StatusAppRequest,
-  StatusAppResponse,
-  UpAppRequest,
-  UpAppResponse,
-  UpsertAppRequest,
-  UpsertAppResponse,
-} from "../views/app.view";
+  CancelServiceDeployRequest,
+  CancelServiceDeployResponse,
+  DeleteServiceRequest,
+  DeleteServiceResponse,
+  DownServiceRequest,
+  DownServiceResponse,
+  GetServiceRequest,
+  GetServiceResponse,
+  HistoryServiceRequest,
+  HistoryServiceResponse,
+  ListServiceDeployRequest,
+  ListServiceDeployResponse,
+  ListServiceRequest,
+  ListServiceResponse,
+  LogsServiceDeployRequest,
+  LogsServiceDeployResponse,
+  MetricsServiceRequest,
+  MetricsServiceResponse,
+  RestartServiceRequest,
+  RestartServiceResponse,
+  StatusServiceRequest,
+  StatusServiceResponse,
+  UpsertServiceRequest,
+  UpsertServiceResponse,
+  UpServiceRequest,
+  UpServiceResponse,
+} from "../views/service.view";
 import { DockerService } from "../services/docker.service";
-import { App } from "../entities/app.entity";
+import { Service } from "../entities/service.entity";
 import { ILike, MoreThanOrEqual } from "typeorm";
 import { PluginService } from "../services/plugin.service";
 import { StorageService } from "../services/storage.service";
@@ -53,9 +53,9 @@ import fs from "fs-extra";
 import path from "path";
 import { PATHS } from "../constants/depker.constant";
 
-@Controller("/api/apps")
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+@Controller("/api/services")
+export class ServiceController {
+  private readonly logger = new Logger(ServiceController.name);
 
   constructor(
     private readonly docker: DockerService,
@@ -64,10 +64,10 @@ export class AppController {
   ) {}
 
   @Get("/")
-  public async list(@Query() request: ListAppRequest): Promise<ListAppResponse> {
+  public async list(@Query() request: ListServiceRequest): Promise<ListServiceResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc" } = request;
     const [by, axis] = sort.split(":");
-    const [apps, count] = await App.findAndCount({
+    const [services, count] = await Service.findAndCount({
       select: {
         name: true,
         buildpack: true,
@@ -87,11 +87,11 @@ export class AppController {
     });
 
     const plugins = await this.plugins.plugins();
-    const deploys = await App.listDeploydAt(apps.map((i) => i.name));
-    const status = await this.docker.listStatus(apps.map((i) => i.name));
+    const deploys = await Service.listDeploydAt(services.map((i) => i.name));
+    const status = await this.docker.listStatus(services.map((i) => i.name));
 
-    const total: ListAppResponse["total"] = count;
-    const items: ListAppResponse["items"] = apps.map((i) => {
+    const total: ListServiceResponse["total"] = count;
+    const items: ListServiceResponse["items"] = services.map((i) => {
       const plugin = plugins[i.buildpack];
       const deploy = deploys[i.name];
       return {
@@ -110,107 +110,114 @@ export class AppController {
   }
 
   @Post("/")
-  public async create(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async create(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (count) {
-      throw new ConflictException(`Found application of ${request.name}.`);
+      throw new ConflictException(`Found service of ${request.name}.`);
     }
-    await App.insert({ name: request.name, buildpack: request.buildpack });
+    await Service.insert({ name: request.name, type: request.type, buildpack: request.buildpack });
     return this.update(request);
   }
 
   @Put("/:name")
-  public async update(@Body() request: UpsertAppRequest): Promise<UpsertAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async update(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    const app = new App();
-    app.name = request.name;
-    app.buildpack = request.buildpack;
+    const service = new Service();
+    service.name = request.name;
+    service.type = request.type;
+    service.buildpack = request.buildpack;
     // web
-    app.domain = request.domain!;
-    app.rule = request.rule!;
-    app.port = request.port!;
-    app.scheme = request.scheme!;
-    app.tls = request.tls!;
-    app.middlewares = request.middlewares!.map((i) => ({ name: i.name, type: i.type, options: i.options }));
+    service.domain = request.domain!;
+    service.rule = request.rule!;
+    service.port = request.port!;
+    service.scheme = request.scheme!;
+    service.tls = request.tls!;
+    // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
+    service.middlewares = request.middlewares!?.map((i) => ({ name: i.name, type: i.type, options: i.options }));
     // extensions
-    app.commands = request.commands!;
-    app.entrypoints = request.entrypoints!;
-    app.restart = request.restart!;
-    app.pull = request.pull!;
-    app.healthcheck = request.healthcheck!;
-    app.init = request.init!;
-    app.rm = request.rm!;
-    app.privileged = request.privileged!;
-    app.user = request.user!;
-    app.workdir = request.workdir!;
+    service.commands = request.commands!;
+    service.entrypoints = request.entrypoints!;
+    service.restart = request.restart!;
+    service.pull = request.pull!;
+    service.healthcheck = request.healthcheck!;
+    service.init = request.init!;
+    service.rm = request.rm!;
+    service.privileged = request.privileged!;
+    service.user = request.user!;
+    service.workdir = request.workdir!;
     // values
-    app.buildArgs = request.buildArgs!;
-    app.networks = request.networks!;
-    app.labels = request.labels!.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
-    app.secrets = request.secrets!.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
-    app.hosts = request.hosts!.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
-    app.ports = request.ports!.map((i) => ({ hport: i.hport, cport: i.cport, proto: i.proto }));
-    app.volumes = request.volumes!.map((i) => ({ hpath: i.hpath, cpath: i.cpath, readonly: i.readonly }));
-    app.extensions = request.extensions!;
+    service.buildArgs = request.buildArgs!;
+    service.networks = request.networks!;
+    // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
+    service.labels = request.labels!?.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
+    // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
+    service.secrets = request.secrets!?.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
+    // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
+    service.hosts = request.hosts!?.map((i) => ({ name: i.name, value: i.value, onbuild: i.onbuild }));
+    // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
+    service.ports = request.ports!?.map((i) => ({ hport: i.hport, cport: i.cport, proto: i.proto }));
+    // eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
+    service.volumes = request.volumes!?.map((i) => ({ hpath: i.hpath, cpath: i.cpath, readonly: i.readonly }));
+    service.extensions = request.extensions!;
 
-    // save app
-    await App.save(app, { reload: false });
-    const saved = await App.findOneBy({ name: app.name });
-    return saved!.toView();
+    // save service
+    await Service.save(service, { reload: false });
+    const saved = await Service.findOneBy({ name: service.name });
+    return saved!.view;
   }
 
   @Get("/:name")
-  public async get(@Param() request: GetAppRequest): Promise<GetAppResponse> {
-    const app = await App.findOne({
+  public async get(@Param() request: GetServiceRequest): Promise<GetServiceResponse> {
+    const service = await Service.findOne({
       where: {
         name: request.name,
       },
     });
-    if (!app) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+    if (!service) {
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
-    return app.toView();
+    return service.view;
   }
 
   @Delete("/:name")
-  public async delete(@Param() request: DeleteAppRequest): Promise<DeleteAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async delete(@Param() request: DeleteServiceRequest): Promise<DeleteServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    // purge application
+    // purge service
     process.nextTick(async () => {
       // delete container
       try {
         await this.docker.getContainer(request.name).remove({ force: true });
-        this.logger.log(`Purge application ${request.name} container successful.`);
+        this.logger.log(`Purge service ${request.name} container successful.`);
       } catch (e) {
-        this.logger.error(`Purge application ${request.name} container failed.`, e);
+        this.logger.error(`Purge service ${request.name} container failed.`, e);
       }
       // delete source
       try {
         await fs.remove(path.join(PATHS.REPOS, `${request.name}.git`));
-        this.logger.log(`Purge application ${request.name} source successful.`);
+        this.logger.log(`Purge service ${request.name} source successful.`);
       } catch (e) {
-        this.logger.error(`Purge application ${request.name} source failed.`, e);
+        this.logger.error(`Purge service ${request.name} source failed.`, e);
       }
     });
 
-    // delete application
-    await App.delete(request.name);
+    // delete service
+    await Service.delete(request.name);
     return { status: "success" };
   }
 
   @Get("/:name/status")
-  public async status(@Param() request: StatusAppRequest): Promise<StatusAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async status(@Param() request: StatusServiceRequest): Promise<StatusServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     const status = await this.docker.listStatus([request.name]);
@@ -218,10 +225,10 @@ export class AppController {
   }
 
   @Get("/:name/metrics")
-  public async metrics(@Param() request: MetricsAppRequest): Promise<MetricsAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async metrics(@Param() request: MetricsServiceRequest): Promise<MetricsServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     try {
@@ -270,10 +277,10 @@ export class AppController {
   }
 
   @Get("/:name/history")
-  public async history(@Data() request: HistoryAppRequest): Promise<HistoryAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async history(@Data() request: HistoryServiceRequest): Promise<HistoryServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
     const repo = await this.storage.repository(request.name);
     if (!repo) {
@@ -304,8 +311,8 @@ export class AppController {
     const all = offset + limit + 1;
     const commits = await walk.getCommits(all);
 
-    const total: HistoryAppResponse["total"] = commits.length;
-    const items: HistoryAppResponse["items"] = commits
+    const total: HistoryServiceResponse["total"] = commits.length;
+    const items: HistoryServiceResponse["items"] = commits
       .slice(offset, commits.length !== all ? commits.length : commits.length - 1)
       .map((i) => {
         const commit = i.id().tostrS();
@@ -321,38 +328,37 @@ export class AppController {
   }
 
   @Post("/:name/up")
-  public async up(@Data() request: UpAppRequest): Promise<UpAppResponse> {
-    const app = await App.findOne({ where: { name: request.name } });
-    if (!app) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+  public async up(@Data() request: UpServiceRequest): Promise<UpServiceResponse> {
+    const service = await Service.findOne({ where: { name: request.name } });
+    if (!service) {
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     const deploy = new Deploy();
-    deploy.app = app;
+    deploy.service = service;
     deploy.status = "queued";
-    deploy.trigger = request.trigger ?? "manual";
 
     const repo = await this.storage.repository(request.name);
     if (repo) {
       try {
         const commit = await repo.getMasterCommit();
-        deploy.commit = commit.id().tostrS();
+        deploy.target = commit.id().tostrS();
       } catch (e) {
-        throw new NotFoundException(`Found application source but not found commit of ${request.name}`);
+        throw new NotFoundException(`Found service source but not found commit of ${request.name}`);
       }
     } else {
-      deploy.commit = "unknown";
+      deploy.target = "unknown";
     }
 
     const saved = await Deploy.save(deploy);
-    return saved!.toView();
+    return saved!.view;
   }
 
   @Post("/:name/down")
-  public async down(@Data() request: DownAppRequest): Promise<DownAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async down(@Data() request: DownServiceRequest): Promise<DownServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     try {
@@ -368,10 +374,10 @@ export class AppController {
   }
 
   @Post("/:name/restart")
-  public async restart(@Data() request: RestartAppRequest): Promise<RestartAppResponse> {
-    const count = await App.countBy({ name: request.name });
+  public async restart(@Data() request: RestartServiceRequest): Promise<RestartServiceResponse> {
+    const count = await Service.countBy({ name: request.name });
     if (!count) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     try {
@@ -387,37 +393,36 @@ export class AppController {
   }
 
   @Get("/:name/deploy")
-  public async listDeploy(@Data() request: ListAppDeployRequest): Promise<ListAppDeployResponse> {
+  public async listDeploy(@Data() request: ListServiceDeployRequest): Promise<ListServiceDeployResponse> {
     const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
     const [by, axis] = sort.split(":");
-    const exist = await App.countBy({ name: request.name });
+    const exist = await Service.countBy({ name: request.name });
     if (!exist) {
-      throw new NotFoundException(`Not found application of ${request.name}.`);
+      throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     const [deploys, count] = await Deploy.findAndCount({
       where: {
-        app: { name },
-        commit: search ? ILike(`%${search}%`) : undefined,
+        service: { name },
+        target: search ? ILike(`%${search}%`) : undefined,
         status: search ? (ILike(`%${search}%`) as any) : undefined,
-        trigger: search ? (ILike(`%${search}%`) as any) : undefined,
       },
-      relations: { app: true },
+      relations: { service: true },
       skip: offset,
       take: limit,
       order: { [by]: axis ? axis : "asc" },
     });
 
-    const total: ListAppDeployResponse["total"] = count;
-    const items: ListAppDeployResponse["items"] = deploys.map((d) => d.toView());
+    const total: ListServiceDeployResponse["total"] = count;
+    const items: ListServiceDeployResponse["items"] = deploys.map((d) => d.view);
 
     return { total, items };
   }
 
   @Get("/:name/deploy/:id/logs")
-  public async logsDeploy(@Data() request: LogsAppDeployRequest): Promise<LogsAppDeployResponse> {
+  public async logsDeploy(@Data() request: LogsServiceDeployRequest): Promise<LogsServiceDeployResponse> {
     const { id, name, since, tail } = request;
-    const count = await Deploy.countBy({ id, app: { name } });
+    const count = await Deploy.countBy({ id, service: { name } });
     if (!count) {
       throw new NotFoundException(`Not found deploy of ${name}.`);
     }
@@ -430,11 +435,11 @@ export class AppController {
       take: typeof tail === "number" ? tail : undefined,
       order: { id: "desc" },
     });
-    const deploy = await Deploy.findOne({ where: { id, app: { name } } });
+    const deploy = await Deploy.findOne({ where: { id, service: { name } } });
 
     lines.reverse();
 
-    const logs: LogsAppDeployResponse["logs"] = lines.map((i) => [i.level, i.time.getTime(), i.line]);
+    const logs: LogsServiceDeployResponse["logs"] = lines.map((i) => [i.level, i.time.getTime(), i.line]);
     if (["success", "failed"].includes(deploy!.status)) {
       return { since: -1, logs };
     }
@@ -448,9 +453,9 @@ export class AppController {
   }
 
   @Delete("/:name/deploy/:id/cancel")
-  public async cancelDeploy(@Data() request: CancelAppDeployRequest): Promise<CancelAppDeployResponse> {
+  public async cancelDeploy(@Data() request: CancelServiceDeployRequest): Promise<CancelServiceDeployResponse> {
     const { id, name } = request;
-    const count = await Deploy.countBy({ id, app: { name } });
+    const count = await Deploy.countBy({ id, service: { name } });
     if (!count) {
       throw new NotFoundException(`Not found deploy of ${name}.`);
     }

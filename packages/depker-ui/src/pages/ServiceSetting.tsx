@@ -17,21 +17,21 @@ import {
   TbWreckingBall,
 } from "react-icons/all";
 import { colors, useStatus } from "../api/use-status";
-import { useApp } from "../api/use-app";
+import { useService } from "../api/use-service";
 import { css } from "@emotion/react";
 import { NavLink } from "../components/core/NavLink";
 import { useCalling } from "../hooks/use-calling";
 
-export type AppSettingContext = {
+export type ServiceSettingContext = {
   name: string;
-  app: ReturnType<typeof useApp>;
+  service: ReturnType<typeof useService>;
   status: ReturnType<typeof useStatus>;
 };
 
-export const AppSetting: React.FC = () => {
+export const ServiceSetting: React.FC = () => {
   const navigate = useNavigate();
-  const { app: name } = useParams<"app">();
-  const app = useApp(name!);
+  const { service: name } = useParams<"service">();
+  const service = useService(name!);
   const status = useStatus(name!);
   const calling = useCalling();
 
@@ -66,8 +66,8 @@ export const AppSetting: React.FC = () => {
           onClick={() => {
             calling.calling(async (actions) => {
               try {
-                await app.actions.stop();
-                actions.success(`Stop successful`, `Application stop successful.`);
+                await service.actions.stop();
+                actions.success(`Stop successful`, `Service stop successful.`);
               } catch (e: any) {
                 actions.failure(`Stop failure`, e);
               }
@@ -90,8 +90,8 @@ export const AppSetting: React.FC = () => {
           onClick={() => {
             calling.calling(async (actions) => {
               try {
-                await app.actions.restart();
-                actions.success(`Restart successful`, `Application restart successful.`);
+                await service.actions.restart();
+                actions.success(`Restart successful`, `Service restart successful.`);
               } catch (e: any) {
                 actions.failure(`Restart failure`, e);
               }
@@ -113,9 +113,9 @@ export const AppSetting: React.FC = () => {
         onClick={() =>
           calling.calling(async (actions) => {
             try {
-              const deploy = await app.actions.deploy();
-              actions.success(`Deploy successful`, `Application create deploy #${deploy.id} successful.`);
-              navigate(`/apps/${name}/deploys/${deploy.id}`);
+              const deploy = await service.actions.deploy();
+              actions.success(`Deploy successful`, `Service create deploy #${deploy.id} successful.`);
+              navigate(`/services/${name}/deploys/${deploy.id}`);
             } catch (e: any) {
               actions.failure(`Deploy failure`, e);
             }
@@ -136,8 +136,8 @@ export const AppSetting: React.FC = () => {
         onClick={() => {
           calling.calling(async (actions) => {
             try {
-              await app.actions.save();
-              actions.success(`Save successful`, `Application save successful.`);
+              await service.actions.save();
+              actions.success(`Save successful`, `Service save successful.`);
             } catch (e: any) {
               actions.failure(`Save failure`, e);
             }
@@ -150,17 +150,17 @@ export const AppSetting: React.FC = () => {
     [calling.loading]
   );
 
-  const AppNav = useMemo(
+  const ServiceNav = useMemo(
     () => (
       <Grid.Col span={12} md={3}>
         <Stack spacing="xs">
-          <NavLink label="Configs" icon={<TbInfoCircle />} action={`/apps/${name}/`} />
-          <NavLink label="Deploys" icon={<TbWreckingBall />} action={`/apps/${name}/deploys`} />
-          <NavLink label="Metrics" icon={<TbActivity />} action={`/apps/${name}/metrics`} />
-          <NavLink label="Logs" icon={<TbNotes />} action={`/apps/${name}/logs`} />
-          <NavLink label="Terminal" icon={<TbTerminal />} action={`/apps/${name}/terminal`} />
-          <NavLink label="History" icon={<TbHistory />} action={`/apps/${name}/history`} />
-          <NavLink label="Danger Zone" icon={<TbAlertTriangle />} color="red" action={`/apps/${name}/danger`} />
+          <NavLink label="Configs" icon={<TbInfoCircle />} action={`/services/${name}/`} />
+          <NavLink label="Deploys" icon={<TbWreckingBall />} action={`/services/${name}/deploys`} />
+          <NavLink label="Metrics" icon={<TbActivity />} action={`/services/${name}/metrics`} />
+          <NavLink label="Logs" icon={<TbNotes />} action={`/services/${name}/logs`} />
+          <NavLink label="Terminal" icon={<TbTerminal />} action={`/services/${name}/terminal`} />
+          <NavLink label="History" icon={<TbHistory />} action={`/services/${name}/history`} />
+          <NavLink label="Danger Zone" icon={<TbAlertTriangle />} color="red" action={`/services/${name}/danger`} />
         </Stack>
       </Grid.Col>
     ),
@@ -169,7 +169,7 @@ export const AppSetting: React.FC = () => {
 
   return (
     <Main
-      title="App Settings"
+      title="Service Settings"
       header={
         <Group spacing="xs">
           {Status}
@@ -185,9 +185,9 @@ export const AppSetting: React.FC = () => {
           flex: 1;
         `}
       >
-        {AppNav}
+        {ServiceNav}
         <Grid.Col span={12} md={9}>
-          <Outlet context={{ name, app, status }} />
+          <Outlet context={{ name, service, status }} />
         </Grid.Col>
       </Grid>
     </Main>

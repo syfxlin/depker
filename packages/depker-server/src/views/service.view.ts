@@ -2,8 +2,8 @@ import {
   isBoolean,
   IsBoolean,
   isFQDN,
-  isIn,
   IsIn,
+  isIn,
   IsInt,
   isNotEmpty,
   IsNotEmpty,
@@ -19,45 +19,24 @@ import {
   Min,
 } from "class-validator";
 import {
-  AppHealthCheck,
-  AppHost,
-  AppLabel,
-  AppMiddleware,
-  AppPort,
-  AppRestart,
-  AppSecret,
-  AppStatus,
-  AppVolume,
-} from "../entities/app.entity";
+  ServiceHealthCheck,
+  ServiceHost,
+  ServiceLabel,
+  ServiceMiddleware,
+  ServicePort,
+  ServiceRestart,
+  ServiceSecret,
+  ServiceStatus,
+  ServiceType,
+  ServiceVolume,
+} from "../entities/service.entity";
 import { ArrayEach } from "../validation/array-each.validation";
 import { objectEach } from "../validation/object-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
-import { DeployStatus, DeployTrigger } from "../entities/deploy.entity";
+import { DeployStatus } from "../entities/deploy.entity";
 import { LogLevel } from "../entities/log.entity";
 
-/*
-GET    /apps
-POST   /apps
-GET    /apps/:name
-DELETE /apps/:name
-
-GET    /apps/:name/status
-GET    /apps/:name/metrics
-GET    /apps/:name/logs
-
-POST   /apps/:name/up
-POST   /apps/:name/down
-POST   /apps/:name/restart
-
-// list deploy
-GET    /apps/:name/deploy
-// get deploy logs
-GET    /apps/:name/deploy/:id/logs
-// cancel deploy
-POST   /apps/:name/deploy/:id/cancel
- */
-
-export class ListAppRequest {
+export class ListServiceRequest {
   @IsString()
   @IsOptional()
   @IsNotEmpty()
@@ -79,26 +58,31 @@ export class ListAppRequest {
   sort?: string;
 }
 
-export type ListAppResponse = {
+export type ListServiceResponse = {
   total: number;
   items: Array<{
     name: string;
     buildpack: string;
     icon: string;
     domain: string;
-    status: AppStatus;
+    status: ServiceStatus;
     createdAt: number;
     updatedAt: number;
     deploydAt: number;
   }>;
 };
 
-export class UpsertAppRequest {
+export class UpsertServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
   @Matches(/^[a-zA-Z0-9._-]+$/)
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(["app", "job"])
+  type: ServiceType;
 
   @IsString()
   @IsNotEmpty()
@@ -115,7 +99,7 @@ export class UpsertAppRequest {
   @IsOptional()
   @IsString()
   @Matches(/^(no|always|on-failure)$/)
-  restart?: AppRestart;
+  restart?: ServiceRestart;
 
   @IsOptional()
   @IsBoolean()
@@ -152,12 +136,12 @@ export class UpsertAppRequest {
       options: [recordEach([isString, isNotEmpty], [isString])],
     }),
   ])
-  middlewares?: Array<AppMiddleware>;
+  middlewares?: Array<ServiceMiddleware>;
 
   // healthcheck
   @IsOptional()
   @IsObject()
-  healthcheck?: AppHealthCheck;
+  healthcheck?: ServiceHealthCheck;
 
   // extensions
   @IsOptional()
@@ -197,7 +181,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  labels?: Array<AppLabel>;
+  labels?: Array<ServiceLabel>;
 
   @IsOptional()
   @ArrayEach([
@@ -207,7 +191,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  secrets?: Array<AppSecret>;
+  secrets?: Array<ServiceSecret>;
 
   @IsOptional()
   @ArrayEach([
@@ -217,7 +201,7 @@ export class UpsertAppRequest {
       onbuild: [isBoolean],
     }),
   ])
-  hosts?: Array<AppHost>;
+  hosts?: Array<ServiceHost>;
 
   @IsOptional()
   @ArrayEach([
@@ -227,7 +211,7 @@ export class UpsertAppRequest {
       proto: [isString, (v) => isIn(v, ["tcp", "udp"])],
     }),
   ])
-  ports?: Array<AppPort>;
+  ports?: Array<ServicePort>;
 
   @IsOptional()
   @ArrayEach([
@@ -237,16 +221,16 @@ export class UpsertAppRequest {
       readonly: [isBoolean],
     }),
   ])
-  volumes?: Array<AppVolume>;
+  volumes?: Array<ServiceVolume>;
 
   @IsOptional()
   @RecordEach([isString, isNotEmpty])
   extensions?: Record<string, any>;
 }
 
-export type UpsertAppResponse = GetAppResponse;
+export type UpsertServiceResponse = GetServiceResponse;
 
-export class GetAppRequest {
+export class GetServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -254,20 +238,21 @@ export class GetAppRequest {
   name: string;
 }
 
-export type GetAppResponse = {
+export type GetServiceResponse = {
   name: string;
+  type: ServiceType;
   buildpack: string;
   commands: string[];
   entrypoints: string[];
-  restart: AppRestart;
+  restart: ServiceRestart;
   pull: boolean;
   domain: string[];
   rule: string;
   port: number;
   scheme: string;
   tls: boolean;
-  middlewares: Array<AppMiddleware>;
-  healthcheck: AppHealthCheck;
+  middlewares: Array<ServiceMiddleware>;
+  healthcheck: ServiceHealthCheck;
   init: boolean;
   rm: boolean;
   privileged: boolean;
@@ -275,17 +260,17 @@ export type GetAppResponse = {
   workdir: string;
   buildArgs: Record<string, string>;
   networks: Record<string, string>;
-  labels: Array<AppLabel>;
-  secrets: Array<AppSecret>;
-  hosts: Array<AppHost>;
-  ports: Array<AppPort>;
-  volumes: Array<AppVolume>;
+  labels: Array<ServiceLabel>;
+  secrets: Array<ServiceSecret>;
+  hosts: Array<ServiceHost>;
+  ports: Array<ServicePort>;
+  volumes: Array<ServiceVolume>;
   createdAt: number;
   updatedAt: number;
   extensions: Record<string, any>;
 };
 
-export class DeleteAppRequest {
+export class DeleteServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -293,11 +278,11 @@ export class DeleteAppRequest {
   name: string;
 }
 
-export type DeleteAppResponse = {
+export type DeleteServiceResponse = {
   status: "success";
 };
 
-export class StatusAppRequest {
+export class StatusServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -305,11 +290,11 @@ export class StatusAppRequest {
   name: string;
 }
 
-export type StatusAppResponse = {
-  status: AppStatus;
+export type StatusServiceResponse = {
+  status: ServiceStatus;
 };
 
-export class MetricsAppRequest {
+export class MetricsServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -317,7 +302,7 @@ export class MetricsAppRequest {
   name: string;
 }
 
-export type MetricsAppResponse = {
+export type MetricsServiceResponse = {
   cpu: {
     free: number;
     used: number;
@@ -334,7 +319,7 @@ export type MetricsAppResponse = {
   };
 };
 
-export class HistoryAppRequest {
+export class HistoryServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -352,7 +337,7 @@ export class HistoryAppRequest {
   limit?: number;
 }
 
-export type HistoryAppResponse = {
+export type HistoryServiceResponse = {
   total: number;
   items: Array<{
     message: string;
@@ -365,30 +350,24 @@ export type HistoryAppResponse = {
   }>;
 };
 
-export class UpAppRequest {
+export class UpServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
   @Matches(/^[a-zA-Z0-9._-]+$/)
   name: string;
-
-  @IsOptional()
-  @IsString()
-  @IsIn(["manual", "depker", "git"])
-  trigger?: DeployTrigger;
 }
 
-export type UpAppResponse = {
+export type UpServiceResponse = {
   id: number;
-  app: string;
-  commit: string;
+  service: string;
+  target: string;
   status: DeployStatus;
-  trigger: DeployTrigger;
   createdAt: number;
   updatedAt: number;
 };
 
-export class DownAppRequest {
+export class DownServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -396,11 +375,11 @@ export class DownAppRequest {
   name: string;
 }
 
-export type DownAppResponse = {
+export type DownServiceResponse = {
   status: "success";
 };
 
-export class RestartAppRequest {
+export class RestartServiceRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -408,11 +387,11 @@ export class RestartAppRequest {
   name: string;
 }
 
-export type RestartAppResponse = {
+export type RestartServiceResponse = {
   status: "success";
 };
 
-export class ListAppDeployRequest {
+export class ListServiceDeployRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -440,20 +419,19 @@ export class ListAppDeployRequest {
   sort?: string;
 }
 
-export type ListAppDeployResponse = {
+export type ListServiceDeployResponse = {
   total: number;
   items: Array<{
     id: number;
-    app: string;
-    commit: string;
+    service: string;
+    target: string;
     status: DeployStatus;
-    trigger: DeployTrigger;
     createdAt: number;
     updatedAt: number;
   }>;
 };
 
-export class LogsAppDeployRequest {
+export class LogsServiceDeployRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -473,12 +451,12 @@ export class LogsAppDeployRequest {
   tail?: number;
 }
 
-export type LogsAppDeployResponse = {
+export type LogsServiceDeployResponse = {
   since: number;
   logs: Array<[LogLevel, number, string]>;
 };
 
-export class CancelAppDeployRequest {
+export class CancelServiceDeployRequest {
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -490,6 +468,6 @@ export class CancelAppDeployRequest {
   id: number;
 }
 
-export type CancelAppDeployResponse = {
+export type CancelServiceDeployResponse = {
   status: "success";
 };
