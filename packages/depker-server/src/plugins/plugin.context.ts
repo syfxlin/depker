@@ -3,7 +3,7 @@ import { Setting } from "../entities/setting.entity";
 import { Token } from "../entities/token.entity";
 import { Service } from "../entities/service.entity";
 import { Deploy } from "../entities/deploy.entity";
-import { Log } from "../entities/log.entity";
+import { DeployLog } from "../entities/deploy-log.entity";
 import { DockerService } from "../services/docker.service";
 import { HttpService } from "nestjs-http-promise";
 import { EventEmitter2 } from "@nestjs/event-emitter";
@@ -28,7 +28,7 @@ export class PluginContext {
   // entity
   public readonly Service = Service;
   public readonly Deploy = Deploy;
-  public readonly Log = Log;
+  public readonly Log = DeployLog;
   public readonly Setting = Setting;
   public readonly Token = Token;
 

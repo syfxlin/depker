@@ -33,8 +33,7 @@ import {
 import { ArrayEach } from "../validation/array-each.validation";
 import { objectEach } from "../validation/object-each.validation";
 import { RecordEach, recordEach } from "../validation/record-each.validation";
-import { DeployStatus } from "../entities/deploy.entity";
-import { LogLevel } from "../entities/log.entity";
+import { DeployStatus, LogLevel } from "../types";
 
 export class ListServiceRequest {
   @IsString()

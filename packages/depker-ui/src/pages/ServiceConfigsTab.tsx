@@ -8,6 +8,7 @@ import {
   TbApiApp,
   TbApps,
   TbAtom2,
+  TbBox,
   TbCertificate,
   TbCircleDot,
   TbClock,
@@ -28,6 +29,7 @@ import {
   TbSignature,
   TbSpace,
   TbTerminal,
+  TbTimeline,
   TbUser,
 } from "react-icons/all";
 import { ArrayInput } from "../components/input/ArrayInput";
@@ -138,20 +140,6 @@ export const ServiceConfigsTab: React.FC = () => {
     [service.data?.buildpack, buildpacks.data]
   );
 
-  const BasicRow = useMemo(
-    () => (
-      <Grid>
-        <Grid.Col span={12} md={6}>
-          {Name}
-        </Grid.Col>
-        <Grid.Col span={12} md={6}>
-          {Type}
-        </Grid.Col>
-      </Grid>
-    ),
-    [Name, Type]
-  );
-
   const PullImage = useMemo(
     () =>
       service.data && (
@@ -171,20 +159,6 @@ export const ServiceConfigsTab: React.FC = () => {
         />
       ),
     [service.data?.pull]
-  );
-
-  const InitRow = useMemo(
-    () => (
-      <Grid>
-        <Grid.Col span={12} md={6}>
-          {Buildpacks}
-        </Grid.Col>
-        <Grid.Col span={12} md={6}>
-          {PullImage}
-        </Grid.Col>
-      </Grid>
-    ),
-    [Buildpacks, PullImage]
   );
 
   const RestartPolicy = useMemo(
@@ -273,9 +247,67 @@ export const ServiceConfigsTab: React.FC = () => {
     [service.data?.healthcheck]
   );
 
-  const PolicyRow = useMemo(
+  const Cron = useMemo(
+    () =>
+      service.data?.type && (
+        <TextInput
+          required
+          label="Cron"
+          description="Cron expression, support to minute level. format: minute hour day month week."
+          placeholder="Cron expression, minute hour day month week"
+          icon={<TbTimeline />}
+          value={service.data.extensions?.cron ?? ""}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            service.actions.update((prev) => ({ ...prev, extensions: { ...prev.extensions, cron: e.target.value } }));
+          }}
+        />
+      ),
+    [service.data?.type, service.data?.extensions?.cron]
+  );
+
+  const Image = useMemo(
+    () =>
+      service.data?.buildpack === "image" && (
+        <TextInput
+          required
+          label="Image"
+          description="An image name is made up of slash-separated name components."
+          placeholder="Container Image"
+          icon={<TbBox />}
+          value={service.data.extensions?.image ?? ""}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            service.actions.update((prev) => ({ ...prev, extensions: { ...prev.extensions, image: e.target.value } }));
+          }}
+        />
+      ),
+    [service.data?.buildpack, service.data?.extensions?.image]
+  );
+
+  const GeneralRow = useMemo(
     () => (
       <Grid>
+        <Grid.Col span={12} md={6}>
+          {Name}
+        </Grid.Col>
+        <Grid.Col span={12} md={6}>
+          {Type}
+        </Grid.Col>
+        <Grid.Col span={12} md={6}>
+          {Buildpacks}
+        </Grid.Col>
+        {Cron && (
+          <Grid.Col span={12} md={6}>
+            {Cron}
+          </Grid.Col>
+        )}
+        {Image && (
+          <Grid.Col span={12} md={6}>
+            {Image}
+          </Grid.Col>
+        )}
+        <Grid.Col span={12} md={6}>
+          {PullImage}
+        </Grid.Col>
         <Grid.Col span={12} md={6}>
           {RestartPolicy}
         </Grid.Col>
@@ -284,7 +316,7 @@ export const ServiceConfigsTab: React.FC = () => {
         </Grid.Col>
       </Grid>
     ),
-    [RestartPolicy, HealthCheck]
+    [Name, Type, Buildpacks, PullImage, RestartPolicy, HealthCheck, Cron, Image]
   );
 
   // requests
@@ -887,9 +919,7 @@ export const ServiceConfigsTab: React.FC = () => {
     <Async query={service.query}>
       <Stack>
         <Heading>General</Heading>
-        {BasicRow}
-        {InitRow}
-        {PolicyRow}
+        {GeneralRow}
         <Heading>Extensions</Heading>
         {Extensions}
         <Heading>Requests</Heading>

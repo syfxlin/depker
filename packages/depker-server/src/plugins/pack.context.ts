@@ -1,10 +1,10 @@
 import { Deploy } from "../entities/deploy.entity";
 import { PluginContext, PluginOptions } from "./plugin.context";
-import { DeployLogger } from "../entities/log.entity";
 import fs from "fs-extra";
 import path from "path";
 import { Service } from "../entities/service.entity";
 import { DeployBuildOptions, DeployStartOptions } from "../services/deploy.service";
+import { LogFunc } from "../types";
 
 export interface PackOptions extends PluginOptions {
   project: string;
@@ -13,7 +13,7 @@ export interface PackOptions extends PluginOptions {
 
 export class PackContext extends PluginContext {
   // logger
-  public readonly log: DeployLogger;
+  public readonly log: LogFunc;
 
   // values
   public readonly project: string;
@@ -122,13 +122,24 @@ export class PackContext extends PluginContext {
       middlewares: options.middlewares ?? service.middlewares,
     });
 
-    if (typeof build === "string") {
-      await this.dockerfile(`FROM ${build}`);
-      const image = await this.deploys.build(name, project, this.log, _build_opts({}));
-      return await this.deploys.start(name, image, this.log, _start_opts(start ?? {}));
-    } else {
-      const image = await this.deploys.build(name, project, this.log, _build_opts(build ?? {}));
-      return await this.deploys.start(name, image, this.log, _start_opts(start ?? {}));
-    }
+    const _build = async () => {
+      if (typeof build === "string") {
+        await this.dockerfile(`FROM ${build}`);
+        return await this.deploys._build({ name, project, options: _build_opts({}), logger: this.log });
+      } else {
+        return await this.deploys._build({ name, project, options: _build_opts(build ?? {}), logger: this.log });
+      }
+    };
+
+    const _start = async (image: string) => {
+      if (service.type === "app") {
+        return await this.deploys._start({ name, image, options: _start_opts(start ?? {}), logger: this.log });
+      } else {
+        const cron = await this.extensions("cron");
+        return await this.deploys._cron({ name, image, cron, options: _start_opts(start ?? {}), logger: this.log });
+      }
+    };
+
+    return await _start(await _build());
   }
 }

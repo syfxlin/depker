@@ -6,7 +6,7 @@ import { Setting } from "./entities/setting.entity";
 import { TraefikTask } from "./tasks/traefik.task";
 import { Deploy } from "./entities/deploy.entity";
 import { GitController } from "./controllers/git.controller";
-import { Log } from "./entities/log.entity";
+import { DeployLog } from "./entities/deploy-log.entity";
 import { DeployTask } from "./tasks/deploy.task";
 import { SystemController } from "./controllers/system.controller";
 import { Token } from "./entities/token.entity";
@@ -21,9 +21,12 @@ import { TokenController } from "./controllers/token.controller";
 import { LogsGateway } from "./ws/logs.gateway";
 import { AccessLogsGateway } from "./ws/access-logs.gateway";
 import { SettingController } from "./controllers/setting.controller";
+import { Cron } from "./entities/cron.entity";
+import { CronLog } from "./entities/cron-log.entity";
+import { CronHistory } from "./entities/cron-history.entity";
 
 // entity
-export const entities = [Setting, Token, Service, Deploy, Log];
+export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronHistory, CronLog];
 
 // controller & service & task
 export const controllers = [

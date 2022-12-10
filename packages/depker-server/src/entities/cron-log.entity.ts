@@ -1,31 +1,24 @@
 import { BaseEntity, Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Relation } from "typeorm";
-import { Deploy } from "./deploy.entity";
-
-export type DeployLogger = {
-  debug: (line: string) => void;
-  log: (line: string) => void;
-  step: (line: string) => void;
-  success: (line: string) => void;
-  error: (line: string, error?: Error) => void;
-};
-
-export type LogLevel = "debug" | "log" | "step" | "success" | "error";
+import { LogLevel } from "../types";
+import { Cron } from "./cron.entity";
+import { CronHistory } from "./cron-history.entity";
 
 @Entity()
 @Index(["time"])
 @Index(["level"])
-export class Log extends BaseEntity {
+export class CronLog extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Deploy, (deploy) => deploy.logs, {
+  // history
+  @ManyToOne(() => CronHistory, {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
     cascade: false,
     persistence: false,
   })
-  deploy: Relation<Deploy>;
+  history: Relation<Cron>;
 
   @Column({ nullable: false })
   time: Date;

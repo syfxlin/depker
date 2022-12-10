@@ -1,7 +1,10 @@
+// types
+export * from "./entities";
+
 // entities
 export * from "../entities/service.entity";
 export * from "../entities/deploy.entity";
-export * from "../entities/log.entity";
+export * from "../entities/deploy-log.entity";
 export * from "../entities/setting.entity";
 export * from "../entities/token.entity";
 

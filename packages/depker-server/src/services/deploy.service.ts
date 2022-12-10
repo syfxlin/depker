@@ -7,7 +7,6 @@ import pAll from "p-all";
 import { PluginService } from "./plugin.service";
 import { PackContext } from "../plugins/pack.context";
 import { Setting } from "../entities/setting.entity";
-import { DeployLogger } from "../entities/log.entity";
 import { IMAGES, NAMES, PATHS } from "../constants/depker.constant";
 import { ContainerCreateOptions } from "dockerode";
 import path from "path";
@@ -22,6 +21,10 @@ import fs from "fs-extra";
 import { PassThrough } from "stream";
 import { createInterface } from "readline";
 import { ModuleRef } from "@nestjs/core";
+import { LogFunc } from "../types";
+import { Cron } from "../entities/cron.entity";
+import { CronTime } from "cron";
+import { CronHistory } from "../entities/cron-history.entity";
 
 export interface DeployBuildOptions {
   // options
@@ -61,6 +64,28 @@ export interface DeployStartOptions {
   middlewares?: ServiceMiddleware[];
 }
 
+export interface DeployBuildArgs {
+  name: string;
+  project: string;
+  options: DeployBuildOptions;
+  logger: LogFunc;
+}
+
+export interface DeployStartArgs {
+  name: string;
+  image: string;
+  options: DeployStartOptions;
+  logger: LogFunc;
+}
+
+export interface DeployCronArgs {
+  name: string;
+  image: string;
+  cron: string;
+  options: DeployStartOptions;
+  logger: LogFunc;
+}
+
 @Injectable()
 export class DeployService {
   constructor(
@@ -70,8 +95,8 @@ export class DeployService {
     private readonly ref: ModuleRef
   ) {}
 
-  public async task() {
-    const setting = await Setting.read();
+  public async task1() {
+    // find deploys
     const deploys = await Deploy.find({
       where: {
         status: In(["queued", "running"]),
@@ -84,10 +109,15 @@ export class DeployService {
       },
     });
 
+    // skip on empty deploy
     if (!deploys.length) {
       return;
     }
 
+    // get settings
+    const setting = await Setting.read();
+
+    // create actions
     const actions = deploys.map((deploy) => async () => {
       const service = deploy.service;
       const logger = deploy.logger;
@@ -120,11 +150,51 @@ export class DeployService {
         // update status to running
         await Deploy.update(deploy.id, { status: "running" });
 
-        // deploy container
-        await this.deploy(deploy);
+        // find buildpack
+        const buildpack = (await this.plugins.buildpacks())[service.buildpack];
+        if (!buildpack?.buildpack?.handler) {
+          throw new Error(`Not found buildpack ${service.buildpack}`);
+        }
+
+        // init project
+        const project = await this.storages.project(service.name, deploy.target);
+
+        // init context
+        const context = new PackContext({
+          name: buildpack.name,
+          deploy: deploy,
+          project: project,
+          ref: this.ref,
+        });
+
+        // deployment containers
+        await buildpack.buildpack.handler(context);
 
         // purge containers
-        await this.purge(deploy);
+        await logger.step(`Purge ${service.name} containers started.`);
+        const infos = await this.docker.listContainers({ all: true });
+        const containers = infos.filter(
+          (c) => c.Labels["depker.name"] === service.name && !c.Names.includes(`/${service.name}`)
+        );
+        for (const info of containers) {
+          const container = this.docker.getContainer(info.Id);
+          try {
+            await container.remove({ force: true });
+          } catch (e: any) {
+            if (e.statusCode === 404) {
+              return;
+            }
+            await logger.error(`Purge container ${container.id} failed.`, e);
+          }
+        }
+
+        // purge images and volumes
+        process.nextTick(async () => {
+          const setting = await Setting.read();
+          if (setting.purge) {
+            await Promise.all([this.docker.pruneImages(), this.docker.pruneVolumes()]);
+          }
+        });
 
         // update status to success
         await Deploy.update(deploy.id, { status: "success" });
@@ -151,66 +221,72 @@ export class DeployService {
     await pAll(actions, { concurrency: setting.concurrency });
   }
 
-  public async deploy(deploy: Deploy) {
-    // values
-    const service = deploy.service;
-
-    // find buildpack
-    const buildpack = (await this.plugins.buildpacks())[service.buildpack];
-    if (!buildpack?.buildpack?.handler) {
-      throw new Error(`Not found buildpack ${service.buildpack}`);
-    }
-
-    // init project
-    const project = await this.storages.project(service.name, deploy.target);
-
-    // init context
-    const context = new PackContext({
-      name: buildpack.name,
-      deploy: deploy,
-      project: project,
-      ref: this.ref,
+  public async task2() {
+    // query all cron task
+    const all = await Cron.find({
+      where: {},
+      order: {
+        createdAt: "asc",
+      },
+      relations: {
+        service: true,
+      },
     });
 
-    // deployment containers
-    await buildpack.buildpack.handler(context);
-  }
+    // filter active cron task
+    const crons = all.filter((cron) => Math.abs(new CronTime(cron.time).getTimeout()) < 60000);
 
-  public async purge(deploy: Deploy) {
-    // values
-    const service = deploy.service;
-    const logger = deploy.logger;
+    // skip on empty cron task
+    if (!crons.length) {
+      return;
+    }
 
-    // logger
-    await logger.step(`Purge ${service.name} containers started.`);
+    // get setting
+    const setting = await Setting.read();
 
-    // purge container
-    const infos = await this.docker.listContainers({ all: true });
-    const containers = infos.filter(
-      (c) => c.Labels["depker.name"] === service.name && !c.Names.includes(`/${service.name}`)
-    );
-    for (const info of containers) {
-      const container = this.docker.getContainer(info.Id);
+    const actions = crons.map((cron) => async () => {
+      // insert cron history
+      const history = new CronHistory();
+      history.cron = cron;
+      history.status = "queued";
+      await CronHistory.save(history);
+
+      // values
+      const service = cron.service;
+      const logger = history.logger;
+      const name = service.name;
+      const image = cron.options.image;
+      const options = cron.options.options;
+
       try {
-        await container.remove({ force: true });
-      } catch (e: any) {
-        if (e.statusCode === 404) {
-          return;
-        }
-        await logger.error(`Purge container ${container.id} failed.`, e);
-      }
-    }
+        // log started
+        await logger.step(`Trigger service ${service.name} started.`);
 
-    // purge images and volumes
-    process.nextTick(async () => {
-      const setting = await Setting.read();
-      if (setting.purge) {
-        await Promise.all([this.docker.pruneImages(), this.docker.pruneVolumes()]);
+        // update status to running
+        await CronHistory.update(history.id, { status: "running" });
+
+        // running service
+        await this._run({ name, image, options, logger });
+
+        // update status to success
+        await CronHistory.update(history.id, { status: "success" });
+
+        // log successful
+        await logger.success(`Trigger service ${service.name} successful.`);
+      } catch (e: any) {
+        // update status to failed
+        await CronHistory.update(history.id, { status: "failed" });
+        // save failed logs
+        await logger.error(`Trigger service ${service.name} failure. Caused by ${e}.`);
       }
     });
+
+    await pAll(actions, { concurrency: setting.concurrency });
   }
 
-  public async build(name: string, project: string, logger: DeployLogger, options: DeployBuildOptions) {
+  public async _build(args: DeployBuildArgs) {
+    const { name, project, options, logger } = args;
+
     const image = `depker-${name}:${Date.now()}`;
 
     // logger
@@ -279,9 +355,8 @@ export class DeployService {
     }
   }
 
-  public async start(name: string, image: string, logger: DeployLogger, options: DeployStartOptions) {
-    // logger
-    await logger.step(`Start container ${name} started.`);
+  public async _create(args: DeployStartArgs) {
+    const { name, image, options } = args;
 
     // args
     const envs: Record<string, string> = {
@@ -294,7 +369,7 @@ export class DeployService {
       "traefik.enable": "true",
       "traefik.docker.network": NAMES.NETWORK,
     };
-    const args: ContainerCreateOptions = {
+    const create: ContainerCreateOptions = {
       name: `${name}-${Date.now()}`,
       Image: image,
       HostConfig: {
@@ -303,14 +378,14 @@ export class DeployService {
     };
 
     if (options.commands?.length) {
-      args.Cmd = options.commands;
+      create.Cmd = options.commands;
     }
     if (options.entrypoints?.length) {
-      args.Entrypoint = options.entrypoints;
+      create.Entrypoint = options.entrypoints;
     }
     if (options.healthcheck?.cmd) {
       const h = options.healthcheck;
-      args.Healthcheck = {
+      create.Healthcheck = {
         Test: h.cmd,
         Retries: h.retries ?? 0,
         Interval: (h.interval ?? 0) * 1000 * 1000000,
@@ -318,28 +393,28 @@ export class DeployService {
         Timeout: (h.timeout ?? 0) * 1000 * 1000000,
       };
     }
-    if (options.restart && args.HostConfig) {
-      args.HostConfig.RestartPolicy = {
+    if (options.restart && create.HostConfig) {
+      create.HostConfig.RestartPolicy = {
         Name: options.restart,
       };
     }
-    if (options.init && args.HostConfig) {
-      args.HostConfig.Init = true;
+    if (options.init && create.HostConfig) {
+      create.HostConfig.Init = true;
     }
-    if (options.rm && args.HostConfig) {
-      args.HostConfig.AutoRemove = true;
+    if (options.rm && create.HostConfig) {
+      create.HostConfig.AutoRemove = true;
     }
-    if (options.privileged && args.HostConfig) {
-      args.HostConfig.Privileged = true;
+    if (options.privileged && create.HostConfig) {
+      create.HostConfig.Privileged = true;
     }
     if (options.user) {
-      args.User = options.user;
+      create.User = options.user;
     }
     if (options.workdir) {
-      args.WorkingDir = options.workdir;
+      create.WorkingDir = options.workdir;
     }
-    if (options.hosts?.length && args.HostConfig) {
-      args.HostConfig.ExtraHosts = Object.entries(options.hosts).map(([name, value]) => `${name}:${value}`);
+    if (options.hosts?.length && create.HostConfig) {
+      create.HostConfig.ExtraHosts = Object.entries(options.hosts).map(([name, value]) => `${name}:${value}`);
     }
 
     // web
@@ -396,7 +471,7 @@ export class DeployService {
 
     // volumes
     for (const volume of options.volumes ?? []) {
-      const binds = args.HostConfig?.Binds as string[];
+      const binds = create.HostConfig?.Binds as string[];
       const hpath = path.join(PATHS.VOLUMES, volume.hpath.replace(/^@\//, ""));
       const cpath = volume.cpath;
       const ro = volume.readonly ? "ro" : "rw";
@@ -404,11 +479,11 @@ export class DeployService {
     }
 
     // envs & labels
-    args.Env = Object.entries(envs).map(([name, value]) => `${name}=${value}`);
-    args.Labels = labels;
+    create.Env = Object.entries(envs).map(([name, value]) => `${name}=${value}`);
+    create.Labels = labels;
 
     // create container
-    const container = await this.docker.createContainer(args);
+    const container = await this.docker.createContainer(create);
 
     // networks
     const dn = await this.docker.depkerNetwork();
@@ -422,6 +497,18 @@ export class DeployService {
         },
       });
     }
+
+    return container;
+  }
+
+  public async _start(args: DeployStartArgs) {
+    const { name, logger } = args;
+
+    // logger
+    await logger.step(`Start container ${name} started.`);
+
+    // create
+    const container = await this._create(args);
 
     try {
       // start
@@ -456,10 +543,66 @@ export class DeployService {
 
       await container.rename({ name });
       await logger.success(`Start container ${name} successful.`);
-      return container.id;
+      return `container:${container.id}`;
     } catch (e: any) {
       await logger.error(`Start container ${name} failure.`, e);
       throw new Error(`Start container ${name} failure. Caused by ${e.message}`);
+    }
+  }
+
+  public async _run(args: DeployStartArgs) {
+    const { name, logger } = args;
+
+    // logger
+    await logger.step(`Run container ${name} started.`);
+
+    // create
+    const container = await this._create(args);
+
+    try {
+      // attach
+      const stream = await container.attach({ stream: true, stdout: true, stderr: true });
+      stream.setEncoding("utf-8");
+      const readline = createInterface({ input: stream });
+      readline.on("line", (line) => {
+        logger.log(line);
+      });
+
+      // start
+      await container.start();
+      await logger.success(`Run container ${name} successful.`);
+
+      // wait
+      await container.wait();
+      await logger.success(`Run container ${name} stopped.`);
+    } catch (e: any) {
+      await logger.error(`Run container ${name} failure.`, e);
+      throw new Error(`Run container ${name} failure. Caused by ${e.message}`);
+    }
+  }
+
+  public async _cron(args: DeployCronArgs) {
+    const { name, image, cron, options, logger } = args;
+
+    // logger
+    await logger.step(`Enqueue schedule task ${name} started.`);
+
+    // update values
+    options.rm = true;
+    options.restart = "no";
+
+    try {
+      // enqueue
+      await Cron.save({
+        service: { name },
+        time: cron,
+        options: { image, options } as any,
+      });
+      await logger.success(`Enqueue schedule task ${name} successful.`);
+      return `cron:${name}`;
+    } catch (e: any) {
+      await logger.error(`Enqueue schedule task ${name} failure.`, e);
+      throw new Error(`Enqueue schedule task ${name} failure. Caused by ${e.message}`);
     }
   }
 }

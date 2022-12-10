@@ -1,14 +1,4 @@
-import {
-  BaseEntity,
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryColumn,
-  Relation,
-  Unique,
-  UpdateDateColumn,
-} from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, Unique, UpdateDateColumn } from "typeorm";
 import { Deploy } from "./deploy.entity";
 
 export type ServiceType = "app" | "job";
@@ -149,13 +139,6 @@ export class Service extends BaseEntity {
   // extensions
   @Column({ nullable: false, default: "{}", type: "simple-json" })
   extensions: Record<string, any>;
-
-  // deploy
-  @OneToMany(() => Deploy, (deploy) => deploy.service, {
-    cascade: false,
-    persistence: false,
-  })
-  deploys: Relation<Deploy[]>;
 
   // date
   @CreateDateColumn({ nullable: false })

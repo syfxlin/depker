@@ -54,7 +54,7 @@ export const ServiceList: React.FC = () => {
                       type: value.type,
                       buildpack: value.buildpack,
                     });
-                    actions.success(`Create service successful`, `Volume need to bind to the service to use.`);
+                    actions.success(`Create service successful`, `Click service to enter configuration.`);
                     return true;
                   } catch (e: any) {
                     actions.failure(`Create service failure`, e);

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Interval } from "@nestjs/schedule";
+import { Cron } from "@nestjs/schedule";
 import { DeployService } from "../services/deploy.service";
 
 @Injectable()
@@ -12,18 +12,27 @@ export class DeployTask {
     this.deploys = deploys;
   }
 
-  @Interval(2000)
-  public async interval() {
+  @Cron("*/2 * * * * *")
+  public async deploy() {
     if (this.running) {
       return;
     }
     this.running = true;
     try {
-      await this.deploys.task();
+      await this.deploys.task1();
     } catch (e: any) {
       this.logger.error(`Run deploy task failed. Caused by ${e.message}`, e.stack);
     } finally {
       this.running = false;
+    }
+  }
+
+  @Cron("0 * * * * *")
+  public async schedule() {
+    try {
+      await this.deploys.task2();
+    } catch (e: any) {
+      this.logger.error(`Run schedule task failed. Caused by ${e.message}`, e.stack);
     }
   }
 }

@@ -47,7 +47,7 @@ import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
 import { Data } from "../decorators/data.decorator";
 import { DateTime } from "luxon";
-import { Log } from "../entities/log.entity";
+import { DeployLog } from "../entities/deploy-log.entity";
 import { Revwalk } from "nodegit";
 import fs from "fs-extra";
 import path from "path";
@@ -427,7 +427,7 @@ export class ServiceController {
       throw new NotFoundException(`Not found deploy of ${name}.`);
     }
 
-    const lines = await Log.find({
+    const lines = await DeployLog.find({
       where: {
         deploy: { id },
         time: typeof since === "number" ? MoreThanOrEqual(DateTime.fromMillis(since).toJSDate()) : undefined,
