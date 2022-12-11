@@ -5,6 +5,7 @@ import { Badge, Button, Grid, Group, Loader, Stack } from "@mantine/core";
 import {
   TbActivity,
   TbAlertTriangle,
+  TbCalendarTime,
   TbDeviceFloppy,
   TbHistory,
   TbInfoCircle,
@@ -82,7 +83,8 @@ export const ServiceSetting: React.FC = () => {
 
   const Restart = useMemo(
     () =>
-      ["running", "restarting", "exited"].includes(status.data) && (
+      ["running", "restarting", "exited"].includes(status.data) &&
+      service.data?.type === "app" && (
         <Button
           loading={calling.loading}
           variant="light"
@@ -101,7 +103,7 @@ export const ServiceSetting: React.FC = () => {
           Restart
         </Button>
       ),
-    [status.data, calling.loading]
+    [status.data, service.data?.type, calling.loading]
   );
 
   const Deploy = useMemo(
@@ -156,15 +158,23 @@ export const ServiceSetting: React.FC = () => {
         <Stack spacing="xs">
           <NavLink label="Configs" icon={<TbInfoCircle />} action={`/services/${name}/`} />
           <NavLink label="Deploys" icon={<TbWreckingBall />} action={`/services/${name}/deploys`} />
-          <NavLink label="Metrics" icon={<TbActivity />} action={`/services/${name}/metrics`} />
-          <NavLink label="Logs" icon={<TbNotes />} action={`/services/${name}/logs`} />
-          <NavLink label="Terminal" icon={<TbTerminal />} action={`/services/${name}/terminal`} />
+          {service.data?.type === "app" ? (
+            <>
+              <NavLink label="Metrics" icon={<TbActivity />} action={`/services/${name}/metrics`} />
+              <NavLink label="Logs" icon={<TbNotes />} action={`/services/${name}/logs`} />
+              <NavLink label="Terminal" icon={<TbTerminal />} action={`/services/${name}/terminal`} />
+            </>
+          ) : (
+            <>
+              <NavLink label="Schedules" icon={<TbCalendarTime />} action={`/services/${name}/schedules`} />
+            </>
+          )}
           <NavLink label="History" icon={<TbHistory />} action={`/services/${name}/history`} />
           <NavLink label="Danger Zone" icon={<TbAlertTriangle />} color="red" action={`/services/${name}/danger`} />
         </Stack>
       </Grid.Col>
     ),
-    [name]
+    [name, service.data?.type]
   );
 
   return (

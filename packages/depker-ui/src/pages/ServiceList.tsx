@@ -10,6 +10,7 @@ import {
   Group,
   Input,
   Select,
+  Stack,
   Text,
   TextInput,
   Tooltip,
@@ -245,7 +246,10 @@ export const ServiceList: React.FC = () => {
                         </Text>
                       </Tooltip>
                     </Link>
-                    <Badge color={colors[item.status]}>{item.status}</Badge>
+                    <Stack spacing="xs">
+                      <Badge color={colors[item.status]}>{item.status}</Badge>
+                      <Badge color={item.type === "app" ? "blue" : "grape"}>{item.type}</Badge>
+                    </Stack>
                     {item.domain && item.domain.length && (
                       <ActionIcon color={t.primaryColor} size="lg" onClick={() => window.open(`http://${item.domain}`)}>
                         <TbArrowUpRight />

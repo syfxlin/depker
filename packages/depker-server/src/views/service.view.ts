@@ -61,6 +61,7 @@ export type ListServiceResponse = {
   total: number;
   items: Array<{
     name: string;
+    type: ServiceType;
     buildpack: string;
     icon: string;
     domain: string;

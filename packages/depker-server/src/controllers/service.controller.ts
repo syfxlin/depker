@@ -40,8 +40,8 @@ import {
   UpServiceResponse,
 } from "../views/service.view";
 import { DockerService } from "../services/docker.service";
-import { Service } from "../entities/service.entity";
-import { ILike, MoreThanOrEqual } from "typeorm";
+import { Service, ServiceStatus } from "../entities/service.entity";
+import { ILike, In, MoreThanOrEqual } from "typeorm";
 import { PluginService } from "../services/plugin.service";
 import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
@@ -52,6 +52,7 @@ import { Revwalk } from "nodegit";
 import fs from "fs-extra";
 import path from "path";
 import { PATHS } from "../constants/depker.constant";
+import { Cron } from "../entities/cron.entity";
 
 @Controller("/api/services")
 export class ServiceController {
@@ -70,6 +71,7 @@ export class ServiceController {
     const [services, count] = await Service.findAndCount({
       select: {
         name: true,
+        type: true,
         buildpack: true,
         domain: true,
         createdAt: true,
@@ -87,19 +89,26 @@ export class ServiceController {
     });
 
     const plugins = await this.plugins.plugins();
-    const deploys = await Service.listDeploydAt(services.map((i) => i.name));
-    const status = await this.docker.listStatus(services.map((i) => i.name));
+    const names = services.map((i) => i.name);
+    const deploys = await Service.listDeploydAt(names);
+    const containers = await this.docker.listStatus(names);
+    const crons: Record<string, ServiceStatus> = (await Cron.findBy({ service: { name: In(names) } })).reduce(
+      (a, i) => ({ ...a, [i.serviceName]: "running" }),
+      {}
+    );
 
     const total: ListServiceResponse["total"] = count;
     const items: ListServiceResponse["items"] = services.map((i) => {
       const plugin = plugins[i.buildpack];
       const deploy = deploys[i.name];
+      const status = i.type === "app" ? containers[i.name] : crons[i.name];
       return {
         name: i.name,
+        type: i.type,
         buildpack: plugin?.label ?? i.buildpack,
         icon: plugin?.icon ?? "",
         domain: i.domain.length ? i.domain[0] : "",
-        status: status[i.name],
+        status: status ?? "stopped",
         createdAt: i.createdAt.getTime(),
         updatedAt: i.updatedAt.getTime(),
         deploydAt: deploy?.getTime() ?? 0,
@@ -128,7 +137,6 @@ export class ServiceController {
 
     const service = new Service();
     service.name = request.name;
-    service.type = request.type;
     service.buildpack = request.buildpack;
     // web
     service.domain = request.domain!;
@@ -185,19 +193,29 @@ export class ServiceController {
 
   @Delete("/:name")
   public async delete(@Param() request: DeleteServiceRequest): Promise<DeleteServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (!count) {
+    const one = await Service.findOneBy({ name: request.name });
+    if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
     // purge service
     process.nextTick(async () => {
-      // delete container
-      try {
-        await this.docker.getContainer(request.name).remove({ force: true });
-        this.logger.log(`Purge service ${request.name} container successful.`);
-      } catch (e) {
-        this.logger.error(`Purge service ${request.name} container failed.`, e);
+      if (one.type === "app") {
+        // delete container
+        try {
+          await this.docker.getContainer(request.name).remove({ force: true });
+          this.logger.log(`Purge service ${request.name} container successful.`);
+        } catch (e) {
+          this.logger.error(`Purge service ${request.name} container failed.`, e);
+        }
+      } else {
+        // delete schedule
+        try {
+          await Cron.delete(request.name);
+          this.logger.log(`Purge service ${request.name} schedule successful.`);
+        } catch (e) {
+          this.logger.error(`Purge service ${request.name} schedule failed.`, e);
+        }
       }
       // delete source
       try {
@@ -215,13 +233,18 @@ export class ServiceController {
 
   @Get("/:name/status")
   public async status(@Param() request: StatusServiceRequest): Promise<StatusServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (!count) {
+    const one = await Service.findOneBy({ name: request.name });
+    if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    const status = await this.docker.listStatus([request.name]);
-    return { status: status[request.name] };
+    if (one.type === "app") {
+      const status = await this.docker.listStatus([request.name]);
+      return { status: status[request.name] };
+    } else {
+      const cron = await Cron.findOneBy({ service: { name: request.name } });
+      return { status: cron ? "running" : "stopped" };
+    }
   }
 
   @Get("/:name/metrics")
@@ -356,18 +379,25 @@ export class ServiceController {
 
   @Post("/:name/down")
   public async down(@Data() request: DownServiceRequest): Promise<DownServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (!count) {
+    const one = await Service.findOneBy({ name: request.name });
+    if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    try {
-      await this.docker.getContainer(request.name).remove({ force: true });
-    } catch (e: any) {
-      if (e.statusCode === 404) {
-        throw new NotFoundException(`Not found container of ${request.name}`);
-      } else {
-        throw e;
+    if (one.type === "app") {
+      try {
+        await this.docker.getContainer(request.name).remove({ force: true });
+      } catch (e: any) {
+        if (e.statusCode === 404) {
+          throw new NotFoundException(`Not found container of ${request.name}`);
+        } else {
+          throw e;
+        }
+      }
+    } else {
+      const result = await Cron.delete(request.name);
+      if (!result.affected) {
+        throw new NotFoundException(`Not found schedule of ${request.name}`);
       }
     }
     return { status: "success" };
@@ -375,18 +405,20 @@ export class ServiceController {
 
   @Post("/:name/restart")
   public async restart(@Data() request: RestartServiceRequest): Promise<RestartServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (!count) {
+    const one = await Service.findOneBy({ name: request.name });
+    if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    try {
-      await this.docker.getContainer(request.name).restart();
-    } catch (e: any) {
-      if (e.statusCode === 404) {
-        throw new NotFoundException(`Not found container of ${request.name}`);
-      } else {
-        throw e;
+    if (one.type === "app") {
+      try {
+        await this.docker.getContainer(request.name).restart();
+      } catch (e: any) {
+        if (e.statusCode === 404) {
+          throw new NotFoundException(`Not found container of ${request.name}`);
+        } else {
+          throw e;
+        }
       }
     }
     return { status: "success" };

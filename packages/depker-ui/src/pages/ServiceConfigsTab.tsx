@@ -77,8 +77,9 @@ export const ServiceConfigsTab: React.FC = () => {
         <Select
           key="type"
           required
+          readOnly
           label="Type"
-          description="Service type, App is a resident service, and Job is a scheduled or one-time service"
+          description="Service type (readonly), App is a resident service, and Job is a scheduled or one-time service"
           placeholder="Type"
           icon={<TbMoon />}
           value={service.data.type}
