@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
   NotFoundException,
   Param,
   Post,
@@ -41,19 +40,17 @@ import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
 import { Data } from "../decorators/data.decorator";
 import { Revwalk } from "nodegit";
-import fs from "fs-extra";
-import path from "path";
-import { PATHS } from "../constants/depker.constant";
 import { Cron } from "../entities/cron.entity";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ServiceEventName } from "../events/service.event";
 
 @Controller("/api/services")
 export class ServiceController {
-  private readonly logger = new Logger(ServiceController.name);
-
   constructor(
     private readonly docker: DockerService,
     private readonly storage: StorageService,
-    private readonly plugins: PluginService
+    private readonly plugins: PluginService,
+    private readonly events: EventEmitter2
   ) {}
 
   @Get("/")
@@ -191,32 +188,7 @@ export class ServiceController {
     }
 
     // purge service
-    process.nextTick(async () => {
-      if (one.type === "app") {
-        // delete container
-        try {
-          await this.docker.getContainer(request.name).remove({ force: true });
-          this.logger.log(`Purge service ${request.name} container successful.`);
-        } catch (e) {
-          this.logger.error(`Purge service ${request.name} container failed.`, e);
-        }
-      } else {
-        // delete schedule
-        try {
-          await Cron.delete(request.name);
-          this.logger.log(`Purge service ${request.name} schedule successful.`);
-        } catch (e) {
-          this.logger.error(`Purge service ${request.name} schedule failed.`, e);
-        }
-      }
-      // delete source
-      try {
-        await fs.remove(path.join(PATHS.REPOS, `${request.name}.git`));
-        this.logger.log(`Purge service ${request.name} source successful.`);
-      } catch (e) {
-        this.logger.error(`Purge service ${request.name} source failed.`, e);
-      }
-    });
+    this.events.emit(ServiceEventName.DELETE, request.name);
 
     // delete service
     await Service.delete(request.name);
@@ -378,23 +350,7 @@ export class ServiceController {
     if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
-
-    if (one.type === "app") {
-      try {
-        await this.docker.getContainer(request.name).remove({ force: true });
-      } catch (e: any) {
-        if (e.statusCode === 404) {
-          throw new NotFoundException(`Not found container of ${request.name}`);
-        } else {
-          throw e;
-        }
-      }
-    } else {
-      const result = await Cron.delete(request.name);
-      if (!result.affected) {
-        throw new NotFoundException(`Not found schedule of ${request.name}`);
-      }
-    }
+    this.events.emit(ServiceEventName.DOWN, request.name);
     return { status: "success" };
   }
 

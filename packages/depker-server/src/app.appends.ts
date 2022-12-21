@@ -26,6 +26,7 @@ import { CronLog } from "./entities/cron-log.entity";
 import { CronHistory } from "./entities/cron-history.entity";
 import { DeployController } from "./controllers/deploy.controller";
 import { CronController } from "./controllers/cron.controller";
+import { ServiceEvent } from "./events/service.event";
 
 // entity
 export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronHistory, CronLog];
@@ -48,3 +49,4 @@ export const controllers = [
 export const gateways = [TerminalGateway, LogsGateway, AccessLogsGateway];
 export const services = [DeployService, DockerService, StorageService];
 export const tasks = [TraefikTask, DeployTask];
+export const events = [ServiceEvent];

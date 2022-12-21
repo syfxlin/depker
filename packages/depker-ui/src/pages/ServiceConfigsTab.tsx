@@ -250,7 +250,7 @@ export const ServiceConfigsTab: React.FC = () => {
 
   const Cron = useMemo(
     () =>
-      service.data?.type && (
+      service.data?.type === "job" && (
         <TextInput
           required
           label="Cron"
