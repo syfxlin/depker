@@ -4,7 +4,7 @@ import { Login } from "./pages/Login";
 import { Box } from "@mantine/core";
 import { Home } from "./pages/Home";
 import { Dashboard } from "./pages/Dashboard";
-import { ServiceList } from "./pages/ServiceList";
+import { Services } from "./pages/Services";
 import { ServiceSetting } from "./pages/ServiceSetting";
 import { Loading } from "./components/core/Loading";
 import { ServiceConfigsTab } from "./pages/ServiceConfigsTab";
@@ -20,6 +20,7 @@ import { Ports } from "./pages/Ports";
 import { Volumes } from "./pages/Volumes";
 import { Settings } from "./pages/Settings";
 import { SettingMainTab } from "./pages/SettingMainTab";
+import { ServiceCronsTab } from "./pages/ServiceCronsTab";
 
 export const App: React.FC = () => {
   return (
@@ -30,7 +31,7 @@ export const App: React.FC = () => {
           <Route element={<Dashboard />}>
             <Route index element={<Navigate to="/home" />} />
             <Route path="/home" element={<Home />} />
-            <Route path="/services" element={<ServiceList />} />
+            <Route path="/services" element={<Services />} />
             <Route path="/services/:service" element={<ServiceSetting />}>
               <Route index element={<ServiceConfigsTab />} />
               <Route path="metrics" element={<ServiceMetricsTab />} />
@@ -40,6 +41,8 @@ export const App: React.FC = () => {
               <Route path="danger" element={<ServiceDangerTab />} />
               <Route path="deploys" element={<ServiceDeploysTab />} />
               <Route path="deploys/:deploy" element={<ServiceDeploysTab />} />
+              <Route path="crons" element={<ServiceCronsTab />} />
+              <Route path="crons/:cron" element={<ServiceCronsTab />} />
             </Route>
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/ports" element={<Ports />} />

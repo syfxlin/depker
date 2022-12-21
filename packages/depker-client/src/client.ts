@@ -13,6 +13,7 @@ import { FilesApi } from "./api/files.api";
 import { TokenApi } from "./api/token.api";
 import { io, ManagerOptions, Socket } from "socket.io-client";
 import { SettingApi } from "./api/setting.api";
+import { CronApi } from "./api/cron.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -38,6 +39,7 @@ export class DepkerClient {
   public readonly volumes: VolumeApi;
   public readonly assets: AssetApi;
   public readonly deploys: DeployApi;
+  public readonly crons: CronApi;
   public readonly files: FilesApi;
   public readonly tokens: TokenApi;
   public readonly settings: SettingApi;
@@ -83,6 +85,7 @@ export class DepkerClient {
     this.volumes = new VolumeApi(this);
     this.assets = new AssetApi(this);
     this.deploys = new DeployApi(this);
+    this.crons = new CronApi(this);
     this.files = new FilesApi(this);
     this.tokens = new TokenApi(this);
     this.settings = new SettingApi(this);

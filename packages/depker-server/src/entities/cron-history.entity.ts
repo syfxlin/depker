@@ -9,10 +9,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Logger } from "@nestjs/common";
-import { DeployStatus, LogFunc, LogLevel } from "../types";
+import { DeployStatus, LogFunc, LogLevel, Service } from "../types";
 import { DateTime } from "luxon";
 import { CronLog } from "./cron-log.entity";
-import { Cron } from "./cron.entity";
 
 @Entity()
 export class CronHistory extends BaseEntity {
@@ -21,15 +20,15 @@ export class CronHistory extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // cron
-  @ManyToOne(() => Cron, {
+  // service
+  @ManyToOne(() => Service, {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
     cascade: false,
     persistence: false,
   })
-  cron: Relation<Cron>;
+  service: Relation<Service>;
 
   @Column({ nullable: false, default: "queued" })
   status: DeployStatus;
@@ -46,7 +45,7 @@ export class CronHistory extends BaseEntity {
     const upload = (level: LogLevel, message: string, error?: Error) => {
       const time = DateTime.utc().toJSDate();
       const line = message + (error ? `[ERROR] ${error.name}: ${error.message}, ${error.stack}` : ``);
-      CronHistory._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${this.cron.service.name} : ${line}`);
+      CronHistory._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${this.service.name} : ${line}`);
       return CronLog.insert({ history: this, time, level, line });
     };
     return {
@@ -55,6 +54,18 @@ export class CronHistory extends BaseEntity {
       step: (line: string) => upload("step", line),
       success: (line: string) => upload("success", line),
       error: (line: string, error?: Error) => upload("error", line, error),
+    };
+  }
+
+  // method
+  public get view() {
+    return {
+      id: this.id,
+      service: this.service.name,
+      cron: this.service.extensions.cron,
+      status: this.status,
+      createdAt: this.createdAt.getTime(),
+      updatedAt: this.updatedAt.getTime(),
     };
   }
 }

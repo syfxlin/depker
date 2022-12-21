@@ -12,8 +12,6 @@ import {
   Query,
 } from "@nestjs/common";
 import {
-  CancelServiceDeployRequest,
-  CancelServiceDeployResponse,
   DeleteServiceRequest,
   DeleteServiceResponse,
   DownServiceRequest,
@@ -22,12 +20,8 @@ import {
   GetServiceResponse,
   HistoryServiceRequest,
   HistoryServiceResponse,
-  ListServiceDeployRequest,
-  ListServiceDeployResponse,
   ListServiceRequest,
   ListServiceResponse,
-  LogsServiceDeployRequest,
-  LogsServiceDeployResponse,
   MetricsServiceRequest,
   MetricsServiceResponse,
   RestartServiceRequest,
@@ -41,13 +35,11 @@ import {
 } from "../views/service.view";
 import { DockerService } from "../services/docker.service";
 import { Service, ServiceStatus } from "../entities/service.entity";
-import { ILike, In, MoreThanOrEqual } from "typeorm";
+import { ILike, In } from "typeorm";
 import { PluginService } from "../services/plugin.service";
 import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
 import { Data } from "../decorators/data.decorator";
-import { DateTime } from "luxon";
-import { DeployLog } from "../entities/deploy-log.entity";
 import { Revwalk } from "nodegit";
 import fs from "fs-extra";
 import path from "path";
@@ -369,7 +361,10 @@ export class ServiceController {
       } catch (e) {
         throw new NotFoundException(`Found service source but not found commit of ${request.name}`);
       }
-    } else {
+    } else if (service.buildpack === "image") {
+      deploy.target = service.extensions.image;
+    }
+    if (!deploy.target) {
       deploy.target = "unknown";
     }
 
@@ -421,77 +416,6 @@ export class ServiceController {
         }
       }
     }
-    return { status: "success" };
-  }
-
-  @Get("/:name/deploy")
-  public async listDeploy(@Data() request: ListServiceDeployRequest): Promise<ListServiceDeployResponse> {
-    const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
-    const [by, axis] = sort.split(":");
-    const exist = await Service.countBy({ name: request.name });
-    if (!exist) {
-      throw new NotFoundException(`Not found service of ${request.name}.`);
-    }
-
-    const [deploys, count] = await Deploy.findAndCount({
-      where: {
-        service: { name },
-        target: search ? ILike(`%${search}%`) : undefined,
-        status: search ? (ILike(`%${search}%`) as any) : undefined,
-      },
-      relations: { service: true },
-      skip: offset,
-      take: limit,
-      order: { [by]: axis ? axis : "asc" },
-    });
-
-    const total: ListServiceDeployResponse["total"] = count;
-    const items: ListServiceDeployResponse["items"] = deploys.map((d) => d.view);
-
-    return { total, items };
-  }
-
-  @Get("/:name/deploy/:id/logs")
-  public async logsDeploy(@Data() request: LogsServiceDeployRequest): Promise<LogsServiceDeployResponse> {
-    const { id, name, since, tail } = request;
-    const count = await Deploy.countBy({ id, service: { name } });
-    if (!count) {
-      throw new NotFoundException(`Not found deploy of ${name}.`);
-    }
-
-    const lines = await DeployLog.find({
-      where: {
-        deploy: { id },
-        time: typeof since === "number" ? MoreThanOrEqual(DateTime.fromMillis(since).toJSDate()) : undefined,
-      },
-      take: typeof tail === "number" ? tail : undefined,
-      order: { id: "desc" },
-    });
-    const deploy = await Deploy.findOne({ where: { id, service: { name } } });
-
-    lines.reverse();
-
-    const logs: LogsServiceDeployResponse["logs"] = lines.map((i) => [i.level, i.time.getTime(), i.line]);
-    if (["success", "failed"].includes(deploy!.status)) {
-      return { since: -1, logs };
-    }
-    if (lines.length) {
-      return { since: lines[lines.length - 1].time.getTime() + 1, logs };
-    }
-    if (since) {
-      return { since, logs };
-    }
-    return { since: 0, logs };
-  }
-
-  @Delete("/:name/deploy/:id/cancel")
-  public async cancelDeploy(@Data() request: CancelServiceDeployRequest): Promise<CancelServiceDeployResponse> {
-    const { id, name } = request;
-    const count = await Deploy.countBy({ id, service: { name } });
-    if (!count) {
-      throw new NotFoundException(`Not found deploy of ${name}.`);
-    }
-    await Deploy.update(id, { status: "failed" });
     return { status: "success" };
   }
 }

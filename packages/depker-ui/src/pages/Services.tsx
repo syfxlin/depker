@@ -29,7 +29,7 @@ import { ObjectModal } from "../components/input/ObjectModal";
 import { useBuildpacks } from "../api/use-buildpacks";
 import { humanDate } from "../utils/human";
 
-export const ServiceList: React.FC = () => {
+export const Services: React.FC = () => {
   const t = useMantineTheme();
   const services = useServices();
   const buildpacks = useBuildpacks();

@@ -24,6 +24,8 @@ import { SettingController } from "./controllers/setting.controller";
 import { Cron } from "./entities/cron.entity";
 import { CronLog } from "./entities/cron-log.entity";
 import { CronHistory } from "./entities/cron-history.entity";
+import { DeployController } from "./controllers/deploy.controller";
+import { CronController } from "./controllers/cron.controller";
 
 // entity
 export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronHistory, CronLog];
@@ -34,6 +36,8 @@ export const controllers = [
   AssetController,
   GitController,
   ServiceController,
+  DeployController,
+  CronController,
   PortController,
   VolumeController,
   BuildpackController,

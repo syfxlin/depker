@@ -166,7 +166,7 @@ export const ServiceSetting: React.FC = () => {
             </>
           ) : (
             <>
-              <NavLink label="Schedules" icon={<TbCalendarTime />} action={`/services/${name}/schedules`} />
+              <NavLink label="Crons" icon={<TbCalendarTime />} action={`/services/${name}/crons`} />
             </>
           )}
           <NavLink label="History" icon={<TbHistory />} action={`/services/${name}/history`} />

@@ -1,10 +1,10 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { hashSync } from "bcrypt";
 import { GetSettingResponse } from "../views/setting.view";
 
 @Entity()
 export class Setting extends BaseEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
   @Column({ length: 128, nullable: false })
@@ -64,17 +64,21 @@ export class Setting extends BaseEntity {
   // repository
   public static async read() {
     let setting = await this.findOne({
-      where: {},
+      where: { id: 1 },
       order: { id: "asc" },
     });
     if (!setting) {
-      await this.insert({
-        email: "admin@example.com",
-        username: "admin",
-        password: hashSync("password", 10),
-      });
+      await this.upsert(
+        {
+          id: 1,
+          email: "admin@example.com",
+          username: "admin",
+          password: hashSync("password", 10),
+        },
+        ["id"]
+      );
       setting = await this.findOne({
-        where: {},
+        where: { id: 1 },
         order: { id: "asc" },
       });
     }

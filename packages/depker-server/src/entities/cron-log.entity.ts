@@ -1,6 +1,5 @@
 import { BaseEntity, Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Relation } from "typeorm";
 import { LogLevel } from "../types";
-import { Cron } from "./cron.entity";
 import { CronHistory } from "./cron-history.entity";
 
 @Entity()
@@ -18,7 +17,7 @@ export class CronLog extends BaseEntity {
     cascade: false,
     persistence: false,
   })
-  history: Relation<Cron>;
+  history: Relation<CronHistory>;
 
   @Column({ nullable: false })
   time: Date;

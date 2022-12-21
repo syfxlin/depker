@@ -18,7 +18,15 @@ export * from "../views/system.view";
 export * from "../views/volume.view";
 export * from "../views/token.view";
 export * from "../views/setting.view";
+export * from "../views/deploy.view";
+export * from "../views/cron.view";
 
 // plugins
 export * from "../plugins/plugin.types";
 export * from "../plugins/plugin.context";
+export { CancelServiceDeployResponse } from "../views/deploy.view";
+export { CancelServiceDeployRequest } from "../views/deploy.view";
+export { LogsServiceDeployResponse } from "../views/deploy.view";
+export { LogsServiceDeployRequest } from "../views/deploy.view";
+export { ListServiceDeployResponse } from "../views/deploy.view";
+export { ListServiceDeployRequest } from "../views/deploy.view";

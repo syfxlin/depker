@@ -247,7 +247,7 @@ export class DeployService {
     const actions = crons.map((cron) => async () => {
       // insert cron history
       const history = new CronHistory();
-      history.cron = cron;
+      history.service = cron.service;
       history.status = "queued";
       await CronHistory.save(history);
 

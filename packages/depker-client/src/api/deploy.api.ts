@@ -10,7 +10,7 @@ import {
 
 export class DeployApi extends Api {
   public async list(request: ListServiceDeployRequest) {
-    const response = await this.client.client.get<ListServiceDeployResponse>(`/api/services/${request.name}/deploy`, {
+    const response = await this.client.client.get<ListServiceDeployResponse>(`/api/services/${request.name}/deploys`, {
       params: request,
     });
     return response.data;
@@ -18,7 +18,7 @@ export class DeployApi extends Api {
 
   public async logs(request: LogsServiceDeployRequest) {
     const response = await this.client.client.get<LogsServiceDeployResponse>(
-      `/api/services/${request.name}/deploy/${request.id}/logs`,
+      `/api/services/${request.name}/deploys/${request.id}/logs`,
       { params: request }
     );
     return response.data;
@@ -26,7 +26,7 @@ export class DeployApi extends Api {
 
   public async cancel(request: CancelServiceDeployRequest) {
     const response = await this.client.client.delete<CancelServiceDeployResponse>(
-      `/api/services/${request.name}/deploy/${request.id}/cancel`
+      `/api/services/${request.name}/deploys/${request.id}/cancel`
     );
     return response.data;
   }
