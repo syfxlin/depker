@@ -27,6 +27,7 @@ import { CronTime } from "cron";
 import { CronHistory } from "../entities/cron-history.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DeployEvent } from "../events/deploy.event";
+import { CronEvent } from "../events/cron.event";
 
 export interface DeployBuildOptions {
   // options
@@ -338,20 +339,39 @@ export class DeployService {
         // log started
         await logger.step(`Trigger service ${service.name} started.`);
 
+        // emit pre_start
+        await this.events.emitAsync(CronEvent.PRE_START, history);
+
         // update status to running
         await CronHistory.update(history.id, { status: "running" });
+
+        // emit post_start
+        await this.events.emitAsync(CronEvent.POST_START, history);
+
+        // emit pre_run
+        await this.events.emitAsync(CronEvent.PRE_RUN, history);
 
         // running service
         await this._run({ name, image, options, logger });
 
+        // emit post_run
+        await this.events.emitAsync(CronEvent.POST_RUN, history);
+
         // update status to success
         await CronHistory.update(history.id, { status: "success" });
+
+        // emit success
+        await this.events.emitAsync(CronEvent.SUCCESS, history);
 
         // log successful
         await logger.success(`Trigger service ${service.name} successful.`);
       } catch (e: any) {
         // update status to failed
         await CronHistory.update(history.id, { status: "failed" });
+
+        // emit failed
+        await this.events.emitAsync(CronEvent.FAILED, history);
+
         // save failed logs
         await logger.error(`Trigger service ${service.name} failure. Caused by ${e}.`);
       }

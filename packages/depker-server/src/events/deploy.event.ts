@@ -14,7 +14,7 @@ export enum DeployEvent {
   FAILED = "deploy.failed",
 }
 
-export type ServiceEventHandler = {
+export type DeployEventHandler = {
   [DeployEvent.CANCEL]: (name: string, id: number) => any;
   [DeployEvent.PRE_START]: (deploy: Deploy) => any;
   [DeployEvent.POST_START]: (deploy: Deploy) => any;

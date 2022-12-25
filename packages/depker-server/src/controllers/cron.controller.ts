@@ -13,9 +13,13 @@ import { ILike, MoreThanOrEqual } from "typeorm";
 import { CronHistory } from "../entities/cron-history.entity";
 import { DateTime } from "luxon";
 import { CronLog } from "../entities/cron-log.entity";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { CronEvent } from "../events/cron.event";
 
 @Controller("/api/services/:name/crons")
 export class CronController {
+  constructor(private readonly events: EventEmitter2) {}
+
   @Get("/")
   public async list(@Data() request: ListServiceCronRequest): Promise<ListServiceCronResponse> {
     const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
@@ -82,7 +86,13 @@ export class CronController {
     if (!count) {
       throw new NotFoundException(`Not found cron of ${name}.`);
     }
+
+    // update status
     await CronHistory.update(id, { status: "failed" });
+
+    // emit event
+    await this.events.emitAsync(CronEvent.CANCEL, name, id);
+
     return { status: "success" };
   }
 }
