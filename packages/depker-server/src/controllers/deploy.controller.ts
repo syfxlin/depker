@@ -13,9 +13,13 @@ import {
   LogsServiceDeployRequest,
   LogsServiceDeployResponse,
 } from "../views/deploy.view";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { DeployEvent } from "../events/deploy.event";
 
 @Controller("/api/services/:name/deploys")
 export class DeployController {
+  constructor(private readonly events: EventEmitter2) {}
+
   @Get("/")
   public async list(@Data() request: ListServiceDeployRequest): Promise<ListServiceDeployResponse> {
     const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
@@ -83,7 +87,13 @@ export class DeployController {
     if (!count) {
       throw new NotFoundException(`Not found deploy of ${name}.`);
     }
+
+    // update status
     await Deploy.update(id, { status: "failed" });
+
+    // emit event
+    await this.events.emitAsync(DeployEvent.CANCEL, name, id);
+
     return { status: "success" };
   }
 }

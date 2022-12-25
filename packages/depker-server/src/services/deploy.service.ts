@@ -25,6 +25,8 @@ import { LogFunc } from "../types";
 import { Cron } from "../entities/cron.entity";
 import { CronTime } from "cron";
 import { CronHistory } from "../entities/cron-history.entity";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { DeployEvent } from "../events/deploy.event";
 
 export interface DeployBuildOptions {
   // options
@@ -92,6 +94,7 @@ export class DeployService {
     private readonly docker: DockerService,
     private readonly storages: StorageService,
     private readonly plugins: PluginService,
+    private readonly events: EventEmitter2,
     private readonly ref: ModuleRef
   ) {}
 
@@ -147,14 +150,23 @@ export class DeployService {
         // log started
         await logger.step(`Deployment service ${service.name} started.`);
 
+        // emit pre_start
+        await this.events.emitAsync(DeployEvent.PRE_START, deploy);
+
         // update status to running
         await Deploy.update(deploy.id, { status: "running" });
+
+        // emit post_start
+        await this.events.emitAsync(DeployEvent.POST_START, deploy);
 
         // find buildpack
         const buildpack = (await this.plugins.buildpacks())[service.buildpack];
         if (!buildpack?.buildpack?.handler) {
           throw new Error(`Not found buildpack ${service.buildpack}`);
         }
+
+        // emit pre_init
+        await this.events.emitAsync(DeployEvent.PRE_INIT, deploy);
 
         // init project
         const project = await this.storages.project(service.name, deploy.target);
@@ -167,8 +179,17 @@ export class DeployService {
           ref: this.ref,
         });
 
+        // emit post_init
+        await this.events.emitAsync(DeployEvent.POST_INIT, deploy);
+
+        // emit pre_pack
+        await this.events.emitAsync(DeployEvent.PRE_PACK, context);
+
         // deployment containers
         await buildpack.buildpack.handler(context);
+
+        // emit post_pack
+        await this.events.emitAsync(DeployEvent.POST_PACK, context);
 
         // purge containers
         await logger.step(`Purge ${service.name} containers started.`);
@@ -196,8 +217,14 @@ export class DeployService {
           }
         });
 
+        // emit purged
+        await this.events.emitAsync(DeployEvent.PURGED, deploy);
+
         // update status to success
         await Deploy.update(deploy.id, { status: "success" });
+
+        // emit success
+        await this.events.emitAsync(DeployEvent.SUCCESS, deploy);
 
         // log successful
         await logger.success(`Deployment service ${service.name} successful.`);
@@ -212,6 +239,9 @@ export class DeployService {
             status: "failed",
           }
         );
+
+        // emit failed
+        await this.events.emitAsync(DeployEvent.FAILED, deploy);
 
         // save failed logs
         await logger.error(`Deployment service ${service.name} failure. Caused by ${e}.`);
