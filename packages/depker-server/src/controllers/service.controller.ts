@@ -42,7 +42,8 @@ import { Data } from "../decorators/data.decorator";
 import { Revwalk } from "nodegit";
 import { Cron } from "../entities/cron.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { ServiceEventName } from "../events/service.event";
+import { ServiceEvent } from "../events/service.event";
+import { CronHistory } from "../entities/cron-history.entity";
 
 @Controller("/api/services")
 export class ServiceController {
@@ -113,7 +114,13 @@ export class ServiceController {
     if (count) {
       throw new ConflictException(`Found service of ${request.name}.`);
     }
+    // insert
     await Service.insert({ name: request.name, type: request.type, buildpack: request.buildpack });
+
+    // emit event
+    await this.events.emitAsync(ServiceEvent.CREATE, request.name);
+
+    // update
     return this.update(request);
   }
 
@@ -163,7 +170,13 @@ export class ServiceController {
 
     // save service
     await Service.save(service, { reload: false });
+
+    // result
     const saved = await Service.findOneBy({ name: service.name });
+
+    // emit event
+    await this.events.emitAsync(ServiceEvent.UPDATE, service.name);
+
     return saved!.view;
   }
 
@@ -187,11 +200,13 @@ export class ServiceController {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    // purge service
-    this.events.emit(ServiceEventName.DELETE, request.name);
-
     // delete service
     await Service.delete(request.name);
+
+    // purge service
+    await this.events.emitAsync(ServiceEvent.DELETE, request.name);
+
+    // result
     return { status: "success" };
   }
 
@@ -208,58 +223,6 @@ export class ServiceController {
     } else {
       const cron = await Cron.findOneBy({ service: { name: request.name } });
       return { status: cron ? "running" : "stopped" };
-    }
-  }
-
-  @Get("/:name/metrics")
-  public async metrics(@Param() request: MetricsServiceRequest): Promise<MetricsServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (!count) {
-      throw new NotFoundException(`Not found service of ${request.name}.`);
-    }
-
-    try {
-      const stats = await this.docker.getContainer(request.name).stats({ stream: false });
-      const cpu_delta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-      const system_cpu_delta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-      const number_cpus = stats.cpu_stats.online_cpus;
-      const cpu = (cpu_delta / system_cpu_delta) * number_cpus * 100;
-      const memory = stats.memory_stats.usage - stats.memory_stats.stats.cache;
-      const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
-      const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
-      return {
-        cpu: {
-          free: 100 - cpu,
-          used: cpu,
-          total: 100,
-        },
-        memory: {
-          free: stats.memory_stats.limit - memory,
-          used: memory,
-          total: stats.memory_stats.limit,
-        },
-        network: {
-          input,
-          output,
-        },
-      };
-    } catch (e: any) {
-      return {
-        cpu: {
-          free: 0,
-          used: 0,
-          total: 1,
-        },
-        memory: {
-          free: 0,
-          used: 0,
-          total: 1,
-        },
-        network: {
-          input: 0,
-          output: 0,
-        },
-      };
     }
   }
 
@@ -340,7 +303,12 @@ export class ServiceController {
       deploy.target = "unknown";
     }
 
+    // save
     const saved = await Deploy.save(deploy);
+
+    // emit event
+    await this.events.emitAsync(ServiceEvent.UP, request.name);
+
     return saved!.view;
   }
 
@@ -350,9 +318,14 @@ export class ServiceController {
     if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
-    this.events.emit(ServiceEventName.DOWN, request.name);
+
+    // emit event
+    await this.events.emitAsync(ServiceEvent.DOWN, request.name);
+
     return { status: "success" };
   }
+
+  // region type=app
 
   @Post("/:name/restart")
   public async restart(@Data() request: RestartServiceRequest): Promise<RestartServiceResponse> {
@@ -360,18 +333,113 @@ export class ServiceController {
     if (!one) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
+    if (one.type !== "app") {
+      throw new ConflictException(`${request.name} service type is app, which does not support the restart operation.`);
+    }
 
-    if (one.type === "app") {
-      try {
-        await this.docker.getContainer(request.name).restart();
-      } catch (e: any) {
-        if (e.statusCode === 404) {
-          throw new NotFoundException(`Not found container of ${request.name}`);
-        } else {
-          throw e;
-        }
+    // restart
+    try {
+      await this.docker.getContainer(request.name).restart();
+    } catch (e: any) {
+      if (e.statusCode === 404) {
+        throw new NotFoundException(`Not found container of ${request.name}`);
+      } else {
+        throw e;
       }
     }
+
+    // emit event
+    await this.events.emitAsync(ServiceEvent.RESTART, request.name);
+
     return { status: "success" };
   }
+
+  @Get("/:name/metrics")
+  public async metrics(@Param() request: MetricsServiceRequest): Promise<MetricsServiceResponse> {
+    const one = await Service.findOneBy({ name: request.name });
+    if (!one) {
+      throw new NotFoundException(`Not found service of ${request.name}.`);
+    }
+    if (one.type !== "app") {
+      throw new ConflictException(`${request.name} service type is app, which does not support the restart operation.`);
+    }
+
+    try {
+      const stats = await this.docker.getContainer(request.name).stats({ stream: false });
+      const cpu_delta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+      const system_cpu_delta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+      const number_cpus = stats.cpu_stats.online_cpus;
+      const cpu = (cpu_delta / system_cpu_delta) * number_cpus * 100;
+      const memory = stats.memory_stats.usage - stats.memory_stats.stats.cache;
+      const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
+      const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
+      return {
+        cpu: {
+          free: 100 - cpu,
+          used: cpu,
+          total: 100,
+        },
+        memory: {
+          free: stats.memory_stats.limit - memory,
+          used: memory,
+          total: stats.memory_stats.limit,
+        },
+        network: {
+          input,
+          output,
+        },
+      };
+    } catch (e: any) {
+      return {
+        cpu: {
+          free: 0,
+          used: 0,
+          total: 1,
+        },
+        memory: {
+          free: 0,
+          used: 0,
+          total: 1,
+        },
+        network: {
+          input: 0,
+          output: 0,
+        },
+      };
+    }
+  }
+
+  // endregion
+
+  // region type=job
+
+  @Post("/:name/trigger")
+  public async trigger(@Data() request: RestartServiceRequest): Promise<RestartServiceResponse> {
+    const one = await Service.findOneBy({ name: request.name });
+    if (!one) {
+      throw new NotFoundException(`Not found service of ${request.name}.`);
+    }
+    if (one.type !== "job") {
+      throw new ConflictException(`${request.name} service type is job, which does not support the trigger operation.`);
+    }
+
+    const cron = await Cron.findOneBy({ serviceName: request.name });
+    if (!cron) {
+      throw new NotFoundException(`Not found cron job of ${request.name}.`);
+    }
+
+    // trigger
+    const history = new CronHistory();
+    history.service = one;
+    history.options = cron.options;
+    history.status = "queued";
+    await CronHistory.save(history);
+
+    // emit event
+    await this.events.emitAsync(ServiceEvent.TRIGGER, request.name);
+
+    return { status: "success" };
+  }
+
+  // endregion
 }

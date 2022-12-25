@@ -6,40 +6,59 @@ import path from "path";
 import { PATHS } from "../constants/depker.constant";
 import { Cron } from "../entities/cron.entity";
 
-export enum ServiceEventName {
-  DOWN = "service.down",
+export enum ServiceEvent {
+  CREATE = "service.create",
+  UPDATE = "service.update",
   DELETE = "service.delete",
+  UP = "service.up",
+  DOWN = "service.down",
+  RESTART = "service.restart",
+  TRIGGER = "service.trigger",
 }
 
+export type ServiceEventHandler = {
+  [ServiceEvent.CREATE]: (name: string) => any;
+  [ServiceEvent.UPDATE]: (name: string) => any;
+  [ServiceEvent.DELETE]: (name: string) => any;
+  [ServiceEvent.UP]: (name: string) => any;
+  [ServiceEvent.DOWN]: (name: string) => any;
+  [ServiceEvent.RESTART]: (name: string) => any;
+  [ServiceEvent.TRIGGER]: (name: string) => any;
+};
+
 @Injectable()
-export class ServiceEvent {
-  private readonly logger = new Logger(ServiceEvent.name);
+export class ServiceEventService {
+  private readonly logger = new Logger(ServiceEventService.name);
 
   constructor(private readonly docker: DockerService) {}
 
-  @OnEvent(ServiceEventName.DOWN)
+  @OnEvent(ServiceEvent.DOWN)
   public async onDown(name: string) {
-    this.logger.log(`Event of service.down [${name}] is received, execution operation started.`);
-    // delete cron
-    await this.deleteCron(name);
-    // delete container
-    await this.deleteContainer(name);
+    process.nextTick(async () => {
+      this.logger.log(`Event of service.down [${name}] is received, execution operation started.`);
+      // delete cron
+      await this.deleteCron(name);
+      // delete container
+      await this.deleteContainer(name);
+    });
   }
 
-  @OnEvent(ServiceEventName.DELETE)
+  @OnEvent(ServiceEvent.DELETE)
   public async onDelete(name: string) {
-    this.logger.log(`Event of service.delete [${name}] is received, execution operation started.`);
-    // delete source
-    try {
-      await fs.remove(path.join(PATHS.REPOS, `${name}.git`));
-      this.logger.log(`Purge service ${name} source successful.`);
-    } catch (e) {
-      this.logger.error(`Purge service ${name} source failed.`, e);
-    }
-    // delete cron
-    await this.deleteCron(name);
-    // delete container
-    await this.deleteContainer(name);
+    process.nextTick(async () => {
+      this.logger.log(`Event of service.delete [${name}] is received, execution operation started.`);
+      // delete source
+      try {
+        await fs.remove(path.join(PATHS.REPOS, `${name}.git`));
+        this.logger.log(`Purge service ${name} source successful.`);
+      } catch (e) {
+        this.logger.error(`Purge service ${name} source failed.`, e);
+      }
+      // delete cron
+      await this.deleteCron(name);
+      // delete container
+      await this.deleteContainer(name);
+    });
   }
 
   private async deleteCron(name: string) {

@@ -95,7 +95,7 @@ export class DeployService {
     private readonly ref: ModuleRef
   ) {}
 
-  public async task1() {
+  public async deployTask() {
     // find deploys
     const deploys = await Deploy.find({
       where: {
@@ -221,7 +221,7 @@ export class DeployService {
     await pAll(actions, { concurrency: setting.concurrency });
   }
 
-  public async task2() {
+  public async scheduleTask() {
     // query all cron task
     const all = await Cron.find({
       where: {},
@@ -234,31 +234,77 @@ export class DeployService {
     });
 
     // filter active cron task
-    const crons = all.filter((cron) => Math.abs(new CronTime(cron.time).getTimeout()) < 60000);
+    const histories = all
+      .filter((cron) => Math.abs(new CronTime(cron.time).getTimeout()) < 60000)
+      .map((cron) => {
+        const history = new CronHistory();
+        history.service = cron.service;
+        history.options = cron.options;
+        history.status = "queued";
+        return history;
+      });
 
     // skip on empty cron task
-    if (!crons.length) {
+    if (!histories.length) {
       return;
     }
 
-    // get setting
+    // schedule history
+    await CronHistory.save(histories);
+  }
+
+  public async jobTask() {
+    const histories = await CronHistory.find({
+      where: {
+        status: In(["queued", "running"]),
+      },
+      order: {
+        createdAt: "asc",
+      },
+      relations: {
+        service: true,
+      },
+    });
+
+    // skip on empty histories
+    if (!histories.length) {
+      return;
+    }
+
+    // get settings
     const setting = await Setting.read();
 
-    const actions = crons.map((cron) => async () => {
-      // insert cron history
-      const history = new CronHistory();
-      history.service = cron.service;
-      history.status = "queued";
-      await CronHistory.save(history);
-
+    const actions = histories.map((history) => async () => {
       // values
-      const service = cron.service;
+      const service = history.service;
       const logger = history.logger;
       const name = service.name;
-      const image = cron.options.image;
-      const options = cron.options.options;
+      const image = history.options.image;
+      const options = history.options.options;
 
       try {
+        // if status equal running, explain that deploy is interrupted during execution, restart
+        if (history.status === "running") {
+          await logger.step(`Building halted, restarting...`);
+        }
+
+        // stop old job
+        if (setting.concurrency === 1) {
+          await CronHistory.update(
+            {
+              service: {
+                name: Not(service.name),
+              },
+              id: Not(history.id),
+              status: In(["queued", "running"]),
+              createdAt: LessThan(new Date(Date.now() - 10 * 1000)),
+            },
+            {
+              status: "failed",
+            }
+          );
+        }
+
         // log started
         await logger.step(`Trigger service ${service.name} started.`);
 

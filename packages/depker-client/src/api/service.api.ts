@@ -56,11 +56,6 @@ export class ServiceApi extends Api {
     return response.data;
   }
 
-  public async metrics(request: MetricsServiceRequest) {
-    const response = await this.client.client.get<MetricsServiceResponse>(`/api/services/${request.name}/metrics`);
-    return response.data;
-  }
-
   public async history(request: HistoryServiceRequest) {
     const response = await this.client.client.get<HistoryServiceResponse>(`/api/services/${request.name}/history`, {
       params: request,
@@ -78,8 +73,15 @@ export class ServiceApi extends Api {
     return response.data;
   }
 
+  // region type=app
+
   public async restart(request: RestartServiceRequest) {
     const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${request.name}/restart`);
+    return response.data;
+  }
+
+  public async metrics(request: MetricsServiceRequest) {
+    const response = await this.client.client.get<MetricsServiceResponse>(`/api/services/${request.name}/metrics`);
     return response.data;
   }
 
@@ -90,4 +92,15 @@ export class ServiceApi extends Api {
   public terminal(name: string): Socket {
     return this.client.socket("/containers/terminal", { name });
   }
+
+  // endregion
+
+  // region type=job
+
+  public async trigger(request: RestartServiceRequest) {
+    const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${request.name}/trigger`);
+    return response.data;
+  }
+
+  // endregion
 }

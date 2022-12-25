@@ -32,11 +32,14 @@ export const useService = (name: string) => {
       stop: async () => {
         return await client.services.down({ name });
       },
+      delete: async () => {
+        return await client.services.delete({ name });
+      },
       restart: async () => {
         return await client.services.restart({ name });
       },
-      delete: async () => {
-        return await client.services.delete({ name });
+      trigger: async () => {
+        return await client.services.trigger({ name });
       },
     })
   );

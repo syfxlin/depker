@@ -84,23 +84,32 @@ export const ServiceSetting: React.FC = () => {
   const Restart = useMemo(
     () =>
       ["running", "restarting", "exited"].includes(status.data) &&
-      service.data?.type === "app" && (
+      service.data && (
         <Button
           loading={calling.loading}
           variant="light"
           leftIcon={<TbRefresh />}
           onClick={() => {
             calling.calling(async (actions) => {
-              try {
-                await service.actions.restart();
-                actions.success(`Restart successful`, `Service restart successful.`);
-              } catch (e: any) {
-                actions.failure(`Restart failure`, e);
+              if (service.data?.type === "app") {
+                try {
+                  await service.actions.restart();
+                  actions.success(`Restart successful`, `Service restart successful.`);
+                } catch (e: any) {
+                  actions.failure(`Restart failure`, e);
+                }
+              } else {
+                try {
+                  await service.actions.trigger();
+                  actions.success(`Trigger successful`, `Service restart successful.`);
+                } catch (e: any) {
+                  actions.failure(`Trigger failure`, e);
+                }
               }
             });
           }}
         >
-          Restart
+          {service.data?.type === "app" ? "Restart" : "Trigger"}
         </Button>
       ),
     [status.data, service.data?.type, calling.loading]

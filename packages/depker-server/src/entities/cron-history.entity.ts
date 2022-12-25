@@ -30,8 +30,12 @@ export class CronHistory extends BaseEntity {
   })
   service: Relation<Service>;
 
+  // options
   @Column({ nullable: false, default: "queued" })
   status: DeployStatus;
+
+  @Column({ nullable: true, type: "simple-json" })
+  options: any;
 
   // date
   @CreateDateColumn({ nullable: false })
