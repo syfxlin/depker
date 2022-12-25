@@ -1,17 +1,20 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { DepkerPlugin } from "../plugins/plugin.types";
 import fs from "fs-extra";
 import path from "path";
-import { PATHS } from "../constants/depker.constant";
+import { IS_WIN, PATHS } from "../constants/depker.constant";
 import { pathToFileURL } from "url";
 import { PluginContext } from "../plugins/plugin.context";
 import * as example from "../plugins/example";
 import * as dockerfile from "../plugins/dockerfile";
 import { image } from "../plugins/image";
 import { ModuleRef } from "@nestjs/core";
+import { spawnSync } from "child_process";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PluginService.name);
+
   private _loaded = false;
   private readonly _internal: DepkerPlugin[] = [image, example as DepkerPlugin, dockerfile as DepkerPlugin];
   private readonly _plugins: Record<string, DepkerPlugin> = {};
@@ -47,6 +50,22 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     return Object.entries(plugins)
       .filter(([, p]) => p.buildpack?.handler)
       .reduce((a, [n, p]) => ({ ...a, [n]: p }), {});
+  }
+
+  public async install(pkg: string) {
+    const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["install", pkg], { cwd: PATHS.PLUGINS });
+    this.logger.debug(
+      `Install plugin ${pkg}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
+    );
+    return returns.status === 0;
+  }
+
+  public async uninstall(pkg: string) {
+    const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["uninstall", pkg], { cwd: PATHS.PLUGINS });
+    this.logger.debug(
+      `Uninstall plugin ${pkg}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
+    );
+    return returns.status === 0;
   }
 
   public async onModuleInit() {
