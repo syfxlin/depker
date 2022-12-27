@@ -7,24 +7,30 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Req,
   Res,
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { Data } from "../decorators/data.decorator";
 import {
+  GetPluginSettingRequest,
+  GetPluginSettingResponse,
   InstallPluginRequest,
   InstallPluginResponse,
   ListPluginRequest,
   ListPluginResponse,
   UninstallPluginRequest,
   UninstallPluginResponse,
+  UpdatePluginSettingRequest,
+  UpdatePluginSettingResponse,
 } from "../views/plugin.view";
 import { PluginService } from "../services/plugin.service";
 import { RouteContext } from "../plugins/route.context";
 import { ModuleRef } from "@nestjs/core";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PluginEvent } from "../events/plugin.event";
+import { Setting } from "../entities/setting.entity";
 
 @Controller("/api/plugins")
 export class PluginController {
@@ -72,6 +78,8 @@ export class PluginController {
         label: p.label,
         group: p.group,
         icon: p.icon,
+        buildpack: !!p.buildpack,
+        options: !!p.options,
       }));
 
     return { total, items };
@@ -97,6 +105,38 @@ export class PluginController {
     }
   }
 
+  @Get("/settings/:name")
+  public async get(@Data() request: GetPluginSettingRequest): Promise<GetPluginSettingResponse> {
+    const plugins = await this.plugins.plugins();
+    const plugin = plugins[request.name];
+    if (!plugin || !plugin.options) {
+      throw new NotFoundException(`Not found plugin global options of ${request.name}`);
+    }
+    const setting = await Setting.read();
+    return {
+      options: plugin.options,
+      values: setting.plugins[plugin.name] ?? {},
+    };
+  }
+
+  @Put("/settings/:name")
+  public async set(@Data() request: UpdatePluginSettingRequest): Promise<UpdatePluginSettingResponse> {
+    const plugins = await this.plugins.plugins();
+    const plugin = plugins[request.name];
+    if (!plugin || !plugin.options) {
+      throw new NotFoundException(`Not found plugin global options of ${request.name}`);
+    }
+    const setting = await Setting.read();
+    await this.events.emitAsync(PluginEvent.PRE_SETTING, plugin, setting.plugins[plugin.name] ?? {});
+    setting.plugins[plugin.name] = request.values;
+    await Setting.write(setting);
+    await this.events.emitAsync(PluginEvent.POST_SETTING, plugin, setting.plugins[plugin.name] ?? {});
+    return {
+      options: plugin.options,
+      values: setting.plugins[plugin.name] ?? {},
+    };
+  }
+
   @All("/routes/:name/:path")
   public async routes(
     @Param("name") name: string,
@@ -109,9 +149,9 @@ export class PluginController {
       throw new NotFoundException(`Not found plugin routes of ${name}`);
     }
     const context = new RouteContext({ name, request, response, ref: this.ref });
-    await this.events.emitAsync(PluginEvent.PRE_ROUTES, plugin, context);
+    await this.events.emitAsync(PluginEvent.PRE_ROUTE, plugin, context);
     const result = await plugin.routes(context);
-    await this.events.emitAsync(PluginEvent.POST_ROUTES, plugin, context, result);
+    await this.events.emitAsync(PluginEvent.POST_ROUTE, plugin, context, result);
     return result;
   }
 }

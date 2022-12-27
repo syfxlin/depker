@@ -1,4 +1,6 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Matches, Min } from "class-validator";
+import { IsInt, isNotEmpty, IsNotEmpty, IsOptional, isString, IsString, Matches, Min } from "class-validator";
+import { DepkerPluginOption } from "../plugins/plugin.types";
+import { RecordEach } from "../validation/record-each.validation";
 
 export class ListPluginRequest {
   @IsString()
@@ -29,6 +31,8 @@ export type ListPluginResponse = {
     label?: string;
     group?: string;
     icon?: string;
+    buildpack: boolean;
+    options: boolean;
   }>;
 };
 
@@ -51,3 +55,25 @@ export class UninstallPluginRequest {
 export type UninstallPluginResponse = {
   status: "success";
 };
+
+export class GetPluginSettingRequest {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+export type GetPluginSettingResponse = {
+  options: DepkerPluginOption[];
+  values: Record<string, any>;
+};
+
+export class UpdatePluginSettingRequest {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @RecordEach([isString, isNotEmpty])
+  values: Record<string, any>;
+}
+
+export type UpdatePluginSettingResponse = GetPluginSettingResponse;

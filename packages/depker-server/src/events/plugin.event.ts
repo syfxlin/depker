@@ -13,8 +13,10 @@ export enum PluginEvent {
   POST_INSTALL = "plugin.post_install",
   PRE_UNINSTALL = "plugin.pre_uninstall",
   POST_UNINSTALL = "plugin.post_uninstall",
-  PRE_ROUTES = "plugin.pre_routes",
-  POST_ROUTES = "plugin.post_routes",
+  PRE_ROUTE = "plugin.pre_routes",
+  POST_ROUTE = "plugin.post_routes",
+  PRE_SETTING = "plugin.pre_setting",
+  POST_SETTING = "plugin.post_setting",
 }
 
 export type PluginEventHandler = {
@@ -28,6 +30,8 @@ export type PluginEventHandler = {
   [PluginEvent.POST_INSTALL]: (pkg: string, returns: SpawnSyncReturns<Buffer>) => any;
   [PluginEvent.PRE_UNINSTALL]: (pkg: string) => any;
   [PluginEvent.POST_UNINSTALL]: (pkg: string, returns: SpawnSyncReturns<Buffer>) => any;
-  [PluginEvent.PRE_ROUTES]: (plugin: DepkerPlugin, context: RouteContext) => any;
-  [PluginEvent.POST_ROUTES]: (plugin: DepkerPlugin, context: RouteContext, result: any) => any;
+  [PluginEvent.PRE_ROUTE]: (plugin: DepkerPlugin, context: RouteContext) => any;
+  [PluginEvent.POST_ROUTE]: (plugin: DepkerPlugin, context: RouteContext, result: any) => any;
+  [PluginEvent.PRE_SETTING]: (plugin: DepkerPlugin, values: Record<string, any>) => any;
+  [PluginEvent.POST_SETTING]: (plugin: DepkerPlugin, values: Record<string, any>) => any;
 };
