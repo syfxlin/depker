@@ -1,4 +1,15 @@
-import { All, Controller, Delete, Get, InternalServerErrorException, Param, Post, Req, Res } from "@nestjs/common";
+import {
+  All,
+  Controller,
+  Delete,
+  Get,
+  InternalServerErrorException,
+  NotFoundException,
+  Param,
+  Post,
+  Req,
+  Res,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 import { Data } from "../decorators/data.decorator";
 import {
@@ -10,10 +21,18 @@ import {
   UninstallPluginResponse,
 } from "../views/plugin.view";
 import { PluginService } from "../services/plugin.service";
+import { RouteContext } from "../plugins/route.context";
+import { ModuleRef } from "@nestjs/core";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { PluginEvent } from "../events/plugin.event";
 
 @Controller("/api/plugins")
 export class PluginController {
-  constructor(private readonly plugins: PluginService) {}
+  constructor(
+    private readonly plugins: PluginService,
+    private readonly events: EventEmitter2,
+    private readonly ref: ModuleRef
+  ) {}
 
   @Get("/")
   public async list(@Data() request: ListPluginRequest): Promise<ListPluginResponse> {
@@ -78,6 +97,21 @@ export class PluginController {
     }
   }
 
-  @All("/:name/:path")
-  public async routes(@Param("name") name: string, @Req() request: Request, @Res() response: Response) {}
+  @All("/routes/:name/:path")
+  public async routes(
+    @Param("name") name: string,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response
+  ) {
+    const plugins = await this.plugins.plugins();
+    const plugin = plugins[name];
+    if (!plugin || !plugin.routes) {
+      throw new NotFoundException(`Not found plugin routes of ${name}`);
+    }
+    const context = new RouteContext({ name, request, response, ref: this.ref });
+    await this.events.emitAsync(PluginEvent.PRE_ROUTES, plugin, context);
+    const result = await plugin.routes(context);
+    await this.events.emitAsync(PluginEvent.POST_ROUTES, plugin, context, result);
+    return result;
+  }
 }

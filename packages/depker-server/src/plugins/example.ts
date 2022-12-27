@@ -99,5 +99,5 @@ export const buildpack: DepkerPlugin["buildpack"] = {
 };
 
 export const routes: DepkerPlugin["routes"] = async (ctx) => {
-  //
+  return "example work!";
 };

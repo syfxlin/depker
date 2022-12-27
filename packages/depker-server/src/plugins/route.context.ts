@@ -15,7 +15,7 @@ export class RouteContext extends PluginContext {
   constructor(options: RouteOptions) {
     super(options);
     this.method = options.request.method;
-    this.path = options.request.param("path");
+    this.path = options.request.params.path;
     this.request = options.request;
     this.response = options.response;
   }
