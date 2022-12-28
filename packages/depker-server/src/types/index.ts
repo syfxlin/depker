@@ -20,6 +20,7 @@ export * from "../views/token.view";
 export * from "../views/setting.view";
 export * from "../views/deploy.view";
 export * from "../views/cron.view";
+export * from "../views/plugin.view";
 
 // events
 export * from "../events/cron.event";

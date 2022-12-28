@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Main } from "../components/layout/Main";
 import { Grid, Stack } from "@mantine/core";
 import { NavLink } from "../components/core/NavLink";
-import { TbSettings } from "react-icons/all";
+import { TbOutlet, TbSettings } from "react-icons/all";
 import { css } from "@emotion/react";
 import { Outlet } from "react-router-dom";
 
@@ -11,7 +11,8 @@ export const Settings: React.FC = () => {
     () => (
       <Grid.Col span={12} md={3}>
         <Stack spacing="xs">
-          <NavLink label="Main Setting" icon={<TbSettings />} action={`/settings/`} />
+          <NavLink label="General" icon={<TbSettings />} action={`/settings/`} />
+          <NavLink label="Plugins" icon={<TbOutlet />} action={`/settings/plugins`} />
         </Stack>
       </Grid.Col>
     ),

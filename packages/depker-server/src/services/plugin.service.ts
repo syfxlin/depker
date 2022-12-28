@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { DepkerPlugin } from "../plugins/plugin.types";
+import { DepkerPlugin, LoadedDepkerPlugin } from "../plugins/plugin.types";
 import fs from "fs-extra";
 import path from "path";
 import { IS_WIN, PATHS } from "../constants/depker.constant";
@@ -12,37 +12,43 @@ import { ModuleRef } from "@nestjs/core";
 import { spawnSync } from "child_process";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PluginEvent } from "../events/plugin.event";
+import { Service } from "../entities/service.entity";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PluginService.name);
 
   private _loaded = false;
-  private readonly _internal: DepkerPlugin[] = [image, example as DepkerPlugin, dockerfile as DepkerPlugin];
-  private readonly _plugins: Record<string, DepkerPlugin> = {};
+  private readonly _defined: DepkerPlugin[] = [image, example as DepkerPlugin, dockerfile as DepkerPlugin];
+  private readonly _internal: Record<string, LoadedDepkerPlugin> = {};
+  private readonly _external: Record<string, LoadedDepkerPlugin> = {};
 
   constructor(private readonly ref: ModuleRef, private readonly events: EventEmitter2) {}
 
-  public async load(): Promise<Record<string, DepkerPlugin>> {
-    if (!this._loaded) {
-      const plugins: DepkerPlugin[] = [...this._internal];
+  public async load(force = false): Promise<Record<string, LoadedDepkerPlugin>> {
+    if (!this._loaded || force) {
+      // internal
+      for (const plugin of this._defined) {
+        await this.events.emitAsync(PluginEvent.PRE_LOAD, plugin.name);
+        this._internal[plugin.name] = { pkg: plugin.name, ...plugin };
+        await this.events.emitAsync(PluginEvent.POST_LOAD, plugin.name, plugin);
+      }
+
+      // external
       const pjson = fs.readJsonSync(path.join(PATHS.PLUGINS, "package.json"));
-      const names = Object.keys(pjson.dependencies || {});
-      for (const name of names) {
-        const idx = path.join(PATHS.PLUGINS, "node_modules", name, "index.js");
-        await this.events.emitAsync(PluginEvent.PRE_LOAD, name);
+      const pkgs = Object.keys(pjson.dependencies || {});
+      for (const pkg of pkgs) {
+        const idx = path.join(PATHS.PLUGINS, "node_modules", pkg, "index.js");
+        await this.events.emitAsync(PluginEvent.PRE_LOAD, pkg);
         const mod = await import(pathToFileURL(idx).toString());
         if (mod.name) {
-          plugins.push(mod);
+          this._external[mod.name] = { pkg, ...mod };
         }
-        await this.events.emitAsync(PluginEvent.POST_LOAD, name, mod);
-      }
-      for (const plugin of plugins) {
-        this._plugins[plugin.name] = plugin;
+        await this.events.emitAsync(PluginEvent.POST_LOAD, pkg, mod);
       }
       this._loaded = true;
     }
-    return this._plugins;
+    return { ...this._internal, ...this._external };
   }
 
   public async plugins(): Promise<Record<string, DepkerPlugin>> {
@@ -56,24 +62,48 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       .reduce((a, [n, p]) => ({ ...a, [n]: p }), {});
   }
 
-  public async install(pkg: string) {
-    await this.events.emitAsync(PluginEvent.PRE_INSTALL, pkg);
-    const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["install", pkg], { cwd: PATHS.PLUGINS });
-    await this.events.emitAsync(PluginEvent.POST_INSTALL, pkg, returns);
+  public async install(name: string) {
+    await this.load();
+    const plugin = this._internal[name];
+    if (plugin) {
+      return `This plugin is already defined internally and cannot be overridden.`;
+    }
+    await this.events.emitAsync(PluginEvent.PRE_INSTALL, name);
+    const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["install", name], { cwd: PATHS.PLUGINS });
+    await this.events.emitAsync(PluginEvent.POST_INSTALL, name, returns);
     this.logger.debug(
-      `Install plugin ${pkg}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
+      `Install plugin ${name}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
     );
-    return returns.status === 0;
+    if (returns.status !== 0) {
+      return `Exit code is ${returns.status}`;
+    }
+    await this.load(true);
+    return null;
   }
 
-  public async uninstall(pkg: string) {
-    await this.events.emitAsync(PluginEvent.PRE_UNINSTALL, pkg);
-    const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["uninstall", pkg], { cwd: PATHS.PLUGINS });
-    await this.events.emitAsync(PluginEvent.POST_UNINSTALL, pkg, returns);
+  public async uninstall(name: string) {
+    await this.load();
+    const plugin = this._external[name];
+    if (!plugin) {
+      return `This plugin is not installed or is an internal package.`;
+    }
+
+    const used = await Service.countBy({ buildpack: plugin.name });
+    if (used) {
+      return `This plugin is currently in use and cannot be uninstalled.`;
+    }
+
+    await this.events.emitAsync(PluginEvent.PRE_UNINSTALL, plugin.pkg);
+    const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["uninstall", plugin.pkg], { cwd: PATHS.PLUGINS });
+    await this.events.emitAsync(PluginEvent.POST_UNINSTALL, plugin.pkg, returns);
     this.logger.debug(
-      `Uninstall plugin ${pkg}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
+      `Uninstall plugin ${plugin.pkg}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
     );
-    return returns.status === 0;
+    if (returns.status !== 0) {
+      return `Exit code is ${returns.status}`;
+    }
+    await this.load(true);
+    return null;
   }
 
   public async onModuleInit() {

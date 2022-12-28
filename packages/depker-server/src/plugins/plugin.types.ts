@@ -89,3 +89,7 @@ export interface DepkerPlugin {
     handler?: (ctx: PackContext) => Promise<void> | void;
   };
 }
+
+export interface LoadedDepkerPlugin extends DepkerPlugin {
+  pkg: string;
+}

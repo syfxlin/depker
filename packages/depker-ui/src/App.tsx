@@ -19,8 +19,9 @@ import { Tokens } from "./pages/Tokens";
 import { Ports } from "./pages/Ports";
 import { Volumes } from "./pages/Volumes";
 import { Settings } from "./pages/Settings";
-import { SettingMainTab } from "./pages/SettingMainTab";
+import { SettingGeneralTab } from "./pages/SettingGeneralTab";
 import { ServiceCronsTab } from "./pages/ServiceCronsTab";
+import { SettingPluginsTab } from "./pages/SettingPluginsTab";
 
 export const App: React.FC = () => {
   return (
@@ -50,7 +51,8 @@ export const App: React.FC = () => {
             <Route path="/files" element={<Files />} />
             <Route path="/files/*" element={<Files />} />
             <Route path="/settings" element={<Settings />}>
-              <Route index element={<SettingMainTab />} />
+              <Route index element={<SettingGeneralTab />} />
+              <Route path="plugins" element={<SettingPluginsTab />} />
             </Route>
           </Route>
         </Routes>

@@ -39,7 +39,7 @@ export type ListPluginResponse = {
 export class InstallPluginRequest {
   @IsString()
   @IsNotEmpty()
-  pkg: string;
+  name: string;
 }
 
 export type InstallPluginResponse = {
@@ -49,7 +49,7 @@ export type InstallPluginResponse = {
 export class UninstallPluginRequest {
   @IsString()
   @IsNotEmpty()
-  pkg: string;
+  name: string;
 }
 
 export type UninstallPluginResponse = {

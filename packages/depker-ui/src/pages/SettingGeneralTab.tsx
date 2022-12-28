@@ -6,7 +6,7 @@ import { Heading } from "../components/parts/Heading";
 import { TbAntennaBars5, TbApps, TbDownload, TbEqual, TbList } from "react-icons/all";
 import { RecordInput } from "../components/input/RecordInput";
 
-export const SettingMainTab: React.FC = () => {
+export const SettingGeneralTab: React.FC = () => {
   const settings = useSettings();
 
   // infos

@@ -85,23 +85,23 @@ export class PluginController {
     return { total, items };
   }
 
-  @Post("/:pkg")
+  @Post("/:name")
   public async install(@Data() request: InstallPluginRequest): Promise<InstallPluginResponse> {
-    const success = await this.plugins.install(request.pkg);
-    if (success) {
+    const error = await this.plugins.install(request.name);
+    if (!error) {
       return { status: "success" };
     } else {
-      throw new InternalServerErrorException(`Install plugin ${request.pkg} failed.`);
+      throw new InternalServerErrorException(`Install plugin ${request.name} failed. ${error}`);
     }
   }
 
-  @Delete("/:pkg")
+  @Delete("/:name")
   public async uninstall(@Data() request: UninstallPluginRequest): Promise<UninstallPluginResponse> {
-    const success = await this.plugins.uninstall(request.pkg);
-    if (success) {
+    const error = await this.plugins.uninstall(request.name);
+    if (!error) {
       return { status: "success" };
     } else {
-      throw new InternalServerErrorException(`Uninstall plugin ${request.pkg} failed.`);
+      throw new InternalServerErrorException(`Uninstall plugin ${request.name} failed. ${error}`);
     }
   }
 
