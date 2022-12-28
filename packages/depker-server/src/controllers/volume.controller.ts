@@ -14,9 +14,13 @@ import path from "path";
 import { Data } from "../decorators/data.decorator";
 import { Service } from "../entities/service.entity";
 import { ILike } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { VolumeEvent } from "../events/volume.event";
 
 @Controller("/api/volumes")
 export class VolumeController {
+  constructor(private readonly events: EventEmitter2) {}
+
   @Get("/")
   public async list(): Promise<ListVolumeResponse> {
     const volumes = fs.readdirSync(PATHS.VOLUMES);
@@ -29,6 +33,7 @@ export class VolumeController {
     const relative = path.relative(PATHS.VOLUMES, location);
     if (relative && !relative.startsWith("..") && !path.isAbsolute(relative)) {
       fs.ensureDirSync(location);
+      await this.events.emitAsync(VolumeEvent.CREATE, request.volume);
       return { status: "success" };
     }
     throw new ForbiddenException(`Illegal volume path of ${request.volume}`);
@@ -46,6 +51,7 @@ export class VolumeController {
     const relative = path.relative(PATHS.VOLUMES, location);
     if (relative && !relative.startsWith("..") && !path.isAbsolute(relative)) {
       fs.removeSync(location);
+      await this.events.emitAsync(VolumeEvent.DELETE, request.volume);
       return { status: "success" };
     }
     throw new ForbiddenException(`Illegal volume path of ${request.volume}`);

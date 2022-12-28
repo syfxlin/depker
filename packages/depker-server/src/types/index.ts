@@ -21,12 +21,16 @@ export * from "../views/setting.view";
 export * from "../views/deploy.view";
 export * from "../views/cron.view";
 
+// events
+export * from "../events/cron.event";
+export * from "../events/deploy.event";
+export * from "../events/plugin.event";
+export * from "../events/port.event";
+export * from "../events/service.event";
+export * from "../events/setting.event";
+export * from "../events/token.event";
+export * from "../events/volume.event";
+
 // plugins
 export * from "../plugins/plugin.types";
 export * from "../plugins/plugin.context";
-export { CancelServiceDeployResponse } from "../views/deploy.view";
-export { CancelServiceDeployRequest } from "../views/deploy.view";
-export { LogsServiceDeployResponse } from "../views/deploy.view";
-export { LogsServiceDeployRequest } from "../views/deploy.view";
-export { ListServiceDeployResponse } from "../views/deploy.view";
-export { ListServiceDeployRequest } from "../views/deploy.view";

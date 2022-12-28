@@ -12,9 +12,13 @@ import { Setting } from "../entities/setting.entity";
 import { Data } from "../decorators/data.decorator";
 import { Service } from "../entities/service.entity";
 import { ILike } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { PortEvent } from "../events/port.event";
 
 @Controller("/api/ports")
 export class PortController {
+  constructor(private readonly events: EventEmitter2) {}
+
   @Get("/")
   public async list(): Promise<ListPortResponse> {
     const setting = await Setting.read();
@@ -28,6 +32,7 @@ export class PortController {
     ports.add(request.port);
     setting.ports = Array.from(ports.values());
     await Setting.write(setting);
+    await this.events.emitAsync(PortEvent.CREATE, request.port);
     return { status: "success" };
   }
 
@@ -44,6 +49,7 @@ export class PortController {
     ports.delete(request.port);
     setting.ports = Array.from(ports.values());
     await Setting.write(setting);
+    await this.events.emitAsync(PortEvent.DELETE, request.port);
     return { status: "success" };
   }
 

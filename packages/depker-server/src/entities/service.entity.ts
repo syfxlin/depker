@@ -186,7 +186,7 @@ export class Service extends BaseEntity {
   public static async listDeploydAt(names: string[]): Promise<Record<string, Date>> {
     const items = await Deploy.createQueryBuilder()
       .select(["service_name AS serviceName", "MAX(updated_at) AS updatedAt"])
-      .where(`status = 'success' AND service_name IN (${names.map((i) => `'${i}'`).join(",")})`)
+      .where(`status = 'success' AND service_name IN (:...names)`, { names })
       .groupBy("service_name")
       .getRawMany<{ serviceName: string; updatedAt: string }>();
     return items.reduce((a, i) => ({ ...a, [i.serviceName]: new Date(i.updatedAt) }), {});
