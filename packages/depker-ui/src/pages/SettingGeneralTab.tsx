@@ -1,13 +1,15 @@
 import React, { ChangeEvent, useMemo } from "react";
 import { useSettings } from "../api/use-settings";
 import { Async } from "../components/core/Async";
-import { NumberInput, Select, Stack, TextInput } from "@mantine/core";
+import { Button, Divider, NumberInput, Select, Stack, TextInput } from "@mantine/core";
 import { Heading } from "../components/parts/Heading";
 import { TbAntennaBars5, TbApps, TbDownload, TbEqual, TbList } from "react-icons/all";
 import { RecordInput } from "../components/input/RecordInput";
+import { useCalling } from "../hooks/use-calling";
 
 export const SettingGeneralTab: React.FC = () => {
   const settings = useSettings();
+  const calling = useCalling();
 
   // infos
   const Email = useMemo(
@@ -167,6 +169,27 @@ export const SettingGeneralTab: React.FC = () => {
     [settings.data?.tls.env]
   );
 
+  const Save = useMemo(
+    () => (
+      <Button
+        loading={calling.loading}
+        onClick={() => {
+          calling.calling(async (actions) => {
+            try {
+              await settings.actions.save();
+              actions.success(`Save successful`, `Settings save successful.`);
+            } catch (e: any) {
+              actions.failure(`Save failure`, e);
+            }
+          });
+        }}
+      >
+        Save
+      </Button>
+    ),
+    [calling.loading, settings.actions.save]
+  );
+
   return (
     <Async query={settings.query}>
       <Stack>
@@ -182,6 +205,8 @@ export const SettingGeneralTab: React.FC = () => {
         {CertificatesType}
         {CertificatesEnv}
       </Stack>
+      <Divider my="md" />
+      {Save}
     </Async>
   );
 };

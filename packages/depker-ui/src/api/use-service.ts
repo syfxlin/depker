@@ -19,12 +19,22 @@ export const useService = (name: string) => {
         return await q.mutate((prev) => (prev ? fn(prev) : prev), false);
       },
       save: async () => {
-        return await q.mutate(async (value) => {
+        let error: any = null;
+        const result = await q.mutate(async (value) => {
           if (!value) {
             return value;
           }
-          return client.services.update(value);
+          try {
+            return await client.services.update(value);
+          } catch (e) {
+            error = e;
+            return value;
+          }
         }, false);
+        if (error) {
+          throw error;
+        }
+        return result;
       },
       deploy: async () => {
         return await client.services.up({ name });

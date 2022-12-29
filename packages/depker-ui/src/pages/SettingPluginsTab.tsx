@@ -7,6 +7,7 @@ import {
   Avatar,
   Badge,
   Button,
+  Divider,
   Group,
   Stack,
   Text,
@@ -17,9 +18,47 @@ import {
 import { css } from "@emotion/react";
 import { client } from "../api/client";
 import { useCalling } from "../hooks/use-calling";
-import { TbOutlet, TbTrash } from "react-icons/all";
-import { openConfirmModal } from "@mantine/modals";
+import { TbOutlet, TbSettings, TbTrash } from "react-icons/all";
+import { closeAllModals, openConfirmModal, openModal } from "@mantine/modals";
 import { ListPluginResponse } from "@syfxlin/depker-client";
+import { usePlugin } from "../api/use-plugin";
+import { ExtensionInput } from "../components/input/ExtensionInput";
+
+const Setting: React.FC<{ name: string }> = ({ name }) => {
+  const plugin = usePlugin(name);
+  const calling = useCalling();
+  return (
+    <Async query={plugin.query}>
+      {plugin.data && (
+        <Stack>
+          <ExtensionInput
+            options={plugin.data.options}
+            value={plugin.data.values}
+            onChange={(value) => plugin.actions.update(() => value)}
+          />
+          <Button
+            mt="xs"
+            fullWidth
+            loading={calling.loading}
+            onClick={() => {
+              calling.calling(async (actions) => {
+                try {
+                  await plugin.actions.save();
+                  closeAllModals();
+                  actions.success(`Save successful`, `Plugin settings save successful.`);
+                } catch (e: any) {
+                  actions.failure(`Save failure`, e);
+                }
+              });
+            }}
+          >
+            Save
+          </Button>
+        </Stack>
+      )}
+    </Async>
+  );
+};
 
 const Actions: React.FC<{
   item: ListPluginResponse["items"][number];
@@ -29,6 +68,22 @@ const Actions: React.FC<{
   const calling = useCalling();
   return (
     <>
+      <Tooltip label="Setting">
+        <ActionIcon
+          size="lg"
+          color={t.primaryColor}
+          loading={calling.loading}
+          disabled={!item.options}
+          onClick={() => {
+            openModal({
+              title: "Setting Plugin",
+              children: <Setting name={item.name} />,
+            });
+          }}
+        >
+          <TbSettings />
+        </ActionIcon>
+      </Tooltip>
       <Tooltip label="Uninstall">
         <ActionIcon
           size="lg"
@@ -76,14 +131,18 @@ export const SettingPluginsTab: React.FC = () => {
     <Stack>
       <Group>
         <TextInput
-          placeholder="Plugin package name."
+          placeholder="Plugin package name or package spec."
           icon={<TbOutlet />}
           value={install}
           onChange={(e) => setInstall(e.target.value)}
           disabled={calling.loading}
+          css={css`
+            flex: 1;
+          `}
         />
         <Button
           loading={calling.loading}
+          disabled={!install}
           onClick={() => {
             calling.calling(async (a) => {
               if (!install) {
@@ -102,6 +161,7 @@ export const SettingPluginsTab: React.FC = () => {
           Install
         </Button>
       </Group>
+      <Divider />
       <Async query={plugins.query}>
         {plugins.data && (
           <Pages

@@ -34,7 +34,10 @@ export class PluginApi extends Api {
   }
 
   public async set(request: UpdatePluginSettingRequest) {
-    const response = await this.client.client.put<UpdatePluginSettingResponse>(`/api/plugins/settings/${request.name}`);
+    const response = await this.client.client.put<UpdatePluginSettingResponse>(
+      `/api/plugins/settings/${request.name}`,
+      request
+    );
     return response.data;
   }
 

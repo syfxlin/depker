@@ -17,7 +17,18 @@ export class SettingController {
 
   @Put("/")
   public async update(@Data() request: UpdateSettingRequest): Promise<UpdateSettingResponse> {
-    await Setting.write(request);
+    await Setting.write({
+      email: request.email,
+      username: request.username,
+      upgrade: request.upgrade,
+      purge: request.purge,
+      concurrency: request.concurrency,
+      dashboard: request.dashboard,
+      tls: {
+        type: request.tls.type,
+        env: request.tls.env,
+      },
+    });
     const setting = await Setting.read();
     await this.events.emitAsync(SettingEvent.UPDATE, setting);
     return setting.view;

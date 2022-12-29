@@ -1,10 +1,10 @@
 import useSWR from "swr";
 import { client } from "./client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
-import { GetSettingResponse } from "@syfxlin/depker-client";
+import { GetPluginSettingResponse } from "@syfxlin/depker-client";
 
-export const useSettings = () => {
-  const query = useSWR(["client.settings.get"], () => client.settings.get(), {
+export const usePlugin = (name: string) => {
+  const query = useSWR(["client.plugins.get", name], () => client.plugins.get({ name }), {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     refreshWhenHidden: false,
@@ -15,8 +15,8 @@ export const useSettings = () => {
     query,
     (v) => v,
     (q) => ({
-      update: async (fn: (prev: GetSettingResponse) => GetSettingResponse) => {
-        return await q.mutate((prev) => (prev ? fn(prev) : prev), false);
+      update: async (fn: (prev: GetPluginSettingResponse["values"]) => GetPluginSettingResponse["values"]) => {
+        return await q.mutate((prev) => (prev ? { options: prev.options, values: fn(prev.values) } : prev), false);
       },
       save: async () => {
         let error: any = null;
@@ -25,7 +25,7 @@ export const useSettings = () => {
             return value;
           }
           try {
-            return await client.settings.update(value);
+            return await client.plugins.set({ name, values: value.values });
           } catch (e) {
             error = e;
             return value;
