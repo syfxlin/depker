@@ -114,7 +114,6 @@ export const SettingGeneralTab: React.FC = () => {
     () =>
       settings.data && (
         <TextInput
-          required
           label="Dashboard"
           description="Domain of the Traefik dashboard, if not filled, the dashboard will not be exposed."
           placeholder="Dashboard"
@@ -150,7 +149,6 @@ export const SettingGeneralTab: React.FC = () => {
     () =>
       settings.data && (
         <RecordInput
-          required
           label="Certificates Environment Variables"
           description="Environment Variables for TLS certificate, see Traefik documentation."
           leftPlaceholder="Certificates Environment Key"
