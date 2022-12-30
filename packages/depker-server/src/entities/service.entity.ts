@@ -82,7 +82,7 @@ export class Service extends BaseEntity {
   @Column({ nullable: false, default: "", type: "text" })
   rule: string;
 
-  @Column({ nullable: false, default: 3000 })
+  @Column({ nullable: false, default: 80 })
   port: number;
 
   @Column({ nullable: false, default: "http" })

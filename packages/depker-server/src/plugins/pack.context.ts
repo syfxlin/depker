@@ -40,6 +40,13 @@ export class PackContext extends PluginContext {
 
   public write(file: string, data: string) {
     fs.outputFileSync(path.join(this.project, file), data, "utf-8");
+    return file;
+  }
+
+  public temp(file: string, data: string) {
+    const p = path.posix.join(".depker", "tmp", file);
+    fs.outputFileSync(path.join(this.project, p), data, "utf-8");
+    return p;
   }
 
   public async extensions(name?: string, value?: any) {

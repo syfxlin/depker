@@ -1,4 +1,4 @@
-import { DepkerPlugin } from "./plugin.types";
+import { DepkerPlugin } from "../../plugin.types";
 
 // image is a buildpack plugin, there will be additional processing
 export const image: DepkerPlugin = {

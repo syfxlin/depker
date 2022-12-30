@@ -516,7 +516,7 @@ export class DeployService {
     // web
     if (options.rule || options.domain?.length) {
       const rule = (options.rule || options.domain?.map((d) => `Host(\`${d}\`)`).join(" || ")) as string;
-      const port = options.port ?? 3000;
+      const port = options.port ?? 80;
       const scheme = options.scheme ?? "http";
       const middlewares: string[] = [];
 

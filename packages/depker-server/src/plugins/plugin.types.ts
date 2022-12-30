@@ -2,48 +2,36 @@ import { PackContext } from "./pack.context";
 import { PluginContext } from "./plugin.context";
 import { RouteContext } from "./route.context";
 
-export interface BaseOption<T> {
+export interface BaseOption<T, E> {
   type: T;
   name: string;
   label?: string;
   description?: string;
   placeholder?: string;
   required?: boolean;
+  validate?: (value: E) => boolean;
 }
 
-export type BooleanOption = BaseOption<"boolean"> & {
-  validate?: (value: boolean) => boolean;
-};
+export type BooleanOption = BaseOption<"boolean", boolean>;
 
-export type StringOption = BaseOption<"string"> & {
-  validate?: (value: string) => boolean;
-};
+export type StringOption = BaseOption<"string", string>;
 
-export type TextOption = BaseOption<"text"> & {
-  validate?: (value: string) => boolean;
-};
+export type TextOption = BaseOption<"text", string>;
 
-export type JsonOption = BaseOption<"json"> & {
-  validate?: (value: string) => boolean;
-};
+export type JsonOption = BaseOption<"json", string>;
 
-export type NumberOption = BaseOption<"number"> & {
+export type NumberOption = BaseOption<"number", number> & {
   min?: number;
   max?: number;
   step?: number;
   precision?: number;
-  validate?: (value: number) => boolean;
 };
 
-export type ListOption = BaseOption<"list"> & {
-  validate?: (value: string[]) => boolean;
-};
+export type ListOption = BaseOption<"list", string[]>;
 
-export type ObjectOption = BaseOption<"object"> & {
-  validate?: (value: Record<string, string>) => boolean;
-};
+export type ObjectOption = BaseOption<"object", Record<string, string>>;
 
-export type SelectOption = BaseOption<"select"> &
+export type SelectOption = BaseOption<"select", string | string[]> &
   (
     | {
         options: Array<{
@@ -51,7 +39,6 @@ export type SelectOption = BaseOption<"select"> &
           value: string;
         }>;
         multiple?: false;
-        validate?: (value: string) => boolean;
       }
     | {
         options: Array<{
@@ -61,7 +48,6 @@ export type SelectOption = BaseOption<"select"> &
         multiple: true;
         min?: number;
         max?: number;
-        validate?: (value: string[]) => boolean;
       }
   );
 

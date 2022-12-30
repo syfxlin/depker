@@ -7,19 +7,20 @@ import { pathToFileURL } from "url";
 import { PluginContext } from "../plugins/plugin.context";
 import * as example from "../plugins/example";
 import * as dockerfile from "../plugins/dockerfile";
-import { image } from "../plugins/image";
 import { ModuleRef } from "@nestjs/core";
 import { spawnSync } from "child_process";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PluginEvent } from "../events/plugin.event";
 import { Service } from "../entities/service.entity";
+import { image } from "../plugins/buildpacks/image/image.plugin";
+import { nginx } from "../plugins/buildpacks/nginx/nginx.plugin";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PluginService.name);
 
   private _loaded = false;
-  private readonly _defined: DepkerPlugin[] = [image, example as DepkerPlugin, dockerfile as DepkerPlugin];
+  private readonly _defined: DepkerPlugin[] = [image, nginx, example as DepkerPlugin, dockerfile as DepkerPlugin];
   private readonly _internal: Record<string, LoadedDepkerPlugin> = {};
   private readonly _external: Record<string, LoadedDepkerPlugin> = {};
 

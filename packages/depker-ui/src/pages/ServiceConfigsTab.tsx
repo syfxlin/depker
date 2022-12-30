@@ -371,7 +371,7 @@ export const ServiceConfigsTab: React.FC = () => {
           max={65535}
           value={service.data.port}
           onChange={(value) => {
-            service.actions.update((prev) => ({ ...prev, port: value ?? 3000 }));
+            service.actions.update((prev) => ({ ...prev, port: value ?? 80 }));
           }}
         />
       ),
@@ -578,7 +578,7 @@ export const ServiceConfigsTab: React.FC = () => {
             onChange: (value: string) => {
               setItem({
                 hport: parseInt(value),
-                cport: item?.cport ?? 3000,
+                cport: item?.cport ?? 80,
                 proto: item?.proto ?? "tcp",
               });
             },
@@ -594,7 +594,7 @@ export const ServiceConfigsTab: React.FC = () => {
               value={item?.cport}
               onChange={(value) => {
                 if (item) {
-                  setItem({ ...item, cport: value ?? 3000 });
+                  setItem({ ...item, cport: value ?? 80 });
                 }
               }}
             />,

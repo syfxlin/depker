@@ -19,7 +19,7 @@ export class TerminalGateway implements OnGatewayConnection {
         AttachStdout: true,
         AttachStderr: true,
         Tty: true,
-        Cmd: ["bash"],
+        Cmd: ["sh"],
         DetachKeys: "ctrl-q",
       });
       const duplex = await exec.start({ stdin: true, Tty: true });
