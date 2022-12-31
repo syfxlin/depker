@@ -5,10 +5,16 @@ import path from "path";
 import { Service } from "../entities/service.entity";
 import { DeployBuildOptions, DeployStartOptions } from "../services/deploy.service";
 import { LogFunc } from "../types";
+import { Environment, FileSystemLoader } from "nunjucks";
 
 export interface PackOptions extends PluginOptions {
   project: string;
   deploy: Deploy;
+}
+
+export interface FilterThis {
+  env: Environment;
+  ctx: any;
 }
 
 export class PackContext extends PluginContext {
@@ -27,7 +33,9 @@ export class PackContext extends PluginContext {
   }
 
   public dockerfile(data: string) {
-    fs.outputFileSync(path.join(this.project, "Dockerfile"), data, "utf-8");
+    const file = "Dockerfile";
+    fs.outputFileSync(path.join(this.project, file), data, "utf-8");
+    return file;
   }
 
   public exists(file: string) {
@@ -39,14 +47,65 @@ export class PackContext extends PluginContext {
   }
 
   public write(file: string, data: string) {
+    if (this.exists(file)) {
+      return file;
+    }
+    this.overwrite(file, data);
+    return file;
+  }
+
+  public overwrite(file: string, data: string) {
     fs.outputFileSync(path.join(this.project, file), data, "utf-8");
     return file;
   }
 
-  public temp(file: string, data: string) {
-    const p = path.posix.join(".depker", "tmp", file);
-    fs.outputFileSync(path.join(this.project, p), data, "utf-8");
-    return p;
+  public render(value: string, context: Record<string, any>) {
+    // template
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
+    const template = new Environment(new FileSystemLoader(this.project), {
+      autoescape: false,
+      noCache: true,
+    });
+    // filter
+    template.addFilter("inject", function (this: FilterThis, value: string) {
+      if (!value) {
+        return "";
+      }
+      return this.env.renderString(value, this.ctx);
+    });
+    template.addFilter("render", function (this: FilterThis, value: string) {
+      if (!value) {
+        return "";
+      }
+      return this.env.renderString(value, this.ctx);
+    });
+    template.addFilter("exists", function (file: string) {
+      return self.exists(file);
+    });
+    template.addFilter("read", function (file: string) {
+      return self.read(file);
+    });
+    template.addFilter("write", function (value: string, file: string) {
+      return self.write(file, value);
+    });
+    template.addFilter("overwrite", function (value: string, file: string) {
+      return self.overwrite(file, value);
+    });
+    template.addFilter("render_write", function (this: FilterThis, value: string, file: string) {
+      if (self.exists(file)) {
+        const content = this.env.renderString(self.read(file), this.ctx);
+        return self.overwrite(file, content);
+      } else {
+        const content = value ? this.env.renderString(value, this.ctx) : "";
+        return self.overwrite(file, content);
+      }
+    });
+    template.addFilter("render_overwrite", function (this: FilterThis, value: string, file: string) {
+      const content = value ? this.env.renderString(value, this.ctx) : "";
+      return self.overwrite(file, content);
+    });
+    return template.renderString(value, context);
   }
 
   public async extensions(name?: string, value?: any) {

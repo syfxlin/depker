@@ -148,7 +148,7 @@ export class PluginController {
     if (!plugin || !plugin.routes) {
       throw new NotFoundException(`Not found plugin routes of ${name}`);
     }
-    const context = new RouteContext({ name, request, response, ref: this.ref });
+    const context = new RouteContext({ plugin, request, response, ref: this.ref });
     await this.events.emitAsync(PluginEvent.PRE_ROUTE, plugin, context);
     const result = await plugin.routes(context);
     await this.events.emitAsync(PluginEvent.POST_ROUTE, plugin, context, result);

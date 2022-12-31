@@ -174,7 +174,7 @@ export class DeployService {
 
         // init context
         const context = new PackContext({
-          name: buildpack.name,
+          plugin: buildpack,
           deploy: deploy,
           project: project,
           ref: this.ref,
@@ -603,15 +603,19 @@ export class DeployService {
     // logger
     await logger.step(`Start container ${name} started.`);
 
+    // running
+    const running = await this.docker.getContainer(name);
+
     // create
     const container = await this._create(args);
+    const id = container.id.substring(0, 7);
 
     try {
       // start
       await container.start();
 
       // wait healthcheck, max timeout 1h
-      await logger.log(`Waiting container ${name} to finished.`);
+      await logger.log(`Waiting container ${name} (${id}) to finished.`);
       for (let i = 1; i <= 1200; i++) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const info = await container.inspect();
@@ -621,7 +625,7 @@ export class DeployService {
           if (status === "running" && (!health || health === "healthy")) {
             break;
           } else {
-            throw new Error(`Start container ${name} is unhealthy.`);
+            throw new Error(`Start container ${name} (${id}) is unhealthy.`);
           }
         }
         if (i % 10 === 0) {
@@ -631,7 +635,7 @@ export class DeployService {
 
       // rename
       try {
-        const running = this.docker.getContainer(name);
+        await running.stop();
         await running.rename({ name: `${name}-${Date.now()}` });
       } catch (e) {
         // ignore
@@ -641,8 +645,14 @@ export class DeployService {
       await logger.success(`Start container ${name} successful.`);
       return `container:${container.id}`;
     } catch (e: any) {
-      await logger.error(`Start container ${name} failure.`, e);
-      throw new Error(`Start container ${name} failure. Caused by ${e.message}`);
+      try {
+        await running.start();
+        await running.rename({ name });
+      } catch (e) {
+        // ignore
+      }
+      await logger.error(`Start container ${name} (${id}) failure.`, e);
+      throw new Error(`Start container ${name} (${id}) failure. Caused by ${e.message}`);
     }
   }
 
@@ -654,6 +664,7 @@ export class DeployService {
 
     // create
     const container = await this._create(args);
+    const id = container.id.substring(0, 7);
 
     try {
       // attach
@@ -666,14 +677,14 @@ export class DeployService {
 
       // start
       await container.start();
-      await logger.success(`Run container ${name} successful.`);
+      await logger.success(`Run container ${name} (${id}) successful.`);
 
       // wait
       await container.wait();
-      await logger.success(`Run container ${name} stopped.`);
+      await logger.success(`Run container ${name} (${id}) stopped.`);
     } catch (e: any) {
-      await logger.error(`Run container ${name} failure.`, e);
-      throw new Error(`Run container ${name} failure. Caused by ${e.message}`);
+      await logger.error(`Run container ${name} (${id}) failure.`, e);
+      throw new Error(`Run container ${name} (${id}) failure. Caused by ${e.message}`);
     }
   }
 

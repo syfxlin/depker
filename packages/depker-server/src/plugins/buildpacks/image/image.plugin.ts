@@ -1,7 +1,11 @@
-import { DepkerPlugin } from "../../plugin.types";
+import { LoadedDepkerPlugin } from "../../plugin.types";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // image is a buildpack plugin, there will be additional processing
-export const image: DepkerPlugin = {
+export const image: LoadedDepkerPlugin = {
+  pkg: "image",
+  dir: path.dirname(fileURLToPath(import.meta.url)),
   name: "image",
   label: "Image",
   group: "General",

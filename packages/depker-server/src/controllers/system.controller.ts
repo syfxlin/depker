@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import s, { Systeminformation } from "systeminformation";
-import pjson from "../../package.json" assert { type: "json" };
+// import pjson from "../../package.json" assert { type: "json" };
 import { HttpService } from "nestjs-http-promise";
 import { URLS } from "../constants/depker.constant";
 // @ts-ignore
@@ -29,10 +29,11 @@ export class SystemController {
   @Get("/version")
   public version(): VersionResponse {
     return {
-      name: pjson.name,
-      description: pjson.description,
-      version: pjson.version,
-    };
+      // name: pjson.name,
+      // description: pjson.description,
+      // version: pjson.version,
+      // TODO: fix package.json
+    } as any;
   }
 
   @Get("/metrics")

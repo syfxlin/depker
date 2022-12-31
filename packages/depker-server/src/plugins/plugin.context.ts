@@ -14,9 +14,10 @@ import { AuthService } from "../guards/auth.service";
 import { Logger } from "@nestjs/common";
 import { ModuleRef } from "@nestjs/core";
 import { DeployService } from "../services/deploy.service";
+import { LoadedDepkerPlugin } from "./plugin.types";
 
 export interface PluginOptions {
-  readonly name: string;
+  readonly plugin: LoadedDepkerPlugin;
   readonly ref: ModuleRef;
 }
 
@@ -37,6 +38,7 @@ export class PluginContext {
 
   // values
   public readonly name: string;
+  public readonly plugin: LoadedDepkerPlugin;
   public readonly ref: ModuleRef;
 
   // services
@@ -50,8 +52,9 @@ export class PluginContext {
   public readonly deploys: DeployService;
 
   constructor(options: PluginOptions) {
-    this.logger = new Logger(`Plugin-${options.name}`);
-    this.name = options.name;
+    this.logger = new Logger(`Plugin-${options.plugin.name}`);
+    this.name = options.plugin.name;
+    this.plugin = options.plugin;
     this.ref = options.ref;
     this.docker = this.ref.get(DeployService, { strict: false });
     this.https = this.ref.get(HttpService, { strict: false });

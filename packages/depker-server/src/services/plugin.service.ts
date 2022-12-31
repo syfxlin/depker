@@ -1,26 +1,22 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { DepkerPlugin, LoadedDepkerPlugin } from "../plugins/plugin.types";
+import { LoadedDepkerPlugin } from "../plugins/plugin.types";
 import fs from "fs-extra";
 import path from "path";
 import { IS_WIN, PATHS } from "../constants/depker.constant";
 import { pathToFileURL } from "url";
 import { PluginContext } from "../plugins/plugin.context";
-import * as example from "../plugins/example";
-import * as dockerfile from "../plugins/dockerfile";
 import { ModuleRef } from "@nestjs/core";
 import { spawnSync } from "child_process";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PluginEvent } from "../events/plugin.event";
 import { Service } from "../entities/service.entity";
-import { image } from "../plugins/buildpacks/image/image.plugin";
-import { nginx } from "../plugins/buildpacks/nginx/nginx.plugin";
+import { internal } from "../plugins/internal.plugin";
 
 @Injectable()
 export class PluginService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PluginService.name);
 
   private _loaded = false;
-  private readonly _defined: DepkerPlugin[] = [image, nginx, example as DepkerPlugin, dockerfile as DepkerPlugin];
   private readonly _internal: Record<string, LoadedDepkerPlugin> = {};
   private readonly _external: Record<string, LoadedDepkerPlugin> = {};
 
@@ -29,9 +25,9 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
   public async load(force = false): Promise<Record<string, LoadedDepkerPlugin>> {
     if (!this._loaded || force) {
       // internal
-      for (const plugin of this._defined) {
+      for (const plugin of internal) {
         await this.events.emitAsync(PluginEvent.PRE_LOAD, plugin.name);
-        this._internal[plugin.name] = { pkg: plugin.name, ...plugin };
+        this._internal[plugin.name] = plugin;
         await this.events.emitAsync(PluginEvent.POST_LOAD, plugin.name, plugin);
       }
 
@@ -39,11 +35,12 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       const pjson = fs.readJsonSync(path.join(PATHS.PLUGINS, "package.json"));
       const pkgs = Object.keys(pjson.dependencies || {});
       for (const pkg of pkgs) {
-        const idx = path.join(PATHS.PLUGINS, "node_modules", pkg, "index.js");
+        const dir = path.join(PATHS.PLUGINS, "node_modules", pkg);
+        const idx = path.join(dir, "index.js");
         await this.events.emitAsync(PluginEvent.PRE_LOAD, pkg);
         const mod = await import(pathToFileURL(idx).toString());
         if (mod.name) {
-          this._external[mod.name] = { pkg, ...mod };
+          this._external[mod.name] = { pkg, dir, ...mod };
         }
         await this.events.emitAsync(PluginEvent.POST_LOAD, pkg, mod);
       }
@@ -52,11 +49,11 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     return { ...this._internal, ...this._external };
   }
 
-  public async plugins(): Promise<Record<string, DepkerPlugin>> {
+  public async plugins(): Promise<Record<string, LoadedDepkerPlugin>> {
     return await this.load();
   }
 
-  public async buildpacks(): Promise<Record<string, DepkerPlugin>> {
+  public async buildpacks(): Promise<Record<string, LoadedDepkerPlugin>> {
     const plugins = await this.load();
     return Object.entries(plugins)
       .filter(([, p]) => p.buildpack?.handler)
@@ -113,7 +110,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     for (const plugin of Object.values(plugins)) {
       await plugin?.init?.(
         new PluginContext({
-          name: plugin.name,
+          plugin,
           ref: this.ref,
         })
       );
@@ -127,7 +124,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     for (const plugin of Object.values(plugins)) {
       await plugin?.destroy?.(
         new PluginContext({
-          name: plugin.name,
+          plugin,
           ref: this.ref,
         })
       );

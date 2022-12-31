@@ -1,7 +1,18 @@
-import { $for, $if, $join } from "../../../utils/template";
+export const dockerfile = `
+FROM nginx:{{ version | d("alpine") }}
 
-// prettier-ignore
-export const nginxConf = (options: any) => `
+COPY {{ nginx_config | render_write(".depker/nginx.conf") }} /etc/nginx/nginx.conf
+{% if ".depker/nginx" | exists %}
+  COPY .depker/nginx /etc/nginx/conf.d/
+{% endif %}
+
+RUN rm -f /usr/share/nginx/html/*
+COPY --chown=nginx:nginx ./{{ root_path | d("dist") }} /usr/share/nginx/html
+
+{{ inject_dockerfile | inject }}
+`;
+
+export const nginx_config = `
 user                        nginx;
 worker_processes            auto;
 error_log                   /var/log/nginx/error.log warn;
@@ -12,7 +23,7 @@ events {
 }
 
 include                     /etc/nginx/conf.d/*-root.conf;
-${options.inject_root ?? ""}
+{{ inject_root | inject }}
 
 http {
   server_tokens             off;
@@ -31,7 +42,7 @@ http {
 
   server {
     listen                  80;
-    charset                 ${options.charset ?? "utf-8"};
+    charset                 {{ charset | d("utf-8") }};
     server_name             _;
 
     real_ip_header          x-forwarded-for;
@@ -39,46 +50,47 @@ http {
     real_ip_recursive       on;
 
     root                    /usr/share/nginx/html;
-    index                   ${$join(options.index_pages ?? ["index.html", "index.htm"])};
+    index                   {{ index_pages | d(["index.html"]) | join(" ") }};
 
-    ${$for(options.error_pages, ([k, v]) => `
-      error_page ${k} /${v};
-    `)}
+    {% for code, path in error_pages %}
+      error_page {{ code }} /{{ path }}
+    {% endfor %}
 
-    ${$if(options.enable_dotfile !== false, `
+    {% if enable_dotfile != false %}
       location ~ /\\. {
         deny all;
         access_log      off;
         log_not_found   off;
         return 404;
       }
-    `)}
-    
-    ${$if(options.enable_cache !== false, `
+    {% endif %}
+
+    {% if enable_cache != false %}
       location ~* \\.(?:css|js)$ {
         access_log        off;
         log_not_found     off;
         add_header        Cache-Control "no-cache, public, must-revalidate, proxy-revalidate";
       }
+
       location ~* \\.(?:jpg|jpeg|gif|png|ico|xml|webp|eot|woff|woff2|ttf|svg|otf)$ {
         access_log        off;
         log_not_found     off;
         expires           60m;
         add_header        Cache-Control "public";
       }
-    `)}
+    {% endif %}
     
-    ${$if(options.try_files !== false, `
+    {% if try_files != false %}
       location / {
         try_files $uri $uri/index.html $uri/ /index.html =404;
       }
-    `)}
+    {% endif %}
 
     include /etc/nginx/conf.d/*-server.conf;
-    ${options.inject_server ?? ""}
+    {{ inject_server | inject }}
   }
 
   include /etc/nginx/conf.d/*-http.conf;
-  ${options.inject_http ?? ""}
+  {{ inject_http | inject }}
 }
 `;

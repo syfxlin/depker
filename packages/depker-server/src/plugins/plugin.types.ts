@@ -78,4 +78,5 @@ export interface DepkerPlugin {
 
 export interface LoadedDepkerPlugin extends DepkerPlugin {
   pkg: string;
+  dir: string;
 }
