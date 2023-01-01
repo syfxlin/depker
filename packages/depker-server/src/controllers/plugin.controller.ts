@@ -67,7 +67,7 @@ export class PluginController {
       .sort((left, right) => {
         const [by, order] = sort.toLowerCase().split(":");
         const a = order === "asc" ? left : right;
-        const b = order === "asc" ? left : right;
+        const b = order === "asc" ? right : left;
         if (by === "name") {
           return a.name.localeCompare(b.name);
         }

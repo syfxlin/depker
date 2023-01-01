@@ -16,12 +16,12 @@ export class PortApi extends Api {
   }
 
   public async create(request: CreatePortRequest) {
-    const response = await this.client.client.post<CreatePortResponse>(`/api/ports`, request);
+    const response = await this.client.client.post<CreatePortResponse>(`/api/ports/${request.port}`);
     return response.data;
   }
 
   public async delete(request: DeletePortRequest) {
-    const response = await this.client.client.delete<DeletePortResponse>(`/api/ports`, { params: request });
+    const response = await this.client.client.delete<DeletePortResponse>(`/api/ports/${request.port}`);
     return response.data;
   }
 

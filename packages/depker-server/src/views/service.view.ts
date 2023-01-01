@@ -316,6 +316,10 @@ export type MetricsServiceResponse = {
     input: number;
     output: number;
   };
+  process: {
+    titles: string[];
+    processes: string[][];
+  };
 };
 
 export class HistoryServiceRequest {

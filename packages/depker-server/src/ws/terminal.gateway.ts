@@ -14,15 +14,7 @@ export class TerminalGateway implements OnGatewayConnection {
       return;
     }
     try {
-      const exec = await this.docker.getContainer(name).exec({
-        AttachStdin: true,
-        AttachStdout: true,
-        AttachStderr: true,
-        Tty: true,
-        Cmd: ["sh"],
-        DetachKeys: "ctrl-q",
-      });
-      const duplex = await exec.start({ stdin: true, Tty: true });
+      const [exec, duplex] = await this.docker.containers.exec(name, ["sh"]);
 
       // input
       socket.on("data", (data: string) => {
@@ -30,7 +22,7 @@ export class TerminalGateway implements OnGatewayConnection {
       });
       // output
       duplex.on("data", (data: Buffer) => {
-        socket.emit("data", data.toString("utf-8"));
+        socket.emit("data", data.toString());
       });
 
       // resize

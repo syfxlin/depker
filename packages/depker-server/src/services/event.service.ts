@@ -27,20 +27,7 @@ export class EventService {
     }
     // delete container
     try {
-      await this.docker.getContainer(name).remove({ force: true });
-      const infos = await this.docker.listContainers({ all: true });
-      const containers = infos.filter((c) => c.Labels["depker.name"] === name);
-      for (const info of containers) {
-        const container = this.docker.getContainer(info.Id);
-        try {
-          await container.remove({ force: true });
-        } catch (e: any) {
-          if (e.statusCode === 404) {
-            return;
-          }
-          this.logger.error(`Purge service ${name} container ${container.id} failed.`, e);
-        }
-      }
+      await this.docker.containers.clean(name);
       this.logger.log(`Purge service ${name} container successful.`);
     } catch (e) {
       this.logger.error(`Purge service ${name} container failed.`, e);

@@ -19,7 +19,7 @@ export class TraefikTask implements OnModuleInit {
     const setting = await Setting.read();
 
     // find exists container
-    const containers = await this.docker.listContainers({ all: true });
+    const containers = await this.docker.containers.list();
 
     // find traefik base dir
     const dir = PATHS.CONFIG;
@@ -30,25 +30,22 @@ export class TraefikTask implements OnModuleInit {
     fs.ensureDirSync(path.posix.join(dir, "conf.d"));
 
     const _traefik = async () => {
-      await this.docker.pullImage(IMAGES.TRAEFIK, setting.upgrade);
+      await this.docker.images.pull(IMAGES.TRAEFIK, setting.upgrade);
       const traefik = containers.find((c) => c.Names.includes(`/${NAMES.TRAEFIK}`));
 
       if (traefik) {
         if (force) {
           // if force reload, remove
           this.logger.log(`Recreating traefik with force reload.`);
-          const container = await this.docker.getContainer(traefik.Id);
-          await container.remove({ force: true });
+          await this.docker.containers.remove(traefik.Id);
         } else if (traefik.Status.includes("Exited")) {
           // if traefik container is exited, remove
           this.logger.log(`Recreating traefik with exited.`);
-          const container = await this.docker.getContainer(traefik.Id);
-          await container.remove({ force: true });
+          await this.docker.containers.remove(traefik.Id);
         } else {
           // if traefik container exists, restart
           this.logger.log(`Restarting traefik with running.`);
-          const container = await this.docker.getContainer(traefik.Id);
-          await container.restart();
+          await this.docker.containers.restart(traefik.Id);
           this.logger.log(`Traefik restart done.`);
           return;
         }
@@ -144,7 +141,7 @@ export class TraefikTask implements OnModuleInit {
       }
 
       // create traefik container
-      const container = await this.docker.createContainer({
+      const container = await this.docker.containers.create({
         name: NAMES.TRAEFIK,
         Image: IMAGES.TRAEFIK,
         Cmd: ["--configFile=/var/traefik/traefik.yml"],
@@ -185,7 +182,7 @@ export class TraefikTask implements OnModuleInit {
       });
 
       // connect to depker network
-      const network = await this.docker.depkerNetwork();
+      const network = await this.docker.networks.depker();
       await network.connect({ Container: container.id });
 
       // start container
@@ -195,32 +192,29 @@ export class TraefikTask implements OnModuleInit {
     };
 
     const _logrotate = async () => {
-      await this.docker.pullImage(IMAGES.LOGROTATE, setting.upgrade);
+      await this.docker.images.pull(IMAGES.LOGROTATE, setting.upgrade);
       const logrotate = containers.find((c) => c.Names.includes(`/${NAMES.LOGROTATE}`));
 
       if (logrotate) {
         if (force) {
           // if force reload, remove
           this.logger.log(`Recreating logrotate with force reload.`);
-          const container = await this.docker.getContainer(logrotate.Id);
-          await container.remove({ force: true });
+          await this.docker.containers.remove(logrotate.Id);
         } else if (logrotate.Status.includes("Exited")) {
           // if logrotate container is exited, remove
           this.logger.log(`Recreating logrotate with exited.`);
-          const container = await this.docker.getContainer(logrotate.Id);
-          await container.remove({ force: true });
+          await this.docker.containers.remove(logrotate.Id);
         } else {
           // if logrotate container exists, restart
           this.logger.log(`Restarting logrotate with running.`);
-          const container = await this.docker.getContainer(logrotate.Id);
-          await container.restart();
+          await this.docker.containers.restart(logrotate.Id);
           this.logger.log(`Logrotate restart done.`);
           return;
         }
       }
 
       // create logrotate container
-      const container = await this.docker.createContainer({
+      const container = await this.docker.containers.create({
         name: NAMES.LOGROTATE,
         Image: IMAGES.LOGROTATE,
         Env: [
@@ -242,7 +236,7 @@ export class TraefikTask implements OnModuleInit {
       });
 
       // connect to depker network
-      const network = await this.docker.depkerNetwork();
+      const network = await this.docker.networks.depker();
       await network.connect({ Container: container.id });
 
       // start container

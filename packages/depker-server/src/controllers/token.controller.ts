@@ -44,7 +44,7 @@ export class TokenController {
     return { total, items };
   }
 
-  @Post("/")
+  @Post("/:name")
   public async create(@Data() request: UpsertTokenRequest): Promise<UpsertTokenResponse> {
     const count = await Token.countBy({ name: request.name });
     if (count) {

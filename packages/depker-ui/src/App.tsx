@@ -22,6 +22,7 @@ import { Settings } from "./pages/Settings";
 import { SettingGeneralTab } from "./pages/SettingGeneralTab";
 import { ServiceCronsTab } from "./pages/ServiceCronsTab";
 import { SettingPluginsTab } from "./pages/SettingPluginsTab";
+import { SettingNetworksTab } from "./pages/SettingNetworksTab";
 
 export const App: React.FC = () => {
   return (
@@ -52,6 +53,7 @@ export const App: React.FC = () => {
             <Route path="/files/*" element={<Files />} />
             <Route path="/settings" element={<Settings />}>
               <Route index element={<SettingGeneralTab />} />
+              <Route path="networks" element={<SettingNetworksTab />} />
               <Route path="plugins" element={<SettingPluginsTab />} />
             </Route>
           </Route>

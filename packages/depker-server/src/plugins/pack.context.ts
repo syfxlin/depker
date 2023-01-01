@@ -190,7 +190,7 @@ export class PackContext extends PluginContext {
 
     const _build = async () => {
       if (typeof build === "string") {
-        await this.dockerfile(`FROM ${build}`);
+        this.dockerfile(`FROM ${build}`);
         return await this.deploys._build({ name, project, options: _build_opts({}), logger: this.log });
       } else {
         return await this.deploys._build({ name, project, options: _build_opts(build ?? {}), logger: this.log });

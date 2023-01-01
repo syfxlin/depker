@@ -1,8 +1,8 @@
 import { OnGatewayConnection, WebSocketGateway } from "@nestjs/websockets";
 import { Socket } from "socket.io";
 import { DockerService } from "../services/docker.service";
-import { stdcopy } from "../utils/docker.util";
 import { DateTime } from "luxon";
+import { LogLevel } from "../types";
 
 @WebSocketGateway({ namespace: "/containers/logs" })
 export class LogsGateway implements OnGatewayConnection {
@@ -16,30 +16,15 @@ export class LogsGateway implements OnGatewayConnection {
       return;
     }
     try {
-      const container = this.docker.getContainer(name as string);
-      const stream = await container.logs({
-        stdout: true,
-        stderr: true,
-        timestamps: true,
-        tail: tail ? parseInt(tail) : undefined,
-        follow: true,
-      });
+      const stream = await this.docker.containers.logs(name as string, parseInt(tail as string));
 
       // output
-      stream.on("data", (chunk: Buffer) => {
-        const output = stdcopy(chunk);
-        for (const [type, buffer] of output) {
-          const level = type ? "error" : "log";
-          const data = buffer.toString();
-          const time = data.substring(0, 30);
-          const line = data.substring(31).replace("\n", "");
-          socket.emit("data", [level, DateTime.fromISO(time).valueOf(), line]);
-        }
+      stream.on("data", (data: [LogLevel, number, string]) => {
+        socket.emit("data", data);
       });
 
       // client close
       socket.on("disconnect", () => {
-        // @ts-ignore
         stream.destroy();
       });
 

@@ -194,21 +194,7 @@ export class DeployService {
 
         // purge containers
         await logger.step(`Purge ${service.name} containers started.`);
-        const infos = await this.docker.listContainers({ all: true });
-        const containers = infos.filter(
-          (c) => c.Labels["depker.name"] === service.name && !c.Names.includes(`/${service.name}`)
-        );
-        for (const info of containers) {
-          const container = this.docker.getContainer(info.Id);
-          try {
-            await container.remove({ force: true });
-          } catch (e: any) {
-            if (e.statusCode === 404) {
-              return;
-            }
-            await logger.error(`Purge container ${container.id} failed.`, e);
-          }
-        }
+        await this.docker.containers.purge(service.name);
 
         // purge images and volumes
         process.nextTick(async () => {
@@ -430,18 +416,22 @@ export class DeployService {
     });
 
     // build image
-    await this.docker.pullImage(IMAGES.DOCKER);
-    const [result] = await this.docker.run(IMAGES.DOCKER, [`sh`, `-c`, commands.join(" ")], through, {
-      WorkingDir: "/project",
-      HostConfig: {
-        AutoRemove: true,
-        Binds: [
-          `${PATHS.LINUX(project)}:/project`,
-          `${PATHS.LINUX(secrets)}:/secrets`,
-          `/var/run/docker.sock:/var/run/docker.sock`,
-        ],
-      },
-    });
+    const result = await this.docker.containers.run(
+      IMAGES.DOCKER,
+      [`sh`, `-c`, commands.join(" ")],
+      (line) => logger.log(line),
+      {
+        WorkingDir: "/project",
+        HostConfig: {
+          AutoRemove: true,
+          Binds: [
+            `${PATHS.LINUX(project)}:/project`,
+            `${PATHS.LINUX(secrets)}:/secrets`,
+            `/var/run/docker.sock:/var/run/docker.sock`,
+          ],
+        },
+      }
+    );
     if (result.StatusCode === 0) {
       await logger.success(`Building image ${image} successful.`);
       return image;
@@ -579,13 +569,13 @@ export class DeployService {
     create.Labels = labels;
 
     // create container
-    const container = await this.docker.createContainer(create);
+    const container = await this.docker.containers.create(create);
 
     // networks
-    const dn = await this.docker.depkerNetwork();
+    const dn = await this.docker.networks.depker();
     await dn.connect({ Container: container.id });
     for (const [network, alias] of Object.entries(options.networks ?? {})) {
-      const dn = await this.docker.initNetwork(network);
+      const dn = await this.docker.networks.find(network);
       await dn.connect({
         Container: container.id,
         EndpointConfig: {
@@ -604,7 +594,7 @@ export class DeployService {
     await logger.step(`Start container ${name} started.`);
 
     // running
-    const running = await this.docker.getContainer(name);
+    const running = this.docker.containers.get(name);
 
     // create
     const container = await this._create(args);

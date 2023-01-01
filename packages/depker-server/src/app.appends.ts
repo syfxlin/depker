@@ -28,6 +28,9 @@ import { DeployController } from "./controllers/deploy.controller";
 import { CronController } from "./controllers/cron.controller";
 import { PluginController } from "./controllers/plugin.controller";
 import { EventService } from "./services/event.service";
+import { ContainerController } from "./controllers/container.controller";
+import { ImageController } from "./controllers/image.controller";
+import { NetworkController } from "./controllers/network.controller";
 
 // entity
 export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronHistory, CronLog];
@@ -47,6 +50,9 @@ export const controllers = [
   TokenController,
   SettingController,
   PluginController,
+  ContainerController,
+  ImageController,
+  NetworkController,
 ];
 export const gateways = [TerminalGateway, LogsGateway, AccessLogsGateway];
 export const services = [DeployService, DockerService, StorageService, EventService];

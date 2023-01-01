@@ -15,6 +15,7 @@ import { io, ManagerOptions, Socket } from "socket.io-client";
 import { SettingApi } from "./api/setting.api";
 import { CronApi } from "./api/cron.api";
 import { PluginApi } from "./api/plugin.api";
+import { NetworkApi } from "./api/network.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -45,6 +46,7 @@ export class DepkerClient {
   public readonly tokens: TokenApi;
   public readonly settings: SettingApi;
   public readonly plugins: PluginApi;
+  public readonly networks: NetworkApi;
 
   constructor(options: DepkerClientOptions) {
     this.endpoint = options.endpoint;
@@ -92,5 +94,6 @@ export class DepkerClient {
     this.tokens = new TokenApi(this);
     this.settings = new SettingApi(this);
     this.plugins = new PluginApi(this);
+    this.networks = new NetworkApi(this);
   }
 }

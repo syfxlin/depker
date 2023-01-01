@@ -15,7 +15,7 @@ export class TokenApi extends Api {
   }
 
   public async create(request: UpsertTokenRequest) {
-    const response = await this.client.client.post<UpsertTokenResponse>(`/api/tokens`, request);
+    const response = await this.client.client.post<UpsertTokenResponse>(`/api/tokens/${request.name}`);
     return response.data;
   }
 

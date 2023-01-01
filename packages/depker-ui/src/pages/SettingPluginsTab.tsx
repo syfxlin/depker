@@ -151,6 +151,7 @@ export const SettingPluginsTab: React.FC = () => {
               }
               try {
                 await plugins.actions.install({ name: install });
+                setInstall("");
                 a.success(`Install plugin successful`, `You can use this plugin when creating a service.`);
               } catch (e: any) {
                 a.failure(`Install plugin failure`, e);

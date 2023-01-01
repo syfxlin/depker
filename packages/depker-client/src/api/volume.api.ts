@@ -16,12 +16,12 @@ export class VolumeApi extends Api {
   }
 
   public async create(request: CreateVolumeRequest) {
-    const response = await this.client.client.post<CreateVolumeResponse>(`/api/volumes`, request);
+    const response = await this.client.client.post<CreateVolumeResponse>(`/api/volumes/${request.volume}`);
     return response.data;
   }
 
   public async delete(request: DeleteVolumeRequest) {
-    const response = await this.client.client.delete<DeleteVolumeResponse>(`/api/volumes`, { params: request });
+    const response = await this.client.client.delete<DeleteVolumeResponse>(`/api/volumes/${request.volume}`);
     return response.data;
   }
 

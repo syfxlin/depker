@@ -27,7 +27,7 @@ export class VolumeController {
     return volumes.map((p) => `@/${p}`);
   }
 
-  @Post("/")
+  @Post("/:volume")
   public async create(@Data() request: CreateVolumeRequest): Promise<CreateVolumeResponse> {
     const location = path.join(PATHS.VOLUMES, request.volume.replace(/^@\//, ""));
     const relative = path.relative(PATHS.VOLUMES, location);
@@ -39,7 +39,7 @@ export class VolumeController {
     throw new ForbiddenException(`Illegal volume path of ${request.volume}`);
   }
 
-  @Delete("/")
+  @Delete("/:volume")
   public async delete(@Data() request: DeleteVolumeRequest): Promise<DeleteVolumeResponse> {
     const req = new BindsVolumeRequest();
     req.volume = request.volume;

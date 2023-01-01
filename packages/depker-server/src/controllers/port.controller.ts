@@ -25,7 +25,7 @@ export class PortController {
     return setting.ports;
   }
 
-  @Post("/")
+  @Post("/:port")
   public async create(@Data() request: CreatePortRequest): Promise<CreatePortResponse> {
     const setting = await Setting.read();
     const ports = new Set(setting.ports);
@@ -36,7 +36,7 @@ export class PortController {
     return { status: "success" };
   }
 
-  @Delete("/")
+  @Delete("/:port")
   public async delete(@Data() request: DeletePortRequest): Promise<DeletePortResponse> {
     const req = new BindsPortRequest();
     req.port = request.port;

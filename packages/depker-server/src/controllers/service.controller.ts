@@ -82,7 +82,7 @@ export class ServiceController {
     const plugins = await this.plugins.plugins();
     const names = services.map((i) => i.name);
     const deploys = await Service.listDeploydAt(names);
-    const containers = await this.docker.listStatus(names);
+    const containers = await this.docker.containers.status(names);
     const crons: Record<string, ServiceStatus> = (await Cron.findBy({ service: { name: In(names) } })).reduce(
       (a, i) => ({ ...a, [i.serviceName]: "running" }),
       {}
@@ -229,8 +229,8 @@ export class ServiceController {
     }
 
     if (one.type === "app") {
-      const status = await this.docker.listStatus([request.name]);
-      return { status: status[request.name] };
+      const status = await this.docker.containers.status(request.name);
+      return { status };
     } else {
       const cron = await Cron.findOneBy({ service: { name: request.name } });
       return { status: cron ? "running" : "stopped" };
@@ -350,7 +350,7 @@ export class ServiceController {
 
     // restart
     try {
-      await this.docker.getContainer(request.name).restart();
+      await this.docker.containers.restart(request.name);
     } catch (e: any) {
       if (e.statusCode === 404) {
         throw new NotFoundException(`Not found container of ${request.name}`);
@@ -375,49 +375,7 @@ export class ServiceController {
       throw new ConflictException(`${request.name} service type is app, which does not support the restart operation.`);
     }
 
-    try {
-      const stats = await this.docker.getContainer(request.name).stats({ stream: false });
-      const cpu_delta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-      const system_cpu_delta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-      const number_cpus = stats.cpu_stats.online_cpus;
-      const cpu = (cpu_delta / system_cpu_delta) * number_cpus * 100;
-      const memory = stats.memory_stats.usage - stats.memory_stats.stats.cache;
-      const input = Object.values(stats.networks).reduce((a, i) => a + i.rx_bytes, 0);
-      const output = Object.values(stats.networks).reduce((a, i) => a + i.tx_bytes, 0);
-      return {
-        cpu: {
-          free: 100 - cpu,
-          used: cpu,
-          total: 100,
-        },
-        memory: {
-          free: stats.memory_stats.limit - memory,
-          used: memory,
-          total: stats.memory_stats.limit,
-        },
-        network: {
-          input,
-          output,
-        },
-      };
-    } catch (e: any) {
-      return {
-        cpu: {
-          free: 0,
-          used: 0,
-          total: 1,
-        },
-        memory: {
-          free: 0,
-          used: 0,
-          total: 1,
-        },
-        network: {
-          input: 0,
-          output: 0,
-        },
-      };
-    }
+    return this.docker.containers.stats(request.name);
   }
 
   // endregion
