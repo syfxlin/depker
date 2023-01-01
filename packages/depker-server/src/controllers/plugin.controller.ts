@@ -1,5 +1,6 @@
 import {
   All,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -125,6 +126,10 @@ export class PluginController {
     const plugin = plugins[request.name];
     if (!plugin || !plugin.options) {
       throw new NotFoundException(`Not found plugin global options of ${request.name}`);
+    }
+    const valid = await this.plugins.validate(plugin.options, request.values);
+    if (valid) {
+      throw new BadRequestException(valid);
     }
     const setting = await Setting.read();
     await this.events.emitAsync(PluginEvent.PRE_SETTING, plugin, setting.plugins[plugin.name] ?? {});

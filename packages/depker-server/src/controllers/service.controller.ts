@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -129,6 +130,16 @@ export class ServiceController {
     const count = await Service.countBy({ name: request.name });
     if (!count) {
       throw new NotFoundException(`Not found service of ${request.name}.`);
+    }
+
+    const plugins = await this.plugins.plugins();
+    const plugin = plugins[request.buildpack];
+    if (!plugin || !plugin.buildpack?.handler) {
+      throw new NotFoundException(`Not found buildpack of ${request.buildpack}`);
+    }
+    const valid = await this.plugins.validate(plugin.buildpack?.options ?? [], request.extensions ?? {});
+    if (valid) {
+      throw new BadRequestException(valid);
     }
 
     const service = new Service();

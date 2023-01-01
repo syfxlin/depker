@@ -9,7 +9,7 @@ export interface BaseOption<T, E> {
   description?: string;
   placeholder?: string;
   required?: boolean;
-  validate?: (value: E) => boolean;
+  validate?: (value: E) => string | null | undefined | Promise<string | null | undefined>;
 }
 
 export type BooleanOption = BaseOption<"boolean", boolean>;

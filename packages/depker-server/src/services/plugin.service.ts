@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { LoadedDepkerPlugin } from "../plugins/plugin.types";
+import { DepkerPluginOption, LoadedDepkerPlugin } from "../plugins/plugin.types";
 import fs from "fs-extra";
 import path from "path";
 import { IS_WIN, PATHS } from "../constants/depker.constant";
@@ -102,6 +102,37 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     }
     await this.load(true);
     return null;
+  }
+
+  public async validate(options: DepkerPluginOption[], values: Record<string, any>) {
+    for (const option of options ?? []) {
+      const value = values[option.name];
+      if (option.required && (value === null || value === undefined)) {
+        return `Plugin option ${option.label ?? option.name} is required.`;
+      }
+      if (option.type === "number" && value !== null && value !== undefined) {
+        if (option.min !== undefined && option.min !== null && option.min > value) {
+          return `Plugin option ${option.label ?? option.name} must be less than or equal to ${option.min}.`;
+        }
+        if (option.max !== undefined && option.max !== null && option.max < value) {
+          return `Plugin option ${option.label ?? option.name} must be more than or equal to ${option.max}.`;
+        }
+      }
+      if (option.type === "select" && option.multiple && value !== null && value !== undefined) {
+        if (option.min !== undefined && option.min !== null && option.min > value.length) {
+          return `Plugin option ${option.label ?? option.name} length must be less than or equal to ${option.min}.`;
+        }
+        if (option.max !== undefined && option.max !== null && option.max < value.length) {
+          return `Plugin option ${option.label ?? option.name} length must be less than or equal to ${option.max}.`;
+        }
+      }
+      if (option.validate && value !== null && value !== undefined) {
+        const valid = option.validate(value as never);
+        if (valid) {
+          return `Plugin option ${option.label ?? option.name} is not validated. ${valid}`;
+        }
+      }
+    }
   }
 
   public async onModuleInit() {
