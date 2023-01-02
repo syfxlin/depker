@@ -9,6 +9,8 @@ COPY {{ nginx_config | render_write(".depker/nginx.conf") }} /etc/nginx/nginx.co
 RUN rm -f /usr/share/nginx/html/*
 COPY --chown=nginx:nginx ./{{ root_path | d("dist") }} /usr/share/nginx/html
 
+HEALTHCHECK CMD nc -vz -w1 127.0.0.1 80
+
 {{ inject_dockerfile | inject }}
 `;
 

@@ -52,14 +52,15 @@ export class Deploy extends BaseEntity {
       const time = DateTime.utc().toJSDate();
       const line = message + (error ? `[ERROR] ${error.name}: ${error.message}, ${error.stack}` : ``);
       Deploy._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${this.service.name}:${this.id} : ${line}`);
-      return DeployLog.insert({ deploy: this, time, level, line });
+      return DeployLog.insert(line.split("\n").map((i) => ({ deploy: this, time, level, line: i })));
     };
     return {
-      debug: (line: string) => upload("debug", line),
-      log: (line: string) => upload("log", line),
-      step: (line: string) => upload("step", line),
-      success: (line: string) => upload("success", line),
-      error: (line: string, error?: Error) => upload("error", line, error),
+      debug: (line) => upload("debug", line),
+      log: (line) => upload("log", line),
+      step: (line) => upload("step", line),
+      success: (line) => upload("success", line),
+      error: (line, error) => upload("error", line, error),
+      upload: (level, line, error) => upload(level, line, error),
     };
   }
 

@@ -53,11 +53,12 @@ export class CronHistory extends BaseEntity {
       return CronLog.insert({ history: this, time, level, line });
     };
     return {
-      debug: (line: string) => upload("debug", line),
-      log: (line: string) => upload("log", line),
-      step: (line: string) => upload("step", line),
-      success: (line: string) => upload("success", line),
-      error: (line: string, error?: Error) => upload("error", line, error),
+      debug: (line) => upload("debug", line),
+      log: (line) => upload("log", line),
+      step: (line) => upload("step", line),
+      success: (line) => upload("success", line),
+      error: (line, error) => upload("error", line, error),
+      upload: (level, line, error) => upload(level, line, error),
     };
   }
 

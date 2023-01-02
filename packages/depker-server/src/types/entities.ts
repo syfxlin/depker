@@ -6,6 +6,7 @@ export type LogFunc = {
   step: (line: string) => void;
   success: (line: string) => void;
   error: (line: string, error?: Error) => void;
+  upload: (level: LogLevel, line: string, error?: Error) => void;
 };
 
 export type DeployStatus = "queued" | "running" | "failed" | "success";

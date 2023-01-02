@@ -183,6 +183,10 @@ export class DeployService {
         // emit post_init
         await this.events.emitAsync(DeployEvent.POST_INIT, deploy);
 
+        // purge containers
+        await logger.step(`Purge ${service.name} residual containers started.`);
+        await this.docker.containers.purge(service.name);
+
         // emit pre_pack
         await this.events.emitAsync(DeployEvent.PRE_PACK, context);
 
@@ -198,10 +202,7 @@ export class DeployService {
 
         // purge images and volumes
         process.nextTick(async () => {
-          const setting = await Setting.read();
-          if (setting.purge) {
-            await Promise.all([this.docker.pruneImages(), this.docker.pruneVolumes()]);
-          }
+          await this.docker.purge();
         });
 
         // emit purged
@@ -443,20 +444,25 @@ export class DeployService {
 
   public async _create(args: DeployStartArgs) {
     const { name, image, options } = args;
+    const time = String(Date.now());
 
     // args
     const envs: Record<string, string> = {
       ...options.secrets,
       DEPKER_NAME: name,
+      DEPKER_TIME: time,
+      DEPKER_IMAGE: image,
     };
     const labels: Record<string, string> = {
       ...options.labels,
       "depker.name": name,
+      "depker.time": time,
+      "depker.image": image,
       "traefik.enable": "true",
       "traefik.docker.network": NAMES.NETWORK,
     };
     const create: ContainerCreateOptions = {
-      name: `${name}-${Date.now()}`,
+      name: `${name}-${time}`,
       Image: image,
       HostConfig: {
         Binds: [],
@@ -504,6 +510,7 @@ export class DeployService {
     }
 
     // web
+    // prettier-ignore
     if (options.rule || options.domain?.length) {
       const rule = (options.rule || options.domain?.map((d) => `Host(\`${d}\`)`).join(" || ")) as string;
       const port = options.port ?? 80;
@@ -511,48 +518,49 @@ export class DeployService {
       const middlewares: string[] = [];
 
       // service
-      labels[`traefik.http.routers.${name}.service`] = name;
-      labels[`traefik.http.services.${name}.loadbalancer.server.scheme`] = scheme;
-      labels[`traefik.http.services.${name}.loadbalancer.server.port`] = String(port);
+      labels[`traefik.http.routers.${name}-${time}.service`] = `${name}-${time}`;
+      labels[`traefik.http.services.${name}-${time}.loadbalancer.server.scheme`] = scheme;
+      labels[`traefik.http.services.${name}-${time}.loadbalancer.server.port`] = String(port);
 
       // route
       if (options.tls) {
         // https
-        labels[`traefik.http.routers.${name}.rule`] = rule;
-        labels[`traefik.http.routers.${name}.entrypoints`] = "https";
-        labels[`traefik.http.routers.${name}.tls.certresolver`] = NAMES.CERTIFICATE;
+        labels[`traefik.http.routers.${name}-${time}.rule`] = rule;
+        labels[`traefik.http.routers.${name}-${time}.entrypoints`] = "https";
+        labels[`traefik.http.routers.${name}-${time}.tls.certresolver`] = NAMES.CERTIFICATE;
         // http
-        labels[`traefik.http.routers.${name}-http.rule`] = rule;
-        labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
-        labels[`traefik.http.routers.${name}-http.middlewares`] = name + "-https";
-        labels[`traefik.http.middlewares.${name}-https.redirectscheme.scheme`] = "https";
+        labels[`traefik.http.routers.${name}-${time}-http.rule`] = rule;
+        labels[`traefik.http.routers.${name}-${time}-http.entrypoints`] = "http";
+        labels[`traefik.http.routers.${name}-${time}-http.middlewares`] = `${name}-${time}-https`;
+        labels[`traefik.http.middlewares.${name}-${time}-https.redirectscheme.scheme`] = "https";
       } else {
         // http
-        labels[`traefik.http.routers.${name}-http.rule`] = rule;
-        labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
+        labels[`traefik.http.routers.${name}-${time}-http.rule`] = rule;
+        labels[`traefik.http.routers.${name}-${time}-http.entrypoints`] = "http";
       }
 
       // middleware
       for (const middleware of options.middlewares ?? []) {
         for (const [k, v] of Object.entries(middleware.options)) {
-          labels[`traefik.http.middlewares.${name}-${middleware.name}.${middleware.type}.${k}`] = v;
-          middlewares.push(`${name}-${middleware.name}`);
+          labels[`traefik.http.middlewares.${name}-${time}-${middleware.name}.${middleware.type}.${k}`] = v;
+          middlewares.push(`${name}-${time}-${middleware.name}`);
         }
       }
-      labels[`traefik.http.routers.${name}.middlewares`] = [...new Set(middlewares)].join(",");
+      labels[`traefik.http.routers.${name}-${time}.middlewares`] = [...new Set(middlewares)].join(",");
     }
 
     // ports
+    // prettier-ignore
     for (const port of options.ports ?? []) {
       const proto = port.proto;
       const hport = port.hport;
       const cport = port.cport;
       if (proto === "tcp") {
-        labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
+        labels[`traefik.${proto}.routers.${name}-${time}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
       }
-      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.entrypoints`] = `${proto}${hport}`;
-      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.service`] = `${name}-${proto}-${cport}`;
-      labels[`traefik.${proto}.services.${name}-${proto}-${cport}.loadbalancer.server.port`] = String(cport);
+      labels[`traefik.${proto}.routers.${name}-${time}-${proto}-${cport}.entrypoints`] = `${proto}${hport}`;
+      labels[`traefik.${proto}.routers.${name}-${time}-${proto}-${cport}.service`] = `${name}-${time}-${proto}-${cport}`;
+      labels[`traefik.${proto}.services.${name}-${time}-${proto}-${cport}.loadbalancer.server.port`] = String(cport);
     }
 
     // volumes
@@ -575,7 +583,7 @@ export class DeployService {
     const dn = await this.docker.networks.depker();
     await dn.connect({ Container: container.id });
     for (const [network, alias] of Object.entries(options.networks ?? {})) {
-      const dn = await this.docker.networks.find(network);
+      const dn = await this.docker.networks.create(network);
       await dn.connect({
         Container: container.id,
         EndpointConfig: {
@@ -641,7 +649,22 @@ export class DeployService {
       } catch (e) {
         // ignore
       }
+
+      // print logs
       await logger.error(`Start container ${name} (${id}) failure.`, e);
+
+      // print failed logs
+      try {
+        await logger.step(`Print failed container logs started.`);
+        const logs = await this.docker.containers.print(container.id);
+        for (const [level, , message] of logs) {
+          await logger.upload(level, message);
+        }
+        await logger.step(`Print failed container logs end.`);
+      } catch (e) {
+        // ignore
+      }
+
       throw new Error(`Start container ${name} (${id}) failure. Caused by ${e.message}`);
     }
   }
