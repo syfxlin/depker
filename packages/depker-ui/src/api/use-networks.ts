@@ -12,7 +12,7 @@ import {
 export const useNetworks = () => {
   const page = usePageState({ page: 1, size: 15 });
 
-  const query = useSWR(["client.networks.list", page.request], async (key, request) => client.networks.list(request));
+  const query = useSWR(["client.networks.list", page.request], (key, request) => client.networks.list(request));
 
   const result = useSWRWrapper(
     query,

@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { Async } from "../components/core/Async";
-import { Pages } from "../components/layout/Pages";
+import React, { ChangeEvent, useState } from "react";
 import {
   ActionIcon,
   Badge,
+  Box,
   Button,
   Divider,
   Group,
@@ -15,11 +14,13 @@ import {
 } from "@mantine/core";
 import { css } from "@emotion/react";
 import { useCalling } from "../hooks/use-calling";
-import { TbList, TbOutlet, TbTrash } from "react-icons/all";
+import { TbList, TbNetwork, TbOutlet, TbPlugConnected, TbPlus, TbTrash } from "react-icons/all";
 import { closeAllModals, openConfirmModal, openModal } from "@mantine/modals";
 import { ListNetworkResponse } from "@syfxlin/depker-client";
 import { useNetworks } from "../api/use-networks";
 import { Empty } from "../components/core/Empty";
+import { Lists, ListsFields, ListsItem } from "../components/layout/Lists";
+import { ObjectModal } from "../components/input/ObjectModal";
 
 const Containers: React.FC<{
   item: ListNetworkResponse["items"][number];
@@ -30,8 +31,9 @@ const Containers: React.FC<{
   const calling = useCalling();
   return (
     <Stack spacing="xs">
-      <Group>
+      <Group spacing="xs">
         <TextInput
+          size="xs"
           placeholder="Network name."
           icon={<TbOutlet />}
           value={connect}
@@ -42,8 +44,11 @@ const Containers: React.FC<{
           `}
         />
         <Button
+          size="xs"
+          color={t.primaryColor}
           loading={calling.loading}
           disabled={!connect}
+          leftIcon={<TbPlugConnected />}
           onClick={() => {
             calling.calling(async (a) => {
               if (!connect) {
@@ -68,68 +73,59 @@ const Containers: React.FC<{
         </Button>
       </Group>
       <Divider />
-      {item.containers.map((container) => (
-        <Group
-          key={`containers-${container.id}`}
-          spacing="xs"
-          position="apart"
-          noWrap
-          css={css`
-            padding: ${t.spacing.sm}px ${t.spacing.md}px;
-            border-radius: ${t.radius.sm}px;
-            color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
-
-            &:hover {
-              background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
-            }
-          `}
-        >
-          <Stack spacing="xs">
-            <Text weight={500}>{container.name}</Text>
-            <Group spacing="xs">
-              <Tooltip label={container.id}>
+      <Box>
+        {item.containers.map((container) => (
+          <ListsItem
+            key={`containers-${container.id}`}
+            left={<Text weight={500}>{container.name}</Text>}
+            right={
+              <>
                 <Badge color="indigo">id: {container.id.substring(0, 7)}</Badge>
-              </Tooltip>
-              <Badge color="cyan">ip: {container.ip}</Badge>
-              <Badge color="pink">mac: {container.mac}</Badge>
-            </Group>
-          </Stack>
-          <Group spacing="xs">
-            <Tooltip label="Delete">
-              <ActionIcon
-                size="lg"
-                color="red"
-                loading={calling.loading}
-                onClick={() => {
-                  openConfirmModal({
-                    title: "Disconnect Network",
-                    children: <Text size="sm">This action is irreversible. Confirm uninstall?</Text>,
-                    labels: { confirm: "Disconnect", cancel: "No don't disconnect it" },
-                    confirmProps: { color: "red" },
-                    onConfirm: () => {
-                      calling.calling(async (a) => {
-                        try {
-                          await actions.disconnect({ name: item.name, container: container.name });
-                          closeAllModals();
-                          a.success(
-                            `Disconnect network successful`,
-                            `Container has successfully disconnected to the network.`
-                          );
-                        } catch (e: any) {
-                          a.failure(`Disconnect network failure`, e);
-                        }
+                <Tooltip label="Delete">
+                  <ActionIcon
+                    size="lg"
+                    color="red"
+                    loading={calling.loading}
+                    onClick={() => {
+                      openConfirmModal({
+                        title: "Disconnect Network",
+                        children: <Text size="sm">This action is irreversible. Confirm uninstall?</Text>,
+                        labels: { confirm: "Disconnect", cancel: "No don't disconnect it" },
+                        confirmProps: { color: "red" },
+                        onConfirm: () => {
+                          calling.calling(async (a) => {
+                            try {
+                              await actions.disconnect({ name: item.name, container: container.name });
+                              closeAllModals();
+                              a.success(
+                                `Disconnect network successful`,
+                                `Container has successfully disconnected to the network.`
+                              );
+                            } catch (e: any) {
+                              a.failure(`Disconnect network failure`, e);
+                            }
+                          });
+                        },
                       });
-                    },
-                  });
-                }}
-              >
-                <TbTrash />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        </Group>
-      ))}
-      {!item.containers.length && <Empty />}
+                    }}
+                  >
+                    <TbTrash />
+                  </ActionIcon>
+                </Tooltip>
+              </>
+            }
+          >
+            <ListsFields
+              data={[
+                ["ID", container.id],
+                ["IP", container.ip],
+                ["MAC", container.mac],
+              ]}
+            />
+          </ListsItem>
+        ))}
+        {!item.containers.length && <Empty />}
+      </Box>
     </Stack>
   );
 };
@@ -191,84 +187,90 @@ const Actions: React.FC<{
 };
 
 export const SettingNetworksTab: React.FC = () => {
-  const t = useMantineTheme();
   const networks = useNetworks();
-  const [network, setNetwork] = useState("");
-  const calling = useCalling();
   return (
-    <Stack>
-      <Group>
-        <TextInput
-          placeholder="Network name."
-          icon={<TbOutlet />}
-          value={network}
-          onChange={(e) => setNetwork(e.target.value)}
-          disabled={calling.loading}
-          css={css`
-            flex: 1;
-          `}
-        />
+    <Lists
+      title="Networks"
+      total={networks.data?.total ?? 0}
+      items={networks.data?.items ?? []}
+      sorts={["name", "id", "scope", "driver"]}
+      query={networks.query}
+      values={networks.values}
+      update={networks.update}
+      buttons={[
         <Button
-          loading={calling.loading}
-          disabled={!network}
-          onClick={() => {
-            calling.calling(async (a) => {
-              if (!network) {
-                a.failure(`Create network failure`, `Please enter the network name of the network to be created.`);
-                return;
-              }
-              try {
-                await networks.actions.create({ name: network });
-                setNetwork("");
-                a.success(`Create network successful`, `You can use this network when creating a service.`);
-              } catch (e: any) {
-                a.failure(`Create network failure`, e);
-              }
-            });
-          }}
+          key="create-networks"
+          size="xs"
+          leftIcon={<TbPlus />}
+          onClick={() =>
+            openModal({
+              title: "Create Network",
+              children: (
+                <ObjectModal
+                  value={{}}
+                  onChange={async (value, actions) => {
+                    if (!value.name) {
+                      actions.failure(
+                        `Create network failure`,
+                        `Please enter the network name of the network to be created.`
+                      );
+                      return false;
+                    }
+                    try {
+                      await networks.actions.create({ name: value.name });
+                      actions.success(`Create network successful`, `You can use this network when creating a service.`);
+                      return true;
+                    } catch (e: any) {
+                      actions.failure(`Create network failure`, e);
+                      return false;
+                    }
+                  }}
+                >
+                  {(item, setItem) => [
+                    <TextInput
+                      key="name"
+                      required
+                      label="Name"
+                      description="Network name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
+                      placeholder="Network Name"
+                      icon={<TbNetwork />}
+                      value={item.name ?? ""}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
+                    />,
+                  ]}
+                </ObjectModal>
+              ),
+            })
+          }
         >
           Create
-        </Button>
-      </Group>
-      <Divider />
-      <Async query={networks.query}>
-        {networks.data && (
-          <Pages
-            page={networks.values.page}
-            size={networks.values.size}
-            total={networks.data.total}
-            onChange={networks.update.page}
-          >
-            {networks.data.items.map((item) => (
-              <Group
-                key={`networks-${item.name}`}
-                position="apart"
-                css={css`
-                  padding: ${t.spacing.sm}px ${t.spacing.md}px;
-                  border-radius: ${t.radius.sm}px;
-                  color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
-
-                  &:hover {
-                    background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
-                  }
-                `}
-              >
-                <Group spacing="xs">
-                  <Text weight={500}>{item.name}</Text>
-                </Group>
-                <Group spacing="xs">
-                  <Tooltip label={item.id}>
-                    <Badge color="indigo">id: {item.id.substring(0, 7)}</Badge>
-                  </Tooltip>
-                  <Badge color="cyan">scope: {item.scope}</Badge>
-                  <Badge color="pink">driver: {item.driver}</Badge>
-                  <Actions item={item} actions={networks.actions} />
-                </Group>
-              </Group>
-            ))}
-          </Pages>
-        )}
-      </Async>
-    </Stack>
+        </Button>,
+      ]}
+    >
+      {(item) => (
+        <ListsItem
+          key={`networks-${item.name}`}
+          left={<Text weight={500}>{item.name}</Text>}
+          right={
+            <>
+              <Badge color="indigo">ID: {item.id.substring(0, 7)}</Badge>
+              <Badge color="cyan">Driver: {item.driver}</Badge>
+              <Badge color="pink">Binds: {item.containers.length}</Badge>
+              <Actions item={item} actions={networks.actions} />
+            </>
+          }
+        >
+          <ListsFields
+            data={[
+              ["ID", item.id],
+              ["Driver", item.driver],
+              ["Scope", item.scope],
+              ["IP Gateway", item.ips.map((i) => i.gateway).join(", ")],
+              ["IP Subnet", item.ips.map((i) => i.subnet).join(", ")],
+            ]}
+          />
+        </ListsItem>
+      )}
+    </Lists>
   );
 };

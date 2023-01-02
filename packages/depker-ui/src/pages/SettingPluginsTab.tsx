@@ -1,28 +1,16 @@
-import React, { useState } from "react";
+import React, { ChangeEvent } from "react";
 import { usePlugins } from "../api/use-plugins";
 import { Async } from "../components/core/Async";
-import { Pages } from "../components/layout/Pages";
-import {
-  ActionIcon,
-  Avatar,
-  Badge,
-  Button,
-  Divider,
-  Group,
-  Stack,
-  Text,
-  TextInput,
-  Tooltip,
-  useMantineTheme,
-} from "@mantine/core";
-import { css } from "@emotion/react";
+import { ActionIcon, Avatar, Badge, Button, Stack, Text, TextInput, Tooltip, useMantineTheme } from "@mantine/core";
 import { client } from "../api/client";
 import { useCalling } from "../hooks/use-calling";
-import { TbOutlet, TbSettings, TbTrash } from "react-icons/all";
+import { TbOutlet, TbPlus, TbSettings, TbTrash } from "react-icons/all";
 import { closeAllModals, openConfirmModal, openModal } from "@mantine/modals";
 import { ListPluginResponse } from "@syfxlin/depker-client";
 import { usePlugin } from "../api/use-plugin";
 import { ExtensionInput } from "../components/input/ExtensionInput";
+import { Lists, ListsItem } from "../components/layout/Lists";
+import { ObjectModal } from "../components/input/ObjectModal";
 
 const Setting: React.FC<{ name: string }> = ({ name }) => {
   const plugin = usePlugin(name);
@@ -123,82 +111,83 @@ const Actions: React.FC<{
 };
 
 export const SettingPluginsTab: React.FC = () => {
-  const t = useMantineTheme();
   const plugins = usePlugins();
-  const [install, setInstall] = useState("");
-  const calling = useCalling();
   return (
-    <Stack>
-      <Group>
-        <TextInput
-          placeholder="Plugin package name or package spec."
-          icon={<TbOutlet />}
-          value={install}
-          onChange={(e) => setInstall(e.target.value)}
-          disabled={calling.loading}
-          css={css`
-            flex: 1;
-          `}
-        />
+    <Lists
+      title="Plugins"
+      total={plugins.data?.total ?? 0}
+      items={plugins.data?.items ?? []}
+      sorts={["name"]}
+      query={plugins.query}
+      values={plugins.values}
+      update={plugins.update}
+      buttons={[
         <Button
-          loading={calling.loading}
-          disabled={!install}
-          onClick={() => {
-            calling.calling(async (a) => {
-              if (!install) {
-                a.failure(`Install plugin failure`, `Please enter the package name of the plugin to be installed.`);
-                return;
-              }
-              try {
-                await plugins.actions.install({ name: install });
-                setInstall("");
-                a.success(`Install plugin successful`, `You can use this plugin when creating a service.`);
-              } catch (e: any) {
-                a.failure(`Install plugin failure`, e);
-              }
-            });
-          }}
+          key="install-plugins"
+          size="xs"
+          leftIcon={<TbPlus />}
+          onClick={() =>
+            openModal({
+              title: "Install Plugin",
+              children: (
+                <ObjectModal
+                  value={{}}
+                  onChange={async (value, actions) => {
+                    if (!value.name) {
+                      actions.failure(
+                        `Install plugin failure`,
+                        `Please enter the package name of the plugin to be installed.`
+                      );
+                      return false;
+                    }
+                    try {
+                      await plugins.actions.install({ name: value.name });
+                      actions.success(`Install plugin successful`, `You can use this plugin when creating a service.`);
+                      return true;
+                    } catch (e: any) {
+                      actions.failure(`Install plugin failure`, e);
+                      return false;
+                    }
+                  }}
+                >
+                  {(item, setItem) => [
+                    <TextInput
+                      key="name"
+                      required
+                      label="Name"
+                      description="Plugin package spec, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
+                      placeholder="Plugin Package Spec"
+                      icon={<TbOutlet />}
+                      value={item.name ?? ""}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
+                    />,
+                  ]}
+                </ObjectModal>
+              ),
+            })
+          }
         >
           Install
-        </Button>
-      </Group>
-      <Divider />
-      <Async query={plugins.query}>
-        {plugins.data && (
-          <Pages
-            page={plugins.values.page}
-            size={plugins.values.size}
-            total={plugins.data.total}
-            onChange={plugins.update.page}
-          >
-            {plugins.data.items.map((item) => (
-              <Group
-                key={`plugins-${item.name}`}
-                position="apart"
-                css={css`
-                  padding: ${t.spacing.sm}px ${t.spacing.md}px;
-                  border-radius: ${t.radius.sm}px;
-                  color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
-
-                  &:hover {
-                    background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
-                  }
-                `}
-              >
-                <Group spacing="xs">
-                  <Avatar size="xs" src={client.assets.icon(item.icon)} />
-                  <Text weight={500}>{item.label ?? item.name}</Text>
-                  {item.group && <Text weight={500}> ({item.group})</Text>}
-                </Group>
-                <Group spacing="xs">
-                  <Badge color="indigo">buildpack: {item.buildpack ? "yes" : "no"}</Badge>
-                  <Actions item={item} actions={plugins.actions} />
-                </Group>
-              </Group>
-            ))}
-          </Pages>
-        )}
-      </Async>
-    </Stack>
+        </Button>,
+      ]}
+    >
+      {(item) => (
+        <ListsItem
+          left={
+            <>
+              <Avatar ml="xs" size="xs" src={client.assets.icon(item.icon)} />
+              <Text weight={500}>{item.label ?? item.name}</Text>
+            </>
+          }
+          right={
+            <>
+              <Badge color="indigo">Group: {item.group ?? "No"}</Badge>
+              <Badge color="cyan">Buildpack: {item.buildpack ? "Yes" : "No"}</Badge>
+              <Actions item={item} actions={plugins.actions} />
+            </>
+          }
+        ></ListsItem>
+      )}
+    </Lists>
   );
 };

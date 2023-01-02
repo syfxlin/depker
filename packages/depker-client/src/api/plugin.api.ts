@@ -14,7 +14,7 @@ import {
 
 export class PluginApi extends Api {
   public async list(request: ListPluginRequest) {
-    const response = await this.client.client.get<ListPluginResponse>(`/api/plugins`);
+    const response = await this.client.client.get<ListPluginResponse>(`/api/plugins`, { params: request });
     return response.data;
   }
 

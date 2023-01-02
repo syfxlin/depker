@@ -14,7 +14,7 @@ import {
 
 export class NetworkApi extends Api {
   public async list(request: ListNetworkRequest) {
-    const response = await this.client.client.get<ListNetworkResponse>(`/api/networks`);
+    const response = await this.client.client.get<ListNetworkResponse>(`/api/networks`, { params: request });
     return response.data;
   }
 
