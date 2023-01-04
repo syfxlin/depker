@@ -19,23 +19,27 @@ export class PluginApi extends Api {
   }
 
   public async install(request: InstallPluginRequest) {
-    const response = await this.client.client.post<InstallPluginResponse>(`/api/plugins/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<InstallPluginResponse>(`/api/plugins/${name}`);
     return response.data;
   }
 
   public async uninstall(request: UninstallPluginRequest) {
-    const response = await this.client.client.delete<UninstallPluginResponse>(`/api/plugins/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.delete<UninstallPluginResponse>(`/api/plugins/${name}`);
     return response.data;
   }
 
   public async get(request: GetPluginSettingRequest) {
-    const response = await this.client.client.get<GetPluginSettingResponse>(`/api/plugins/settings/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<GetPluginSettingResponse>(`/api/plugins/settings/${name}`);
     return response.data;
   }
 
   public async set(request: UpdatePluginSettingRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.put<UpdatePluginSettingResponse>(
-      `/api/plugins/settings/${request.name}`,
+      `/api/plugins/settings/${name}`,
       request
     );
     return response.data;

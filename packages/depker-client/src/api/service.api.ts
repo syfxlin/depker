@@ -37,51 +37,60 @@ export class ServiceApi extends Api {
   }
 
   public async update(request: UpsertServiceRequest) {
-    const response = await this.client.client.put<UpsertServiceResponse>(`/api/services/${request.name}`, request);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.put<UpsertServiceResponse>(`/api/services/${name}`, request);
     return response.data;
   }
 
   public async get(request: GetServiceRequest) {
-    const response = await this.client.client.get<GetServiceResponse>(`/api/services/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<GetServiceResponse>(`/api/services/${name}`);
     return response.data;
   }
 
   public async delete(request: DeleteServiceRequest) {
-    const response = await this.client.client.delete<DeleteServiceResponse>(`/api/services/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.delete<DeleteServiceResponse>(`/api/services/${name}`);
     return response.data;
   }
 
   public async status(request: StatusServiceRequest) {
-    const response = await this.client.client.get<StatusServiceResponse>(`/api/services/${request.name}/status`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<StatusServiceResponse>(`/api/services/${name}/status`);
     return response.data;
   }
 
   public async history(request: HistoryServiceRequest) {
-    const response = await this.client.client.get<HistoryServiceResponse>(`/api/services/${request.name}/history`, {
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<HistoryServiceResponse>(`/api/services/${name}/history`, {
       params: request,
     });
     return response.data;
   }
 
   public async up(request: UpServiceRequest) {
-    const response = await this.client.client.post<UpServiceResponse>(`/api/services/${request.name}/up`, request);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<UpServiceResponse>(`/api/services/${name}/up`, request);
     return response.data;
   }
 
   public async down(request: DownServiceRequest) {
-    const response = await this.client.client.post<DownServiceResponse>(`/api/services/${request.name}/down`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<DownServiceResponse>(`/api/services/${name}/down`);
     return response.data;
   }
 
   // region type=app
 
   public async restart(request: RestartServiceRequest) {
-    const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${request.name}/restart`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${name}/restart`);
     return response.data;
   }
 
   public async metrics(request: MetricsServiceRequest) {
-    const response = await this.client.client.get<MetricsServiceResponse>(`/api/services/${request.name}/metrics`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<MetricsServiceResponse>(`/api/services/${name}/metrics`);
     return response.data;
   }
 
@@ -98,7 +107,8 @@ export class ServiceApi extends Api {
   // region type=job
 
   public async trigger(request: RestartServiceRequest) {
-    const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${request.name}/trigger`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${name}/trigger`);
     return response.data;
   }
 

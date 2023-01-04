@@ -10,23 +10,26 @@ import {
 
 export class DeployApi extends Api {
   public async list(request: ListServiceDeployRequest) {
-    const response = await this.client.client.get<ListServiceDeployResponse>(`/api/services/${request.name}/deploys`, {
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<ListServiceDeployResponse>(`/api/services/${name}/deploys`, {
       params: request,
     });
     return response.data;
   }
 
   public async logs(request: LogsServiceDeployRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.get<LogsServiceDeployResponse>(
-      `/api/services/${request.name}/deploys/${request.id}/logs`,
+      `/api/services/${name}/deploys/${request.id}/logs`,
       { params: request }
     );
     return response.data;
   }
 
   public async cancel(request: CancelServiceDeployRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.delete<CancelServiceDeployResponse>(
-      `/api/services/${request.name}/deploys/${request.id}/cancel`
+      `/api/services/${name}/deploys/${request.id}/cancel`
     );
     return response.data;
   }

@@ -16,7 +16,18 @@ import {
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
-import { TbApiApp, TbApps, TbArrowUpRight, TbMoon, TbPlus, TbSearch, TbX } from "react-icons/all";
+import {
+  TbApiApp,
+  TbApps,
+  TbArrowsSort,
+  TbArrowUpRight,
+  TbMoon,
+  TbPlus,
+  TbSearch,
+  TbSortAscending,
+  TbSortDescending,
+  TbX,
+} from "react-icons/all";
 import { css } from "@emotion/react";
 import { Link } from "react-router-dom";
 import { useServices } from "../api/use-services";
@@ -161,6 +172,31 @@ export const Services: React.FC = () => {
     [services.values.search]
   );
 
+  const Sort = useMemo(
+    () => (
+      <Select
+        placeholder="Sort..."
+        icon={<TbArrowsSort />}
+        value={services.values.sort[0]}
+        onChange={(value) => value && services.update.sort([value, services.values.sort[1]])}
+        data={["name", "buildpack", "createdAt", "updatedAt"]}
+        rightSection={
+          <Tooltip label={`Sort direction: ${services.values.sort[1]}`}>
+            <ActionIcon
+              onClick={() =>
+                services.values.sort[0] &&
+                services.update.sort([services.values.sort[0], services.values.sort[1] === "asc" ? "desc" : "asc"])
+              }
+            >
+              {services.values.sort[1] === "asc" ? <TbSortAscending /> : <TbSortDescending />}
+            </ActionIcon>
+          </Tooltip>
+        }
+      />
+    ),
+    [services.values.sort]
+  );
+
   const List = useMemo(
     () =>
       services.data && (
@@ -271,6 +307,7 @@ export const Services: React.FC = () => {
       header={
         <Group>
           {Search}
+          {Sort}
           {Create}
         </Group>
       }

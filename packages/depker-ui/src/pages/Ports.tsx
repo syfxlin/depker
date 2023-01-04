@@ -1,94 +1,84 @@
 import React from "react";
 import { ActionIcon, Button, Group, NumberInput, Stack, Text, Tooltip, useMantineTheme } from "@mantine/core";
 import { Main } from "../components/layout/Main";
-import { TbApps, TbCircleDot, TbList, TbPlus, TbTrash } from "react-icons/all";
+import { TbApps, TbCircleDot, TbPlus, TbTrash } from "react-icons/all";
 import { closeAllModals, openConfirmModal, openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
 import { Async } from "../components/core/Async";
-import { css } from "@emotion/react";
 import { usePorts } from "../api/use-ports";
 import { useCalling } from "../hooks/use-calling";
 import { usePortBinds } from "../api/use-port-binds";
 import { NavLink } from "../components/core/NavLink";
 import { useNavigate } from "react-router-dom";
 import { Empty } from "../components/core/Empty";
+import { ListsItem } from "../components/layout/Lists";
+import { css } from "@emotion/react";
 
 const Binds: React.FC<{ port: number }> = ({ port }) => {
+  const t = useMantineTheme();
   const navigate = useNavigate();
   const binds = usePortBinds(port);
   return (
     <Stack spacing="xs">
-      {binds.data.map((item) => (
-        <NavLink
-          key={`binds-${item}`}
-          label={item}
-          icon={<TbApps />}
-          action={() => {
-            closeAllModals();
-            navigate(`/services/${item}/`);
-          }}
-        />
-      ))}
-      {!binds.data.length && <Empty />}
+      <Async query={binds.query}>
+        {binds.data.map((item) => (
+          <NavLink
+            key={`binds-${item}`}
+            active
+            label={item}
+            icon={<TbApps />}
+            action={() => {
+              closeAllModals();
+              navigate(`/services/${item}/`);
+            }}
+            css={css`
+              border-radius: ${t.radius.sm}px;
+            `}
+          />
+        ))}
+        {!binds.data.length && <Empty />}
+      </Async>
     </Stack>
   );
 };
 
 const Actions: React.FC<{ port: number; actions: ReturnType<typeof usePorts>["actions"] }> = ({ port, actions }) => {
-  const t = useMantineTheme();
   const calling = useCalling();
   return (
-    <>
-      <Tooltip label="Binds">
-        <ActionIcon
-          size="lg"
-          color={t.primaryColor}
-          loading={calling.loading}
-          onClick={() => {
-            openModal({
-              title: `Port ${port} Binds`,
-              children: <Binds port={port} />,
-            });
-          }}
-        >
-          <TbList />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="Delete">
-        <ActionIcon
-          size="lg"
-          color="red"
-          loading={calling.loading}
-          onClick={() => {
-            openConfirmModal({
-              title: "Delete Port",
-              children: (
-                <>
-                  <Text size="sm" color="red">
-                    The port mapping will not be removed immediately, need to re-deploy service.
-                  </Text>
-                  <Text size="sm">This action is irreversible. Confirm delete?</Text>
-                </>
-              ),
-              labels: { confirm: "Delete", cancel: "No don't delete it" },
-              confirmProps: { color: "red" },
-              onConfirm: () => {
-                calling.calling(async (a) => {
-                  try {
-                    await actions.delete({ port });
-                    a.success(`Delete port successful`, `All binds have been disconnected.`);
-                  } catch (e: any) {
-                    a.failure(`Delete port failure`, e);
-                  }
-                });
-              },
-            });
-          }}
-        >
-          <TbTrash />
-        </ActionIcon>
-      </Tooltip>
-    </>
+    <Tooltip label="Delete">
+      <ActionIcon
+        size="lg"
+        color="red"
+        loading={calling.loading}
+        onClick={() => {
+          openConfirmModal({
+            title: "Delete Port",
+            children: (
+              <>
+                <Text size="sm" color="red">
+                  The port mapping will not be removed immediately, need to re-deploy service.
+                </Text>
+                <Text size="sm">This action is irreversible. Confirm delete?</Text>
+              </>
+            ),
+            labels: { confirm: "Delete", cancel: "No don't delete it" },
+            confirmProps: { color: "red" },
+            onConfirm: () => {
+              calling.calling(async (a) => {
+                try {
+                  await actions.delete({ port });
+                  a.success(`Delete port successful`, `All binds have been disconnected.`);
+                } catch (e: any) {
+                  a.failure(`Delete port failure`, e);
+                }
+              });
+            },
+          });
+        }}
+      >
+        <TbTrash />
+      </ActionIcon>
+    </Tooltip>
   );
 };
 
@@ -148,26 +138,13 @@ export const Ports: React.FC = () => {
     >
       <Async query={ports.query}>
         {ports.data.map((item) => (
-          <Group
+          <ListsItem
             key={`ports-${item}`}
-            position="apart"
-            css={css`
-              padding: ${t.spacing.sm}px ${t.spacing.md}px;
-              border-radius: ${t.radius.sm}px;
-              color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
-
-              &:hover {
-                background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
-              }
-            `}
+            left={<Text weight={500}>{item}</Text>}
+            right={<Actions port={item} actions={ports.actions} />}
           >
-            <Stack spacing={0}>
-              <Text weight={500}>{item}</Text>
-            </Stack>
-            <Group spacing="xs">
-              <Actions port={item} actions={ports.actions} />
-            </Group>
-          </Group>
+            <Binds port={item} />
+          </ListsItem>
         ))}
       </Async>
     </Main>

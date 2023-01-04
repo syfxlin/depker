@@ -29,6 +29,8 @@ export type ListNetworkResponse = {
     id: string;
     scope: string;
     driver: string;
+    ipv6: boolean;
+    created: number;
     ips: Array<{
       gateway: string;
       subnet: string;
@@ -36,8 +38,9 @@ export type ListNetworkResponse = {
     containers: Array<{
       id: string;
       name: string;
-      ip: string;
       mac: string;
+      ipv4: string;
+      ipv6: string;
     }>;
   }>;
 };

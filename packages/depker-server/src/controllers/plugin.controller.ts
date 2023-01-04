@@ -75,6 +75,7 @@ export class PluginController {
       })
       .slice(offset, offset + limit)
       .map((p) => ({
+        pkg: p.pkg,
         name: p.name,
         label: p.label,
         group: p.group,

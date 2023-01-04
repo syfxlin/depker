@@ -9,7 +9,7 @@ import { closeAllModals, openConfirmModal, openModal } from "@mantine/modals";
 import { ListPluginResponse } from "@syfxlin/depker-client";
 import { usePlugin } from "../api/use-plugin";
 import { ExtensionInput } from "../components/input/ExtensionInput";
-import { Lists, ListsItem } from "../components/layout/Lists";
+import { Lists, ListsFields, ListsItem } from "../components/layout/Lists";
 import { ObjectModal } from "../components/input/ObjectModal";
 
 const Setting: React.FC<{ name: string }> = ({ name }) => {
@@ -115,8 +115,8 @@ export const SettingPluginsTab: React.FC = () => {
   return (
     <Lists
       title="Plugins"
-      total={plugins.data?.total ?? 0}
-      items={plugins.data?.items ?? []}
+      total={plugins.data?.total}
+      items={plugins.data?.items}
       sorts={["name"]}
       query={plugins.query}
       values={plugins.values}
@@ -173,9 +173,10 @@ export const SettingPluginsTab: React.FC = () => {
     >
       {(item) => (
         <ListsItem
+          key={`plugins-${item.name}`}
           left={
             <>
-              <Avatar ml="xs" size="xs" src={client.assets.icon(item.icon)} />
+              <Avatar size="xs" src={client.assets.icon(item.icon)} />
               <Text weight={500}>{item.label ?? item.name}</Text>
             </>
           }
@@ -186,7 +187,16 @@ export const SettingPluginsTab: React.FC = () => {
               <Actions item={item} actions={plugins.actions} />
             </>
           }
-        ></ListsItem>
+        >
+          <ListsFields
+            data={[
+              ["Package Spec", item.pkg],
+              ["Group", item.group || "-"],
+              ["Buildpack Support", item.buildpack ? "Yes" : "No"],
+              ["Global Options", item.options ? "Yes" : "No"],
+            ]}
+          />
+        </ListsItem>
       )}
     </Lists>
   );

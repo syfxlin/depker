@@ -1,35 +1,43 @@
 import React, { ChangeEvent } from "react";
 import { ActionIcon, Button, Group, Stack, Text, TextInput, Tooltip, useMantineTheme } from "@mantine/core";
 import { Main } from "../components/layout/Main";
-import { TbApps, TbCircleDot, TbFiles, TbList, TbPlus, TbTrash } from "react-icons/all";
+import { TbApps, TbCircleDot, TbFiles, TbPlus, TbTrash } from "react-icons/all";
 import { closeAllModals, openConfirmModal, openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
 import { Async } from "../components/core/Async";
-import { css } from "@emotion/react";
 import { useCalling } from "../hooks/use-calling";
 import { NavLink } from "../components/core/NavLink";
 import { useNavigate } from "react-router-dom";
 import { Empty } from "../components/core/Empty";
 import { useVolumeBinds } from "../api/use-volume-binds";
 import { useVolumes } from "../api/use-volumes";
+import { ListsItem } from "../components/layout/Lists";
+import { css } from "@emotion/react";
 
 const Binds: React.FC<{ volume: string }> = ({ volume }) => {
+  const t = useMantineTheme();
   const navigate = useNavigate();
   const binds = useVolumeBinds(volume);
   return (
     <Stack spacing="xs">
-      {binds.data.map((item) => (
-        <NavLink
-          key={`binds-${item}`}
-          label={item}
-          icon={<TbApps />}
-          action={() => {
-            closeAllModals();
-            navigate(`/services/${item}/`);
-          }}
-        />
-      ))}
-      {!binds.data.length && <Empty />}
+      <Async query={binds.query}>
+        {binds.data.map((item) => (
+          <NavLink
+            key={`binds-${item}`}
+            active
+            label={item}
+            icon={<TbApps />}
+            action={() => {
+              closeAllModals();
+              navigate(`/services/${item}/`);
+            }}
+            css={css`
+              border-radius: ${t.radius.sm}px;
+            `}
+          />
+        ))}
+        {!binds.data.length && <Empty />}
+      </Async>
     </Stack>
   );
 };
@@ -43,33 +51,16 @@ const Actions: React.FC<{ volume: string; actions: ReturnType<typeof useVolumes>
   const calling = useCalling();
   return (
     <>
-      {volume.startsWith("@/") && (
-        <Tooltip label="Files">
-          <ActionIcon
-            size="lg"
-            color={t.primaryColor}
-            loading={calling.loading}
-            onClick={() => {
-              navigate(`/files/fs/volumes/${volume.substring(2)}`);
-            }}
-          >
-            <TbFiles />
-          </ActionIcon>
-        </Tooltip>
-      )}
-      <Tooltip label="Binds">
+      <Tooltip label="Files">
         <ActionIcon
           size="lg"
           color={t.primaryColor}
           loading={calling.loading}
           onClick={() => {
-            openModal({
-              title: `Volume ${volume} Binds`,
-              children: <Binds volume={volume} />,
-            });
+            navigate(`/files/fs/volumes/${volume.substring(2)}`);
           }}
         >
-          <TbList />
+          <TbFiles />
         </ActionIcon>
       </Tooltip>
       <Tooltip label="Delete">
@@ -164,26 +155,13 @@ export const Volumes: React.FC = () => {
     >
       <Async query={volumes.query}>
         {volumes.data.map((item) => (
-          <Group
+          <ListsItem
             key={`volumes-${item}`}
-            position="apart"
-            css={css`
-              padding: ${t.spacing.sm}px ${t.spacing.md}px;
-              border-radius: ${t.radius.sm}px;
-              color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
-
-              &:hover {
-                background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
-              }
-            `}
+            left={<Text weight={500}>{item}</Text>}
+            right={<Actions volume={item} actions={volumes.actions} />}
           >
-            <Stack spacing={0}>
-              <Text weight={500}>{item}</Text>
-            </Stack>
-            <Group spacing="xs">
-              <Actions volume={item} actions={volumes.actions} />
-            </Group>
-          </Group>
+            <Binds volume={item} />
+          </ListsItem>
         ))}
       </Async>
     </Main>

@@ -21,6 +21,7 @@ import { useNetworks } from "../api/use-networks";
 import { Empty } from "../components/core/Empty";
 import { Lists, ListsFields, ListsItem } from "../components/layout/Lists";
 import { ObjectModal } from "../components/input/ObjectModal";
+import { humanDate } from "../utils/human";
 
 const Containers: React.FC<{
   item: ListNetworkResponse["items"][number];
@@ -118,8 +119,9 @@ const Containers: React.FC<{
             <ListsFields
               data={[
                 ["ID", container.id],
-                ["IP", container.ip],
                 ["MAC", container.mac],
+                ["IPv4", container.ipv4 || "-"],
+                ["IPv6", container.ipv6 || "-"],
               ]}
             />
           </ListsItem>
@@ -191,8 +193,8 @@ export const SettingNetworksTab: React.FC = () => {
   return (
     <Lists
       title="Networks"
-      total={networks.data?.total ?? 0}
-      items={networks.data?.items ?? []}
+      total={networks.data?.total}
+      items={networks.data?.items}
       sorts={["name", "id", "scope", "driver"]}
       query={networks.query}
       values={networks.values}
@@ -263,10 +265,12 @@ export const SettingNetworksTab: React.FC = () => {
           <ListsFields
             data={[
               ["ID", item.id],
-              ["Driver", item.driver],
-              ["Scope", item.scope],
-              ["IP Gateway", item.ips.map((i) => i.gateway).join(", ")],
-              ["IP Subnet", item.ips.map((i) => i.subnet).join(", ")],
+              ["Driver", item.driver || "-"],
+              ["Scope", item.scope || "-"],
+              ["IP Gateway", item.ips.map((i) => i.gateway).join(", ") || "-"],
+              ["IP Subnet", item.ips.map((i) => i.subnet).join(", ") || "-"],
+              ["Enable IPv6", item.ipv6 ? "Yes" : "No"],
+              ["Created Time", humanDate(item.created)],
             ]}
           />
         </ListsItem>

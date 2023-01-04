@@ -14,6 +14,7 @@ import {
   ListNetworkResponse,
 } from "../views/network.view";
 import { NetworkInspectInfo } from "dockerode";
+import { DateTime } from "luxon";
 
 @Controller("/api/networks")
 export class NetworkController {
@@ -72,6 +73,8 @@ export class NetworkController {
         id: i.Id,
         scope: i.Scope,
         driver: i.Driver,
+        ipv6: i.EnableIPv6,
+        created: DateTime.fromISO(i.Created).valueOf(),
         ips: (i.IPAM?.Config ?? []).map((c) => ({
           gateway: c.Gateway,
           subnet: c.Subnet,
@@ -79,8 +82,9 @@ export class NetworkController {
         containers: Object.entries(i.Containers ?? {}).map(([id, container]) => ({
           id: id,
           name: container.Name,
-          ip: container.IPv4Address,
           mac: container.MacAddress,
+          ipv4: container.IPv4Address,
+          ipv6: container.IPv6Address,
         })),
       }));
 

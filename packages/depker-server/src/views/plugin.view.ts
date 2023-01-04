@@ -27,6 +27,7 @@ export class ListPluginRequest {
 export type ListPluginResponse = {
   total: number;
   items: Array<{
+    pkg: string;
     name: string;
     label?: string;
     group?: string;

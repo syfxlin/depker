@@ -10,23 +10,26 @@ import {
 
 export class CronApi extends Api {
   public async list(request: ListServiceCronRequest) {
-    const response = await this.client.client.get<ListServiceCronResponse>(`/api/services/${request.name}/crons`, {
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.get<ListServiceCronResponse>(`/api/services/${name}/crons`, {
       params: request,
     });
     return response.data;
   }
 
   public async logs(request: LogsServiceCronRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.get<LogsServiceCronResponse>(
-      `/api/services/${request.name}/crons/${request.id}/logs`,
+      `/api/services/${name}/crons/${request.id}/logs`,
       { params: request }
     );
     return response.data;
   }
 
   public async cancel(request: CancelServiceCronRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.delete<CancelServiceCronResponse>(
-      `/api/services/${request.name}/crons/${request.id}/cancel`
+      `/api/services/${name}/crons/${request.id}/cancel`
     );
     return response.data;
   }

@@ -3,15 +3,13 @@ import { Main } from "../components/layout/Main";
 import { ActionIcon, Badge, Button, Group, Stack, Text, TextInput, Tooltip, useMantineTheme } from "@mantine/core";
 import { TbApps, TbCheck, TbCopy, TbPlus, TbRefresh, TbTrash } from "react-icons/all";
 import { useTokens } from "../api/use-tokens";
-import { Async } from "../components/core/Async";
-import { Pages } from "../components/layout/Pages";
-import { css } from "@emotion/react";
 import { humanDate } from "../utils/human";
 import { openConfirmModal, openModal } from "@mantine/modals";
 import { ObjectModal } from "../components/input/ObjectModal";
 import { showNotification } from "@mantine/notifications";
 import { useClipboard } from "@mantine/hooks";
 import { useCalling } from "../hooks/use-calling";
+import { Lists, ListsItem } from "../components/layout/Lists";
 
 const Copy: React.FC<{ token: string }> = ({ token }) => {
   const t = useMantineTheme();
@@ -173,43 +171,34 @@ export const Tokens: React.FC = () => {
         </Group>
       }
     >
-      <Async query={tokens.query}>
-        {tokens.data && (
-          <Pages
-            page={tokens.values.page}
-            size={tokens.values.size}
-            total={tokens.data.total}
-            onChange={tokens.update.page}
-          >
-            {tokens.data.items.map((item) => (
-              <Group
-                key={`tokens-${item.name}`}
-                position="apart"
-                css={css`
-                  padding: ${t.spacing.sm}px ${t.spacing.md}px;
-                  border-radius: ${t.radius.sm}px;
-                  color: ${t.colorScheme === "light" ? t.colors.gray[7] : t.colors.dark[0]};
-
-                  &:hover {
-                    background-color: ${t.colorScheme === "light" ? t.colors.gray[0] : t.colors.dark[5]};
-                  }
-                `}
-              >
-                <Stack spacing={0}>
-                  <Text weight={500}>{item.name}</Text>
-                  <Text color="dimmed" size="xs">
-                    Created on {humanDate(item.createdAt)}, Updated on {humanDate(item.updatedAt)}
-                  </Text>
-                </Stack>
-                <Group spacing="xs">
-                  <Badge color="indigo">identity: {item.identity}</Badge>
-                  <Actions name={item.name} actions={tokens.actions} />
-                </Group>
-              </Group>
-            ))}
-          </Pages>
+      <Lists
+        total={tokens.data?.total}
+        items={tokens.data?.items}
+        sorts={["name", "identity", "createdAt", "updatedAt"]}
+        query={tokens.query}
+        values={tokens.values}
+        update={tokens.update}
+      >
+        {(item) => (
+          <ListsItem
+            key={`tokens-${item.name}`}
+            left={
+              <Stack spacing={0}>
+                <Text weight={500}>{item.name}</Text>
+                <Text color="dimmed" size="xs">
+                  Created on {humanDate(item.createdAt)}, Updated on {humanDate(item.updatedAt)}
+                </Text>
+              </Stack>
+            }
+            right={
+              <>
+                <Badge color="indigo">identity: {item.identity}</Badge>
+                <Actions name={item.name} actions={tokens.actions} />
+              </>
+            }
+          ></ListsItem>
         )}
-      </Async>
+      </Lists>
     </Main>
   );
 };

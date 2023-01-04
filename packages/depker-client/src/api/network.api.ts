@@ -19,25 +19,29 @@ export class NetworkApi extends Api {
   }
 
   public async create(request: CreateNetworkRequest) {
-    const response = await this.client.client.post<CreateNetworkResponse>(`/api/networks/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<CreateNetworkResponse>(`/api/networks/${name}`);
     return response.data;
   }
 
   public async delete(request: DeleteNetworkRequest) {
-    const response = await this.client.client.delete<DeleteNetworkResponse>(`/api/networks/${request.name}`);
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.delete<DeleteNetworkResponse>(`/api/networks/${name}`);
     return response.data;
   }
 
   public async connect(request: ConnectNetworkRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.post<ConnectNetworkResponse>(
-      `/api/networks/${request.name}/connect/${request.container}`
+      `/api/networks/${name}/connect/${request.container}`
     );
     return response.data;
   }
 
   public async disconnect(request: DisconnectNetworkRequest) {
+    const name = encodeURIComponent(request.name);
     const response = await this.client.client.delete<DisconnectNetworkResponse>(
-      `/api/networks/${request.name}/disconnect/${request.container}`
+      `/api/networks/${name}/disconnect/${request.container}`
     );
     return response.data;
   }

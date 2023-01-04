@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode, useState } from "react";
+import React, { ReactElement, ReactNode, useMemo, useState } from "react";
 import {
   ActionIcon,
   Box,
@@ -28,13 +28,13 @@ import { SWRResponse } from "swr";
 import { Async } from "../core/Async";
 
 export type ListsProps<T> = {
-  title: string;
+  title?: string;
   buttons?: ReactNode[];
   children?: (item: T) => ReactNode;
   // data
-  total: number;
-  items: T[];
-  sorts: string[];
+  total?: number;
+  items?: T[];
+  sorts?: string[];
   query: SWRResponse;
   values: {
     page: number;
@@ -52,10 +52,11 @@ export type ListsProps<T> = {
 
 export const Lists = <T,>(props: ListsProps<T>): ReactElement => {
   const t = useMantineTheme();
-  return (
-    <Stack spacing="xs">
-      <Grid>
-        <Grid.Col span={12} md={3}>
+
+  const Title = useMemo(
+    () => (
+      <Grid.Col span={12} md={3}>
+        {props.title && (
           <Text
             css={css`
               font-size: ${t.headings.sizes.h4.fontSize}px;
@@ -64,41 +65,54 @@ export const Lists = <T,>(props: ListsProps<T>): ReactElement => {
           >
             {props.title}
           </Text>
-        </Grid.Col>
-        <Grid.Col span={12} md={9}>
-          <Group noWrap position="right" spacing="xs">
-            <TextInput
-              size="xs"
-              placeholder="Search..."
-              icon={<TbSearch />}
-              value={props.values.search}
-              onChange={(e) => props.update.search(e.target.value)}
-            />
-            <Select
-              size="xs"
-              placeholder="Sort..."
-              icon={<TbArrowsSort />}
-              value={props.values.sort[0]}
-              onChange={(value) => value && props.update.sort([value, props.values.sort[1]])}
-              data={props.sorts}
-              rightSection={
-                <Tooltip label={`Sort direction: ${props.values.sort[1]}`}>
-                  <ActionIcon
-                    onClick={() =>
-                      props.values.sort[0] &&
-                      props.update.sort([props.values.sort[0], props.values.sort[1] === "asc" ? "desc" : "asc"])
-                    }
-                  >
-                    {props.values.sort[1] === "asc" ? <TbSortAscending /> : <TbSortDescending />}
-                  </ActionIcon>
-                </Tooltip>
-              }
-            />
-            {props.buttons}
-          </Group>
-        </Grid.Col>
-      </Grid>
-      <Divider />
+        )}
+      </Grid.Col>
+    ),
+    [props.title]
+  );
+
+  const Search = useMemo(
+    () => (
+      <TextInput
+        size="xs"
+        placeholder="Search..."
+        icon={<TbSearch />}
+        value={props.values.search}
+        onChange={(e) => props.update.search(e.target.value)}
+      />
+    ),
+    [props.values.search]
+  );
+
+  const Sort = useMemo(
+    () =>
+      props.sorts && (
+        <Select
+          size="xs"
+          placeholder="Sort..."
+          icon={<TbArrowsSort />}
+          value={props.values.sort[0]}
+          onChange={(value) => value && props.update.sort([value, props.values.sort[1]])}
+          data={props.sorts}
+          rightSection={
+            <Tooltip label={`Sort direction: ${props.values.sort[1]}`}>
+              <ActionIcon
+                onClick={() =>
+                  props.values.sort[0] &&
+                  props.update.sort([props.values.sort[0], props.values.sort[1] === "asc" ? "desc" : "asc"])
+                }
+              >
+                {props.values.sort[1] === "asc" ? <TbSortAscending /> : <TbSortDescending />}
+              </ActionIcon>
+            </Tooltip>
+          }
+        />
+      ),
+    [props.values.sort, props.sorts]
+  );
+
+  const List = useMemo(
+    () => (
       <Box
         css={css`
           flex: 1;
@@ -107,17 +121,42 @@ export const Lists = <T,>(props: ListsProps<T>): ReactElement => {
         `}
       >
         <Async query={props.query}>
-          {!props.total ? <Empty /> : props.items.map((item) => props.children?.(item))}
+          {!props.total ? <Empty /> : (props.items ?? []).map((item) => props.children?.(item))}
         </Async>
       </Box>
+    ),
+    [props.total, props.items]
+  );
+
+  const Page = useMemo(
+    () => (
       <Pagination
         page={props.values.page}
-        total={Math.max(1, Math.ceil(props.total / props.values.size))}
+        total={Math.max(1, Math.ceil((props.total ?? 0) / props.values.size))}
         withControls
         withEdges
         position="center"
         onChange={props.update.page}
       />
+    ),
+    [props.values.page, props.values.size, props.total]
+  );
+
+  return (
+    <Stack spacing="xs">
+      <Grid>
+        {Title}
+        <Grid.Col span={12} md={9}>
+          <Group noWrap position="right" spacing="xs">
+            {Search}
+            {Sort}
+            {props.buttons}
+          </Group>
+        </Grid.Col>
+      </Grid>
+      <Divider />
+      {List}
+      {Page}
     </Stack>
   );
 };
@@ -171,7 +210,7 @@ export const ListsItem = (props: ListsItemProps): ReactElement => {
 };
 
 export type ListsFieldsProps = {
-  data: [string, string][];
+  data: [ReactNode, ReactNode][];
 };
 
 export const ListsFields = (props: ListsFieldsProps): ReactElement => {
