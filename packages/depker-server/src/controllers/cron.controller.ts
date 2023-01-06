@@ -49,8 +49,8 @@ export class CronController {
   @Get("/:id/logs")
   public async logs(@Data() request: LogsServiceCronRequest): Promise<LogsServiceCronResponse> {
     const { id, name, since, tail } = request;
-    const count = await Cron.countBy({ id, service: { name } });
-    if (!count) {
+    const cron = await Cron.findOneBy({ id, service: { name } });
+    if (!cron) {
       throw new NotFoundException(`Not found cron of ${name}.`);
     }
 
@@ -62,12 +62,11 @@ export class CronController {
       take: typeof tail === "number" ? tail : undefined,
       order: { id: "desc" },
     });
-    const history = await Cron.findOne({ where: { id, service: { name } } });
 
     lines.reverse();
 
     const logs: LogsServiceCronResponse["logs"] = lines.map((i) => [i.level, i.time.getTime(), i.line]);
-    if (["success", "failed"].includes(history!.status)) {
+    if (["success", "failed"].includes(cron!.status)) {
       return { since: -1, logs };
     }
     if (lines.length) {
