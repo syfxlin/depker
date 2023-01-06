@@ -26,7 +26,9 @@ export class NetworkApi extends Api {
 
   public async delete(request: DeleteNetworkRequest) {
     const name = encodeURIComponent(request.name);
-    const response = await this.client.client.delete<DeleteNetworkResponse>(`/api/networks/${name}`);
+    const response = await this.client.client.delete<DeleteNetworkResponse>(`/api/networks/${name}`, {
+      params: request,
+    });
     return response.data;
   }
 

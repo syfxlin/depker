@@ -16,6 +16,7 @@ import { SettingApi } from "./api/setting.api";
 import { CronApi } from "./api/cron.api";
 import { PluginApi } from "./api/plugin.api";
 import { NetworkApi } from "./api/network.api";
+import { ImageApi } from "./api/image.api";
 
 export interface DepkerClientOptions {
   endpoint: string;
@@ -47,6 +48,7 @@ export class DepkerClient {
   public readonly settings: SettingApi;
   public readonly plugins: PluginApi;
   public readonly networks: NetworkApi;
+  public readonly images: ImageApi;
 
   constructor(options: DepkerClientOptions) {
     this.endpoint = options.endpoint;
@@ -95,5 +97,6 @@ export class DepkerClient {
     this.settings = new SettingApi(this);
     this.plugins = new PluginApi(this);
     this.networks = new NetworkApi(this);
+    this.images = new ImageApi(this);
   }
 }

@@ -1,17 +1,4 @@
-import {
-  All,
-  BadRequestException,
-  Controller,
-  Delete,
-  Get,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
-  Post,
-  Put,
-  Req,
-  Res,
-} from "@nestjs/common";
+import { All, Controller, Delete, Get, NotFoundException, Param, Post, Put, Req, Res } from "@nestjs/common";
 import { Request, Response } from "express";
 import { Data } from "../decorators/data.decorator";
 import {
@@ -46,24 +33,17 @@ export class PluginController {
     const { search = "", offset = 0, limit = 10, sort = "name:desc" } = request;
     const plugins = Object.values(await this.plugins.plugins());
 
-    const total: ListPluginResponse["total"] = plugins.length;
-    const items: ListPluginResponse["items"] = plugins
-      .filter((p) => {
-        const lower = search.toLowerCase();
-        if (!lower) {
-          return true;
-        }
-        if (p.name.toLowerCase().indexOf(lower) !== -1) {
-          return true;
-        }
-        if (p.label && p.label.toLowerCase().indexOf(lower) !== -1) {
-          return true;
-        }
-        if (p.group && p.group.toLowerCase().indexOf(lower) !== -1) {
-          return true;
-        }
-        return false;
-      })
+    const filtered = plugins.filter((p) => {
+      const lower = search.toLowerCase();
+      if (!lower) {
+        return true;
+      }
+      const fields = [p.name, p.label, p.group];
+      return fields.find((f) => (f ?? "").toLowerCase().indexOf(lower) !== -1);
+    });
+
+    const total: ListPluginResponse["total"] = filtered.length;
+    const items: ListPluginResponse["items"] = filtered
       .sort((left, right) => {
         const [by, order] = sort.toLowerCase().split(":");
         const a = order === "asc" ? left : right;
@@ -89,22 +69,14 @@ export class PluginController {
 
   @Post("/:name")
   public async install(@Data() request: InstallPluginRequest): Promise<InstallPluginResponse> {
-    const error = await this.plugins.install(request.name);
-    if (!error) {
-      return { status: "success" };
-    } else {
-      throw new InternalServerErrorException(`Install plugin ${request.name} failed. ${error}`);
-    }
+    await this.plugins.install(request.name);
+    return { status: "success" };
   }
 
   @Delete("/:name")
   public async uninstall(@Data() request: UninstallPluginRequest): Promise<UninstallPluginResponse> {
-    const error = await this.plugins.uninstall(request.name);
-    if (!error) {
-      return { status: "success" };
-    } else {
-      throw new InternalServerErrorException(`Uninstall plugin ${request.name} failed. ${error}`);
-    }
+    await this.plugins.uninstall(request.name);
+    return { status: "success" };
   }
 
   @Get("/settings/:name")
@@ -128,10 +100,7 @@ export class PluginController {
     if (!plugin || !plugin.options) {
       throw new NotFoundException(`Not found plugin global options of ${request.name}`);
     }
-    const valid = await this.plugins.validate(plugin.options, request.values);
-    if (valid) {
-      throw new BadRequestException(valid);
-    }
+    await this.plugins.validate(plugin.options, request.values);
     const setting = await Setting.read();
     await this.events.emitAsync(PluginEvent.PRE_SETTING, plugin, setting.plugins[plugin.name] ?? {});
     setting.plugins[plugin.name] = request.values;

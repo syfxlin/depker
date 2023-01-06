@@ -131,6 +131,7 @@ export const SettingPluginsTab: React.FC = () => {
               title: "Install Plugin",
               children: (
                 <ObjectModal
+                  button="Install"
                   value={{}}
                   onChange={async (value, actions) => {
                     if (!value.name) {

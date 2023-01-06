@@ -81,7 +81,7 @@ const Containers: React.FC<{
             left={<Text weight={500}>{container.name}</Text>}
             right={
               <>
-                <Badge color="indigo">id: {container.id.substring(0, 7)}</Badge>
+                <Badge color="indigo">ID: {container.id.substring(0, 7)}</Badge>
                 <Tooltip label="Delete">
                   <ActionIcon
                     size="lg"
@@ -90,7 +90,7 @@ const Containers: React.FC<{
                     onClick={() => {
                       openConfirmModal({
                         title: "Disconnect Network",
-                        children: <Text size="sm">This action is irreversible. Confirm uninstall?</Text>,
+                        children: <Text size="sm">This action is irreversible. Confirm delete?</Text>,
                         labels: { confirm: "Disconnect", cancel: "No don't disconnect it" },
                         confirmProps: { color: "red" },
                         onConfirm: () => {
@@ -165,7 +165,7 @@ const Actions: React.FC<{
           onClick={() => {
             openConfirmModal({
               title: "Delete Network",
-              children: <Text size="sm">This action is irreversible. Confirm uninstall?</Text>,
+              children: <Text size="sm">This action is irreversible. Confirm delete?</Text>,
               labels: { confirm: "Delete", cancel: "No don't delete it" },
               confirmProps: { color: "red" },
               onConfirm: () => {
@@ -209,6 +209,7 @@ export const SettingNetworksTab: React.FC = () => {
               title: "Create Network",
               children: (
                 <ObjectModal
+                  button="Create"
                   value={{}}
                   onChange={async (value, actions) => {
                     if (!value.name) {

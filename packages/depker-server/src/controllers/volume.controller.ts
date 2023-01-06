@@ -23,13 +23,12 @@ export class VolumeController {
 
   @Get("/")
   public async list(): Promise<ListVolumeResponse> {
-    const volumes = fs.readdirSync(PATHS.VOLUMES);
-    return volumes.map((p) => `@/${p}`);
+    return fs.readdirSync(PATHS.VOLUMES);
   }
 
   @Post("/:volume")
   public async create(@Data() request: CreateVolumeRequest): Promise<CreateVolumeResponse> {
-    const location = path.join(PATHS.VOLUMES, request.volume.replace(/^@\//, ""));
+    const location = path.join(PATHS.VOLUMES, request.volume);
     const relative = path.relative(PATHS.VOLUMES, location);
     if (relative && !relative.startsWith("..") && !path.isAbsolute(relative)) {
       fs.ensureDirSync(location);
@@ -47,7 +46,7 @@ export class VolumeController {
     if (binds.length) {
       throw new ConflictException(`Found binds of volume ${request.volume}, need to remove all binds before delete.`);
     }
-    const location = path.join(PATHS.VOLUMES, request.volume.replace(/^@\//, ""));
+    const location = path.join(PATHS.VOLUMES, request.volume);
     const relative = path.relative(PATHS.VOLUMES, location);
     if (relative && !relative.startsWith("..") && !path.isAbsolute(relative)) {
       fs.removeSync(location);

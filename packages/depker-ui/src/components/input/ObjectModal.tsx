@@ -6,6 +6,7 @@ import { useCalling, UseCallingActions } from "../../hooks/use-calling";
 export type ObjectModalProps = {
   value?: Record<string, any>;
   onChange?: (value: Record<string, any>, actions: UseCallingActions) => boolean | Promise<boolean>;
+  button: ReactNode;
   children: (value: Record<string, any>, setValue: (value: Record<string, any>) => void) => Array<ReactNode>;
 };
 
@@ -27,7 +28,7 @@ export const ObjectModal: React.FC<ObjectModalProps> = (props) => {
           });
         }}
       >
-        Save
+        {props.button}
       </Button>
     </Stack>
   );

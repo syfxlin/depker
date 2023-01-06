@@ -261,11 +261,6 @@ export class DockerImage {
     return await this.docker.getImage(name).remove();
   }
 
-  public async tag(name: string, tag: string) {
-    const [r, t] = tag.split(":");
-    return await this.docker.getImage(name).tag({ repo: r, tag: t });
-  }
-
   public async pull(name: string, force?: boolean, lines?: (line: string) => void) {
     if (force || !(await this.find(name))) {
       this.docker.logger.log(`Pulling image ${name}.`);

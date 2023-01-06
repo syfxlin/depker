@@ -29,6 +29,30 @@ export type ListImageResponse = {
     tags: string[];
     created: number;
     size: number;
-    containers: number;
+    containers: Array<{
+      id: string;
+      name: string;
+      image: string;
+    }>;
   }>;
+};
+
+export class CreateImageRequest {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+export type CreateImageResponse = {
+  status: "success";
+};
+
+export class DeleteImageRequest {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+export type DeleteImageResponse = {
+  status: "success";
 };

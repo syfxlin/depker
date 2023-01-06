@@ -26,6 +26,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
               title: <>Edit {props.label}</>,
               children: (
                 <ObjectModal
+                  button="Save"
                   value={value}
                   onChange={(value) => {
                     onChange?.(value);

@@ -54,6 +54,7 @@ export const Services: React.FC = () => {
             title: <>Create Service</>,
             children: (
               <ObjectModal
+                button="Create"
                 value={{}}
                 onChange={async (value, actions) => {
                   if (!value.name || !value.type || !value.buildpack) {

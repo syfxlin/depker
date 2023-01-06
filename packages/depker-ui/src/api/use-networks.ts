@@ -10,7 +10,7 @@ import {
 } from "@syfxlin/depker-client";
 
 export const useNetworks = () => {
-  const page = usePageState({ page: 1, size: 15 });
+  const page = usePageState({ page: 1, size: 10 });
 
   const query = useSWR(["client.networks.list", page.request], (key, request) => client.networks.list(request));
 

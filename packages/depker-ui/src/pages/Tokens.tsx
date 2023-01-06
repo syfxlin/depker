@@ -113,6 +113,7 @@ export const Tokens: React.FC = () => {
                 title: <>Create Token</>,
                 children: (
                   <ObjectModal
+                    button="Create"
                     value={{}}
                     onChange={async (value, actions) => {
                       if (!value.name) {

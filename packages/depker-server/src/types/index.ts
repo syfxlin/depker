@@ -22,6 +22,7 @@ export * from "../views/deploy.view";
 export * from "../views/cron.view";
 export * from "../views/plugin.view";
 export * from "../views/network.view";
+export * from "../views/image.view";
 
 // events
 export * from "../events/cron.event";

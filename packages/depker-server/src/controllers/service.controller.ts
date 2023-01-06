@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -34,8 +33,8 @@ import {
   UpServiceResponse,
 } from "../views/service.view";
 import { DockerService } from "../services/docker.service";
-import { Service, ServiceStatus } from "../entities/service.entity";
-import { ILike, In } from "typeorm";
+import { Service } from "../entities/service.entity";
+import { ILike } from "typeorm";
 import { PluginService } from "../services/plugin.service";
 import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
@@ -79,14 +78,13 @@ export class ServiceController {
       take: limit,
     });
 
-    const plugins = await this.plugins.plugins();
     const names = services.map((i) => i.name);
-    const deploys = await Service.listDeploydAt(names);
-    const containers = await this.docker.containers.status(names);
-    const crons: Record<string, ServiceStatus> = (await Cron.findBy({ service: { name: In(names) } })).reduce(
-      (a, i) => ({ ...a, [i.serviceName]: "running" }),
-      {}
-    );
+    const [plugins, deploys, containers, crons] = await Promise.all([
+      this.plugins.plugins(),
+      Service.listDeploydAt(names),
+      this.docker.containers.status(names),
+      Cron.status(names),
+    ]);
 
     const total: ListServiceResponse["total"] = count;
     const items: ListServiceResponse["items"] = services.map((i) => {
@@ -137,10 +135,7 @@ export class ServiceController {
     if (!plugin || !plugin.buildpack?.handler) {
       throw new NotFoundException(`Not found buildpack of ${request.buildpack}`);
     }
-    const valid = await this.plugins.validate(plugin.buildpack?.options ?? [], request.extensions ?? {});
-    if (valid) {
-      throw new BadRequestException(valid);
-    }
+    await this.plugins.validate(plugin.buildpack?.options ?? [], request.extensions ?? {});
 
     const service = new Service();
     service.name = request.name;
@@ -232,8 +227,8 @@ export class ServiceController {
       const status = await this.docker.containers.status(request.name);
       return { status };
     } else {
-      const cron = await Cron.findOneBy({ service: { name: request.name } });
-      return { status: cron ? "running" : "stopped" };
+      const cron = await Cron.status(request.name);
+      return { status: cron };
     }
   }
 

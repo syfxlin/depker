@@ -32,6 +32,7 @@ export const ObjectArrayInput = forwardRef<HTMLDivElement, ObjectArrayInputProps
                   title: <>Edit {props.label} Item</>,
                   children: (
                     <ObjectModal
+                      button="Save"
                       value={item}
                       onChange={(item) => {
                         const values = [...value];

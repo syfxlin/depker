@@ -83,7 +83,6 @@ const Actions: React.FC<{ port: number; actions: ReturnType<typeof usePorts>["ac
 };
 
 export const Ports: React.FC = () => {
-  const t = useMantineTheme();
   const ports = usePorts();
   return (
     <Main
@@ -97,6 +96,7 @@ export const Ports: React.FC = () => {
                 title: <>Create Port</>,
                 children: (
                   <ObjectModal
+                    button="Create"
                     value={{}}
                     onChange={async (value, actions) => {
                       if (!value.port) {

@@ -524,7 +524,7 @@ export const Logs = forwardRef<HTMLDivElement, LogsProps>(({ title, empty, data,
               <Select
                 size="xs"
                 label="Follow Logs"
-                description="	Follow log output"
+                description="Follow log output"
                 placeholder="Follow Logs"
                 icon={<TbInfinity />}
                 value={follow ? "true" : "false"}

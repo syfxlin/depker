@@ -566,10 +566,10 @@ export class DeployService {
     // volumes
     for (const volume of options.volumes ?? []) {
       const binds = create.HostConfig?.Binds as string[];
-      const hpath = path.join(PATHS.VOLUMES, volume.hpath.replace(/^@\//, ""));
+      const hpath = path.isAbsolute(volume.hpath) ? volume.hpath : path.join(PATHS.VOLUMES, volume.hpath);
       const cpath = volume.cpath;
       const ro = volume.readonly ? "ro" : "rw";
-      binds.push(`${hpath}:${cpath}:${ro}`);
+      binds.push(`${PATHS.LINUX(hpath)}:${cpath}:${ro}`);
     }
 
     // envs & labels

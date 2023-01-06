@@ -5,7 +5,7 @@ import { usePageState } from "../hooks/use-page-state";
 import { InstallPluginRequest, UninstallPluginRequest } from "@syfxlin/depker-client";
 
 export const usePlugins = () => {
-  const page = usePageState({ page: 1, size: 15 });
+  const page = usePageState({ page: 1, size: 10 });
 
   const query = useSWR(["client.plugins.list", page.request], async (key, request) => client.plugins.list(request));
 

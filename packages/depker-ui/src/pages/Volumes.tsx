@@ -102,7 +102,6 @@ const Actions: React.FC<{ volume: string; actions: ReturnType<typeof useVolumes>
 };
 
 export const Volumes: React.FC = () => {
-  const t = useMantineTheme();
   const volumes = useVolumes();
   return (
     <Main
@@ -116,6 +115,7 @@ export const Volumes: React.FC = () => {
                 title: <>Create Volume</>,
                 children: (
                   <ObjectModal
+                    button="Create"
                     value={{}}
                     onChange={async (value, actions) => {
                       if (!value.volume) {

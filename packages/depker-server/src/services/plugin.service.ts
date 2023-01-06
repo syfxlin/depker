@@ -1,4 +1,12 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from "@nestjs/common";
 import { DepkerPluginOption, LoadedDepkerPlugin } from "../plugins/plugin.types";
 import fs from "fs-extra";
 import path from "path";
@@ -64,7 +72,7 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
     await this.load();
     const plugin = this._internal[name];
     if (plugin) {
-      return `This plugin is already defined internally and cannot be overridden.`;
+      throw new ConflictException(`This plugin is already defined internally and cannot be overridden.`);
     }
     await this.events.emitAsync(PluginEvent.PRE_INSTALL, name);
     const returns = spawnSync(IS_WIN ? "npm.cmd" : "npm", ["install", name], { cwd: PATHS.PLUGINS });
@@ -73,22 +81,21 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       `Install plugin ${name}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
     );
     if (returns.status !== 0) {
-      return `Exit code is ${returns.status}`;
+      throw new InternalServerErrorException(`Exit code is ${returns.status}`);
     }
     await this.load(true);
-    return null;
   }
 
   public async uninstall(name: string) {
     await this.load();
     const plugin = this._external[name];
     if (!plugin) {
-      return `This plugin is not installed or is an internal package.`;
+      throw new ConflictException(`This plugin is not installed or is an internal package.`);
     }
 
     const used = await Service.countBy({ buildpack: plugin.name });
     if (used) {
-      return `This plugin is currently in use and cannot be uninstalled.`;
+      throw new ConflictException(`This plugin is currently in use and cannot be uninstalled.`);
     }
 
     await this.events.emitAsync(PluginEvent.PRE_UNINSTALL, plugin.pkg);
@@ -98,38 +105,45 @@ export class PluginService implements OnModuleInit, OnModuleDestroy {
       `Uninstall plugin ${plugin.pkg}, status: ${returns.status}, stdout: ${returns.stdout}, stderr: ${returns.stderr}`
     );
     if (returns.status !== 0) {
-      return `Exit code is ${returns.status}`;
+      throw new InternalServerErrorException(`Exit code is ${returns.status}`);
     }
     await this.load(true);
-    return null;
   }
 
   public async validate(options: DepkerPluginOption[], values: Record<string, any>) {
     for (const option of options ?? []) {
       const value = values[option.name];
       if (option.required && (value === null || value === undefined)) {
-        return `Plugin option ${option.label ?? option.name} is required.`;
+        throw new BadRequestException(`Plugin option ${option.label ?? option.name} is required.`);
       }
       if (option.type === "number" && value !== null && value !== undefined) {
         if (option.min !== undefined && option.min !== null && option.min > value) {
-          return `Plugin option ${option.label ?? option.name} must be less than or equal to ${option.min}.`;
+          throw new BadRequestException(
+            `Plugin option ${option.label ?? option.name} must be less than or equal to ${option.min}.`
+          );
         }
         if (option.max !== undefined && option.max !== null && option.max < value) {
-          return `Plugin option ${option.label ?? option.name} must be more than or equal to ${option.max}.`;
+          throw new BadRequestException(
+            `Plugin option ${option.label ?? option.name} must be more than or equal to ${option.max}.`
+          );
         }
       }
       if (option.type === "select" && option.multiple && value !== null && value !== undefined) {
         if (option.min !== undefined && option.min !== null && option.min > value.length) {
-          return `Plugin option ${option.label ?? option.name} length must be less than or equal to ${option.min}.`;
+          throw new BadRequestException(
+            `Plugin option ${option.label ?? option.name} length must be less than or equal to ${option.min}.`
+          );
         }
         if (option.max !== undefined && option.max !== null && option.max < value.length) {
-          return `Plugin option ${option.label ?? option.name} length must be less than or equal to ${option.max}.`;
+          throw new BadRequestException(
+            `Plugin option ${option.label ?? option.name} length must be less than or equal to ${option.max}.`
+          );
         }
       }
       if (option.validate && value !== null && value !== undefined) {
         const valid = option.validate(value as never);
         if (valid) {
-          return `Plugin option ${option.label ?? option.name} is not validated. ${valid}`;
+          throw new BadRequestException(`Plugin option ${option.label ?? option.name} is not validated. ${valid}`);
         }
       }
     }
