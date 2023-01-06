@@ -14,11 +14,14 @@ import { DateTime } from "luxon";
 import { CronLog } from "./cron-log.entity";
 
 @Entity()
-export class CronHistory extends BaseEntity {
+export class Cron extends BaseEntity {
   private static readonly _logger = new Logger("CRON");
 
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ nullable: false })
+  serviceName: string;
 
   // service
   @ManyToOne(() => Service, {
@@ -34,9 +37,6 @@ export class CronHistory extends BaseEntity {
   @Column({ nullable: false, default: "queued" })
   status: DeployStatus;
 
-  @Column({ nullable: true, type: "simple-json" })
-  options: any;
-
   // date
   @CreateDateColumn({ nullable: false })
   createdAt: Date;
@@ -49,7 +49,7 @@ export class CronHistory extends BaseEntity {
     const upload = (level: LogLevel, message: string, error?: Error) => {
       const time = DateTime.utc().toJSDate();
       const line = message + (error ? `[ERROR] ${error.name}: ${error.message}, ${error.stack}` : ``);
-      CronHistory._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${this.service.name} : ${line}`);
+      Cron._logger.debug(`[${time.toISOString()}] ${level.toUpperCase()} ${this.service.name} : ${line}`);
       return CronLog.insert({ history: this, time, level, line });
     };
     return {

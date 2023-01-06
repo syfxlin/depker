@@ -22,9 +22,8 @@ import { PassThrough } from "stream";
 import { createInterface } from "readline";
 import { ModuleRef } from "@nestjs/core";
 import { LogFunc } from "../types";
-import { Cron } from "../entities/cron.entity";
 import { CronTime } from "cron";
-import { CronHistory } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron-history.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DeployEvent } from "../events/deploy.event";
 import { CronEvent } from "../events/cron.event";
@@ -74,6 +73,14 @@ export interface DeployBuildArgs {
   logger: LogFunc;
 }
 
+export interface DeployCreateArgs {
+  name: string;
+  image: string;
+  cron: string;
+  options: DeployStartOptions;
+  logger: LogFunc;
+}
+
 export interface DeployStartArgs {
   name: string;
   image: string;
@@ -86,6 +93,11 @@ export interface DeployCronArgs {
   image: string;
   cron: string;
   options: DeployStartOptions;
+  logger: LogFunc;
+}
+
+export interface DeployAttachArgs {
+  name: string;
   logger: LogFunc;
 }
 
@@ -241,38 +253,34 @@ export class DeployService {
 
   public async scheduleTask() {
     // query all cron task
-    const all = await Cron.find({
-      where: {},
-      order: {
-        createdAt: "asc",
-      },
-      relations: {
-        service: true,
-      },
-    });
+    const infos = await this.docker.containers.list();
 
     // filter active cron task
-    const histories = all
-      .filter((cron) => Math.abs(new CronTime(cron.time).getTimeout()) < 60000)
-      .map((cron) => {
-        const history = new CronHistory();
-        history.service = cron.service;
-        history.options = cron.options;
+    const crons = infos
+      .filter(
+        (i) =>
+          i.Labels["depker.name"] &&
+          i.Labels["depker.cron"] &&
+          Math.abs(new CronTime(i.Labels["depker.cron"]).getTimeout()) < 60000
+      )
+      .map((i) => {
+        const history = new Cron();
+        history.serviceName = i.Labels["depker.name"];
         history.status = "queued";
         return history;
       });
 
     // skip on empty cron task
-    if (!histories.length) {
+    if (!crons.length) {
       return;
     }
 
     // schedule history
-    await CronHistory.save(histories);
+    await Cron.save(crons);
   }
 
   public async jobTask() {
-    const histories = await CronHistory.find({
+    const crons = await Cron.find({
       where: {
         status: In(["queued", "running"]),
       },
@@ -284,21 +292,19 @@ export class DeployService {
       },
     });
 
-    // skip on empty histories
-    if (!histories.length) {
+    // skip on empty crons
+    if (!crons.length) {
       return;
     }
 
     // get settings
     const setting = await Setting.read();
 
-    const actions = histories.map((history) => async () => {
+    const actions = crons.map((history) => async () => {
       // values
       const service = history.service;
       const logger = history.logger;
       const name = service.name;
-      const image = history.options.image;
-      const options = history.options.options;
 
       try {
         // if status equal running, explain that deploy is interrupted during execution, restart
@@ -308,7 +314,7 @@ export class DeployService {
 
         // stop old job
         if (setting.concurrency === 1) {
-          await CronHistory.update(
+          await Cron.update(
             {
               service: {
                 name: Not(service.name),
@@ -330,7 +336,7 @@ export class DeployService {
         await this.events.emitAsync(CronEvent.PRE_START, history);
 
         // update status to running
-        await CronHistory.update(history.id, { status: "running" });
+        await Cron.update(history.id, { status: "running" });
 
         // emit post_start
         await this.events.emitAsync(CronEvent.POST_START, history);
@@ -339,13 +345,13 @@ export class DeployService {
         await this.events.emitAsync(CronEvent.PRE_RUN, history);
 
         // running service
-        await this._run({ name, image, options, logger });
+        await this._attach({ name, logger });
 
         // emit post_run
         await this.events.emitAsync(CronEvent.POST_RUN, history);
 
         // update status to success
-        await CronHistory.update(history.id, { status: "success" });
+        await Cron.update(history.id, { status: "success" });
 
         // emit success
         await this.events.emitAsync(CronEvent.SUCCESS, history);
@@ -354,7 +360,7 @@ export class DeployService {
         await logger.success(`Trigger service ${service.name} successful.`);
       } catch (e: any) {
         // update status to failed
-        await CronHistory.update(history.id, { status: "failed" });
+        await Cron.update(history.id, { status: "failed" });
 
         // emit failed
         await this.events.emitAsync(CronEvent.FAILED, history);
@@ -442,8 +448,8 @@ export class DeployService {
     }
   }
 
-  public async _create(args: DeployStartArgs) {
-    const { name, image, options } = args;
+  public async _create(args: DeployCreateArgs) {
+    const { name, image, cron, options } = args;
     const time = String(Date.now());
 
     // args
@@ -458,6 +464,7 @@ export class DeployService {
       "depker.name": name,
       "depker.time": time,
       "depker.image": image,
+      "depker.cron": cron,
       "traefik.enable": "true",
       "traefik.docker.network": NAMES.NETWORK,
     };
@@ -605,7 +612,7 @@ export class DeployService {
     const running = this.docker.containers.get(name);
 
     // create
-    const container = await this._create(args);
+    const container = await this._create({ ...args, cron: "" });
     const id = container.id.substring(0, 7);
 
     try {
@@ -634,6 +641,10 @@ export class DeployService {
       // rename
       try {
         await running.stop();
+      } catch (e) {
+        // ignore
+      }
+      try {
         await running.rename({ name: `${name}-${Date.now()}` });
       } catch (e) {
         // ignore
@@ -641,10 +652,14 @@ export class DeployService {
 
       await container.rename({ name });
       await logger.success(`Start container ${name} successful.`);
-      return `container:${container.id}`;
+      return container.id;
     } catch (e: any) {
       try {
         await running.start();
+      } catch (e) {
+        // ignore
+      }
+      try {
         await running.rename({ name });
       } catch (e) {
         // ignore
@@ -669,15 +684,59 @@ export class DeployService {
     }
   }
 
-  public async _run(args: DeployStartArgs) {
+  public async _cron(args: DeployCronArgs) {
+    const { name, options, logger } = args;
+
+    // logger
+    await logger.step(`Enqueue schedule task ${name} started.`);
+
+    // update values
+    options.rm = false;
+    options.restart = "no";
+
+    // running
+    const running = this.docker.containers.get(name);
+
+    // create
+    const container = await this._create({ ...args, cron: args.cron });
+    const id = container.id.substring(0, 7);
+
+    try {
+      // enqueue
+      try {
+        await running.stop();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        await running.rename({ name: `${name}-${Date.now()}` });
+      } catch (e) {
+        // ignore
+      }
+      await container.rename({ name });
+      await logger.success(`Enqueue schedule task ${name} (${id}) successful.`);
+      return container.id;
+    } catch (e: any) {
+      try {
+        await running.rename({ name });
+      } catch (e) {
+        // ignore
+      }
+      await logger.error(`Enqueue schedule task ${name} (${id}) failure.`, e);
+      throw new Error(`Enqueue schedule task ${name} (${id}) failure. Caused by ${e.message}`);
+    }
+  }
+
+  public async _attach(args: DeployAttachArgs) {
     const { name, logger } = args;
 
     // logger
-    await logger.step(`Run container ${name} started.`);
+    await logger.step(`Attach container ${name} started.`);
 
     // create
-    const container = await this._create(args);
-    const id = container.id.substring(0, 7);
+    const container = await this.docker.containers.get(name);
+    const inspect = await container.inspect(name);
+    const id = inspect.Id.substring(0, 7);
 
     try {
       // attach
@@ -690,39 +749,14 @@ export class DeployService {
 
       // start
       await container.start();
-      await logger.success(`Run container ${name} (${id}) successful.`);
+      await logger.success(`Attach container ${name} (${id}) successful.`);
 
       // wait
       await container.wait();
-      await logger.success(`Run container ${name} (${id}) stopped.`);
+      await logger.success(`Attach container ${name} (${id}) stopped.`);
     } catch (e: any) {
-      await logger.error(`Run container ${name} (${id}) failure.`, e);
-      throw new Error(`Run container ${name} (${id}) failure. Caused by ${e.message}`);
-    }
-  }
-
-  public async _cron(args: DeployCronArgs) {
-    const { name, image, cron, options, logger } = args;
-
-    // logger
-    await logger.step(`Enqueue schedule task ${name} started.`);
-
-    // update values
-    options.rm = true;
-    options.restart = "no";
-
-    try {
-      // enqueue
-      await Cron.save({
-        service: { name },
-        time: cron,
-        options: { image, options } as any,
-      });
-      await logger.success(`Enqueue schedule task ${name} successful.`);
-      return `cron:${name}`;
-    } catch (e: any) {
-      await logger.error(`Enqueue schedule task ${name} failure.`, e);
-      throw new Error(`Enqueue schedule task ${name} failure. Caused by ${e.message}`);
+      await logger.error(`Attach container ${name} (${id}) failure.`, e);
+      throw new Error(`Attach container ${name} (${id}) failure. Caused by ${e.message}`);
     }
   }
 }

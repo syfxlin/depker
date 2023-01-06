@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import Docker, { ContainerCreateOptions } from "dockerode";
 import { IS_DOCKER, NAMES } from "../constants/depker.constant";
-import { ServiceStatus } from "../entities/service.entity";
+import { ServiceStatus, ServiceType } from "../entities/service.entity";
 import { PassThrough, Transform, TransformCallback } from "stream";
 import { createInterface } from "readline";
 import { stdcopy } from "../utils/docker.util";
@@ -61,22 +61,33 @@ export class DockerContainer {
     return await this.docker.getContainer(name).inspect();
   }
 
-  public async status(name: string): Promise<ServiceStatus>;
-  public async status(name: string[]): Promise<Record<string, ServiceStatus>>;
-  public async status(name: string | string[]): Promise<ServiceStatus | Record<string, ServiceStatus>> {
+  public async status(name: string, type?: ServiceType): Promise<ServiceStatus>;
+  public async status(name: string[], type?: ServiceType): Promise<Record<string, ServiceStatus>>;
+  public async status(
+    name: string | string[],
+    type?: ServiceType
+  ): Promise<ServiceStatus | Record<string, ServiceStatus>> {
     const names = typeof name === "string" ? [name] : name;
     const results: Record<string, ServiceStatus> = {};
     const infos = await this.docker.listContainers({ all: true });
     for (const n of names) {
       const info = infos.find((i) => i.Names.includes(`/${n}`));
-      if (info?.State === "running") {
-        results[n] = "running";
-      } else if (info?.State === "restarting") {
-        results[n] = "restarting";
-      } else if (info?.State === "exited") {
-        results[n] = "exited";
+      if (type === "app") {
+        if (info?.State === "running") {
+          results[n] = "running";
+        } else if (info?.State === "restarting") {
+          results[n] = "restarting";
+        } else if (info?.State === "exited") {
+          results[n] = "exited";
+        } else {
+          results[n] = "stopped";
+        }
       } else {
-        results[n] = "stopped";
+        if (info) {
+          results[n] = "running";
+        } else {
+          results[n] = "exited";
+        }
       }
     }
     return typeof name === "string" ? results[name] : results;

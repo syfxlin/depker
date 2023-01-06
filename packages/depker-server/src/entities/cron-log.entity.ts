@@ -1,6 +1,6 @@
 import { BaseEntity, Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Relation } from "typeorm";
 import { LogLevel } from "../types";
-import { CronHistory } from "./cron-history.entity";
+import { Cron } from "./cron-history.entity";
 
 @Entity()
 @Index(["time"])
@@ -10,14 +10,14 @@ export class CronLog extends BaseEntity {
   id: number;
 
   // history
-  @ManyToOne(() => CronHistory, {
+  @ManyToOne(() => Cron, {
     nullable: false,
     onDelete: "CASCADE",
     orphanedRowAction: "delete",
     cascade: false,
     persistence: false,
   })
-  history: Relation<CronHistory>;
+  history: Relation<Cron>;
 
   @Column({ nullable: false })
   time: Date;

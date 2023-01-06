@@ -21,9 +21,8 @@ import { TokenController } from "./controllers/token.controller";
 import { LogsGateway } from "./ws/logs.gateway";
 import { AccessLogsGateway } from "./ws/access-logs.gateway";
 import { SettingController } from "./controllers/setting.controller";
-import { Cron } from "./entities/cron.entity";
 import { CronLog } from "./entities/cron-log.entity";
-import { CronHistory } from "./entities/cron-history.entity";
+import { Cron } from "./entities/cron-history.entity";
 import { DeployController } from "./controllers/deploy.controller";
 import { CronController } from "./controllers/cron.controller";
 import { PluginController } from "./controllers/plugin.controller";
@@ -33,7 +32,7 @@ import { ImageController } from "./controllers/image.controller";
 import { NetworkController } from "./controllers/network.controller";
 
 // entity
-export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronHistory, CronLog];
+export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronLog];
 
 // controller & service & task
 export const controllers = [

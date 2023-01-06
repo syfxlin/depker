@@ -1,4 +1,4 @@
-import { CronHistory } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron-history.entity";
 
 export enum CronEvent {
   CANCEL = "cron.cancel",
@@ -12,10 +12,10 @@ export enum CronEvent {
 
 export type CronEventHandler = {
   [CronEvent.CANCEL]: (name: string, id: number) => any;
-  [CronEvent.PRE_START]: (history: CronHistory) => any;
-  [CronEvent.POST_START]: (history: CronHistory) => any;
-  [CronEvent.PRE_RUN]: (history: CronHistory) => any;
-  [CronEvent.POST_RUN]: (history: CronHistory) => any;
-  [CronEvent.SUCCESS]: (history: CronHistory) => any;
-  [CronEvent.FAILED]: (history: CronHistory) => any;
+  [CronEvent.PRE_START]: (history: Cron) => any;
+  [CronEvent.POST_START]: (history: Cron) => any;
+  [CronEvent.PRE_RUN]: (history: Cron) => any;
+  [CronEvent.POST_RUN]: (history: Cron) => any;
+  [CronEvent.SUCCESS]: (history: Cron) => any;
+  [CronEvent.FAILED]: (history: Cron) => any;
 };

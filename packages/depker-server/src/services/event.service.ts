@@ -5,7 +5,6 @@ import { PATHS } from "../constants/depker.constant";
 import { DockerService } from "./docker.service";
 import { OnEvent } from "@nestjs/event-emitter";
 import fs from "fs-extra";
-import { Cron } from "../entities/cron.entity";
 import { PortEvent } from "../events/port.event";
 import { TraefikTask } from "../tasks/traefik.task";
 import { SettingEvent } from "../events/setting.event";
@@ -18,13 +17,6 @@ export class EventService {
 
   @OnEvent(ServiceEvent.DOWN)
   public async onServiceDown(name: string) {
-    // delete cron
-    try {
-      await Cron.delete(name);
-      this.logger.log(`Purge service ${name} schedule successful.`);
-    } catch (e) {
-      this.logger.error(`Purge service ${name} schedule failed.`, e);
-    }
     // delete container
     try {
       await this.docker.containers.clean(name);

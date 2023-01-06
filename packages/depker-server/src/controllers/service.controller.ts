@@ -40,10 +40,9 @@ import { StorageService } from "../services/storage.service";
 import { Deploy } from "../entities/deploy.entity";
 import { Data } from "../decorators/data.decorator";
 import { Revwalk } from "nodegit";
-import { Cron } from "../entities/cron.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ServiceEvent } from "../events/service.event";
-import { CronHistory } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron-history.entity";
 
 @Controller("/api/services")
 export class ServiceController {
@@ -79,18 +78,17 @@ export class ServiceController {
     });
 
     const names = services.map((i) => i.name);
-    const [plugins, deploys, containers, crons] = await Promise.all([
+    const [plugins, deploys, containers] = await Promise.all([
       this.plugins.plugins(),
       Service.listDeploydAt(names),
       this.docker.containers.status(names),
-      Cron.status(names),
     ]);
 
     const total: ListServiceResponse["total"] = count;
     const items: ListServiceResponse["items"] = services.map((i) => {
       const plugin = plugins[i.buildpack];
       const deploy = deploys[i.name];
-      const status = i.type === "app" ? containers[i.name] : crons[i.name];
+      const status = containers[i.name];
       return {
         name: i.name,
         type: i.type,
@@ -223,13 +221,8 @@ export class ServiceController {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    if (one.type === "app") {
-      const status = await this.docker.containers.status(request.name);
-      return { status };
-    } else {
-      const cron = await Cron.status(request.name);
-      return { status: cron };
-    }
+    const status = await this.docker.containers.status(one.name, one.type);
+    return { status };
   }
 
   @Get("/:name/history")
@@ -387,17 +380,16 @@ export class ServiceController {
       throw new ConflictException(`${request.name} service type is job, which does not support the trigger operation.`);
     }
 
-    const cron = await Cron.findOneBy({ serviceName: request.name });
-    if (!cron) {
+    const info = await this.docker.containers.find(request.name);
+    if (!info || !info.Labels["depker.cron"]) {
       throw new NotFoundException(`Not found cron job of ${request.name}.`);
     }
 
     // trigger
-    const history = new CronHistory();
+    const history = new Cron();
     history.service = one;
-    history.options = cron.options;
     history.status = "queued";
-    await CronHistory.save(history);
+    await Cron.save(history);
 
     // emit event
     await this.events.emitAsync(ServiceEvent.TRIGGER, request.name);

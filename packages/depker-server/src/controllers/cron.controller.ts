@@ -10,7 +10,7 @@ import {
 } from "../views/cron.view";
 import { Service } from "../entities/service.entity";
 import { ILike, MoreThanOrEqual } from "typeorm";
-import { CronHistory } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron-history.entity";
 import { DateTime } from "luxon";
 import { CronLog } from "../entities/cron-log.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
@@ -29,7 +29,7 @@ export class CronController {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    const [histories, count] = await CronHistory.findAndCount({
+    const [crons, count] = await Cron.findAndCount({
       where: {
         service: { name },
         status: search ? (ILike(`%${search}%`) as any) : undefined,
@@ -41,7 +41,7 @@ export class CronController {
     });
 
     const total: ListServiceCronResponse["total"] = count;
-    const items: ListServiceCronResponse["items"] = histories.map((d) => d.view);
+    const items: ListServiceCronResponse["items"] = crons.map((d) => d.view);
 
     return { total, items };
   }
@@ -49,7 +49,7 @@ export class CronController {
   @Get("/:id/logs")
   public async logs(@Data() request: LogsServiceCronRequest): Promise<LogsServiceCronResponse> {
     const { id, name, since, tail } = request;
-    const count = await CronHistory.countBy({ id, service: { name } });
+    const count = await Cron.countBy({ id, service: { name } });
     if (!count) {
       throw new NotFoundException(`Not found cron of ${name}.`);
     }
@@ -62,7 +62,7 @@ export class CronController {
       take: typeof tail === "number" ? tail : undefined,
       order: { id: "desc" },
     });
-    const history = await CronHistory.findOne({ where: { id, service: { name } } });
+    const history = await Cron.findOne({ where: { id, service: { name } } });
 
     lines.reverse();
 
@@ -82,13 +82,13 @@ export class CronController {
   @Delete("/:id/cancel")
   public async cancel(@Data() request: CancelServiceCronRequest): Promise<CancelServiceCronResponse> {
     const { id, name } = request;
-    const count = await CronHistory.countBy({ id, service: { name } });
+    const count = await Cron.countBy({ id, service: { name } });
     if (!count) {
       throw new NotFoundException(`Not found cron of ${name}.`);
     }
 
     // update status
-    await CronHistory.update(id, { status: "failed" });
+    await Cron.update(id, { status: "failed" });
 
     // emit event
     await this.events.emitAsync(CronEvent.CANCEL, name, id);
