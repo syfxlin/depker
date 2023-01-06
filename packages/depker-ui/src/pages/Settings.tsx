@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Main } from "../components/layout/Main";
 import { Grid, Stack } from "@mantine/core";
 import { NavLink } from "../components/core/NavLink";
-import { TbNetwork, TbOutlet, TbPackgeImport, TbSettings } from "react-icons/all";
+import { TbNetwork, TbOutlet, TbPackgeImport, TbSettings, TbTerminal2 } from "react-icons/all";
 import { css } from "@emotion/react";
 import { Outlet } from "react-router-dom";
 
@@ -15,6 +15,7 @@ export const Settings: React.FC = () => {
           <NavLink label="Images" icon={<TbPackgeImport />} action={`/settings/images`} />
           <NavLink label="Networks" icon={<TbNetwork />} action={`/settings/networks`} />
           <NavLink label="Plugins" icon={<TbOutlet />} action={`/settings/plugins`} />
+          <NavLink label="Node Shell" icon={<TbTerminal2 />} action={`/settings/shell`} />
         </Stack>
       </Grid.Col>
     ),

@@ -14,6 +14,10 @@ export class SystemApi extends Api {
   }
 
   public logs(tail: number): Socket {
-    return this.client.socket("/logs", { tail });
+    return this.client.socket("/nodes/logs", { tail });
+  }
+
+  public shell(): Socket {
+    return this.client.socket("/nodes/shell");
   }
 }

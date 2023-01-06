@@ -5,7 +5,7 @@ import path from "path";
 import { PATHS } from "../constants/depker.constant";
 import fs from "fs-extra";
 
-@WebSocketGateway({ namespace: "/logs" })
+@WebSocketGateway({ namespace: "/nodes/logs" })
 export class AccessLogsGateway implements OnGatewayConnection {
   public async handleConnection(socket: Socket) {
     const { tail = 1000 } = socket.handshake.auth;

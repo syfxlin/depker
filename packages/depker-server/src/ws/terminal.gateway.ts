@@ -14,7 +14,7 @@ export class TerminalGateway implements OnGatewayConnection {
       return;
     }
     try {
-      const [exec, duplex] = await this.docker.containers.exec(name, ["sh"]);
+      const [exec, duplex] = await this.docker.containers.exec(name, ["sh", "-c", "(zsh || bash || ash || sh)"]);
 
       // input
       socket.on("data", (data: string) => {
