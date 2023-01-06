@@ -42,7 +42,7 @@ import { Data } from "../decorators/data.decorator";
 import { Revwalk } from "nodegit";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ServiceEvent } from "../events/service.event";
-import { Cron } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron.entity";
 
 @Controller("/api/services")
 export class ServiceController {
@@ -77,11 +77,10 @@ export class ServiceController {
       take: limit,
     });
 
-    const names = services.map((i) => i.name);
     const [plugins, deploys, containers] = await Promise.all([
       this.plugins.plugins(),
-      Service.listDeploydAt(names),
-      this.docker.containers.status(names),
+      Service.listDeploydAt(services.map((i) => i.name)),
+      this.docker.containers.status(services.map((i) => ({ name: i.name, type: i.type }))),
     ]);
 
     const total: ListServiceResponse["total"] = count;
@@ -221,7 +220,7 @@ export class ServiceController {
       throw new NotFoundException(`Not found service of ${request.name}.`);
     }
 
-    const status = await this.docker.containers.status(one.name, one.type);
+    const status = await this.docker.containers.status({ name: one.name, type: one.type });
     return { status };
   }
 

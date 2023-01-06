@@ -1,4 +1,4 @@
-import { Cron } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron.entity";
 
 export enum CronEvent {
   CANCEL = "cron.cancel",

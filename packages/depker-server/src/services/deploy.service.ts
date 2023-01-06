@@ -23,7 +23,7 @@ import { createInterface } from "readline";
 import { ModuleRef } from "@nestjs/core";
 import { LogFunc } from "../types";
 import { CronTime } from "cron";
-import { Cron } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DeployEvent } from "../events/deploy.event";
 import { CronEvent } from "../events/cron.event";

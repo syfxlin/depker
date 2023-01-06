@@ -22,7 +22,7 @@ import { LogsGateway } from "./ws/logs.gateway";
 import { AccessLogsGateway } from "./ws/access-logs.gateway";
 import { SettingController } from "./controllers/setting.controller";
 import { CronLog } from "./entities/cron-log.entity";
-import { Cron } from "./entities/cron-history.entity";
+import { Cron } from "./entities/cron.entity";
 import { DeployController } from "./controllers/deploy.controller";
 import { CronController } from "./controllers/cron.controller";
 import { PluginController } from "./controllers/plugin.controller";

@@ -10,7 +10,7 @@ import {
 } from "../views/cron.view";
 import { Service } from "../entities/service.entity";
 import { ILike, MoreThanOrEqual } from "typeorm";
-import { Cron } from "../entities/cron-history.entity";
+import { Cron } from "../entities/cron.entity";
 import { DateTime } from "luxon";
 import { CronLog } from "../entities/cron-log.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";

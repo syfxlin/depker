@@ -1,6 +1,6 @@
 import { BaseEntity, Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Relation } from "typeorm";
 import { LogLevel } from "../types";
-import { Cron } from "./cron-history.entity";
+import { Cron } from "./cron.entity";
 
 @Entity()
 @Index(["time"])

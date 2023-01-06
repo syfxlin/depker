@@ -61,36 +61,35 @@ export class DockerContainer {
     return await this.docker.getContainer(name).inspect();
   }
 
-  public async status(name: string, type?: ServiceType): Promise<ServiceStatus>;
-  public async status(name: string[], type?: ServiceType): Promise<Record<string, ServiceStatus>>;
+  public async status(data: { name: string; type: ServiceType }): Promise<ServiceStatus>;
+  public async status(data: { name: string; type: ServiceType }[]): Promise<Record<string, ServiceStatus>>;
   public async status(
-    name: string | string[],
-    type?: ServiceType
+    data: { name: string; type: ServiceType } | { name: string; type: ServiceType }[]
   ): Promise<ServiceStatus | Record<string, ServiceStatus>> {
-    const names = typeof name === "string" ? [name] : name;
+    const items = data instanceof Array ? data : [data];
     const results: Record<string, ServiceStatus> = {};
     const infos = await this.docker.listContainers({ all: true });
-    for (const n of names) {
-      const info = infos.find((i) => i.Names.includes(`/${n}`));
+    for (const { name, type } of items) {
+      const info = infos.find((i) => i.Names.includes(`/${name}`));
       if (type === "app") {
         if (info?.State === "running") {
-          results[n] = "running";
+          results[name] = "running";
         } else if (info?.State === "restarting") {
-          results[n] = "restarting";
+          results[name] = "restarting";
         } else if (info?.State === "exited") {
-          results[n] = "exited";
+          results[name] = "exited";
         } else {
-          results[n] = "stopped";
+          results[name] = "stopped";
         }
       } else {
         if (info) {
-          results[n] = "running";
+          results[name] = "running";
         } else {
-          results[n] = "exited";
+          results[name] = "stopped";
         }
       }
     }
-    return typeof name === "string" ? results[name] : results;
+    return data instanceof Array ? results : results[data.name];
   }
 
   public async stats(name: string) {
