@@ -15,11 +15,11 @@ import { AssetController } from "./controllers/asset.controller";
 import { PortController } from "./controllers/port.controller";
 import { VolumeController } from "./controllers/volume.controller";
 import { BuildpackController } from "./controllers/buildpack.controller";
-import { TerminalGateway } from "./ws/terminal.gateway";
+import { ContainerTerminalGateway } from "./ws/container-terminal.gateway";
 import { FileController } from "./controllers/file.controller";
 import { TokenController } from "./controllers/token.controller";
-import { LogsGateway } from "./ws/logs.gateway";
-import { AccessLogsGateway } from "./ws/access-logs.gateway";
+import { ContainerLogsGateway } from "./ws/container-logs.gateway";
+import { NodeLogsGateway } from "./ws/node-logs.gateway";
 import { SettingController } from "./controllers/setting.controller";
 import { CronLog } from "./entities/cron-log.entity";
 import { Cron } from "./entities/cron.entity";
@@ -54,6 +54,6 @@ export const controllers = [
   ImageController,
   NetworkController,
 ];
-export const gateways = [TerminalGateway, LogsGateway, AccessLogsGateway, NodeShellGateway];
+export const gateways = [ContainerTerminalGateway, ContainerLogsGateway, NodeLogsGateway, NodeShellGateway];
 export const services = [DeployService, DockerService, StorageService, EventService];
 export const tasks = [TraefikTask, DeployTask];

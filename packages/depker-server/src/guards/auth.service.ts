@@ -48,7 +48,7 @@ export class AuthService {
   }
 
   public async request(request: Request) {
-    const authorization: string = request.headers["authorization"] ?? request.cookies["depker-token"];
+    const authorization: string = request.headers?.["authorization"] ?? request.cookies?.["depker-token"];
     try {
       if (authorization) {
         if (authorization.startsWith("Basic ")) {

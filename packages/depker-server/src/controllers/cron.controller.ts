@@ -15,12 +15,14 @@ import { DateTime } from "luxon";
 import { CronLog } from "../entities/cron-log.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { CronEvent } from "../events/cron.event";
+import { AuthGuard } from "../guards/auth.guard";
 
 @Controller("/api/services/:name/crons")
 export class CronController {
   constructor(private readonly events: EventEmitter2) {}
 
   @Get("/")
+  @AuthGuard()
   public async list(@Data() request: ListServiceCronRequest): Promise<ListServiceCronResponse> {
     const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
     const [by, axis] = sort.split(":");
@@ -47,6 +49,7 @@ export class CronController {
   }
 
   @Get("/:id/logs")
+  @AuthGuard()
   public async logs(@Data() request: LogsServiceCronRequest): Promise<LogsServiceCronResponse> {
     const { id, name, since, tail } = request;
     const cron = await Cron.findOneBy({ id, service: { name } });
@@ -79,6 +82,7 @@ export class CronController {
   }
 
   @Delete("/:id/cancel")
+  @AuthGuard()
   public async cancel(@Data() request: CancelServiceCronRequest): Promise<CancelServiceCronResponse> {
     const { id, name } = request;
     const count = await Cron.countBy({ id, service: { name } });

@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import { LogLevel } from "../types";
 
 @WebSocketGateway({ namespace: "/containers/logs" })
-export class LogsGateway implements OnGatewayConnection {
+export class ContainerLogsGateway implements OnGatewayConnection {
   constructor(private readonly docker: DockerService) {}
 
   public async handleConnection(socket: Socket) {

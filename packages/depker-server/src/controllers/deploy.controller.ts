@@ -15,12 +15,14 @@ import {
 } from "../views/deploy.view";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DeployEvent } from "../events/deploy.event";
+import { AuthGuard } from "../guards/auth.guard";
 
 @Controller("/api/services/:name/deploys")
 export class DeployController {
   constructor(private readonly events: EventEmitter2) {}
 
   @Get("/")
+  @AuthGuard()
   public async list(@Data() request: ListServiceDeployRequest): Promise<ListServiceDeployResponse> {
     const { name, search = "", offset = 0, limit = 10, sort = "id:desc" } = request;
     const [by, axis] = sort.split(":");
@@ -48,6 +50,7 @@ export class DeployController {
   }
 
   @Get("/:id/logs")
+  @AuthGuard()
   public async logs(@Data() request: LogsServiceDeployRequest): Promise<LogsServiceDeployResponse> {
     const { id, name, since, tail } = request;
     const count = await Deploy.countBy({ id, service: { name } });
@@ -81,6 +84,7 @@ export class DeployController {
   }
 
   @Delete("/:id/cancel")
+  @AuthGuard()
   public async cancel(@Data() request: CancelServiceDeployRequest): Promise<CancelServiceDeployResponse> {
     const { id, name } = request;
     const count = await Deploy.countBy({ id, service: { name } });

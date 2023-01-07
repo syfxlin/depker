@@ -43,6 +43,7 @@ import { Revwalk } from "nodegit";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ServiceEvent } from "../events/service.event";
 import { Cron } from "../entities/cron.entity";
+import { AuthGuard } from "../guards/auth.guard";
 
 @Controller("/api/services")
 export class ServiceController {
@@ -54,6 +55,7 @@ export class ServiceController {
   ) {}
 
   @Get("/")
+  @AuthGuard()
   public async list(@Query() request: ListServiceRequest): Promise<ListServiceResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc" } = request;
     const [by, axis] = sort.split(":");
@@ -105,6 +107,7 @@ export class ServiceController {
   }
 
   @Post("/")
+  @AuthGuard()
   public async create(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
     const count = await Service.countBy({ name: request.name });
     if (count) {
@@ -121,6 +124,7 @@ export class ServiceController {
   }
 
   @Put("/:name")
+  @AuthGuard()
   public async update(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
     const count = await Service.countBy({ name: request.name });
     if (!count) {
@@ -184,6 +188,7 @@ export class ServiceController {
   }
 
   @Get("/:name")
+  @AuthGuard()
   public async get(@Param() request: GetServiceRequest): Promise<GetServiceResponse> {
     const service = await Service.findOne({
       where: {
@@ -197,6 +202,7 @@ export class ServiceController {
   }
 
   @Delete("/:name")
+  @AuthGuard()
   public async delete(@Param() request: DeleteServiceRequest): Promise<DeleteServiceResponse> {
     const one = await Service.findOneBy({ name: request.name });
     if (!one) {
@@ -214,6 +220,7 @@ export class ServiceController {
   }
 
   @Get("/:name/status")
+  @AuthGuard()
   public async status(@Param() request: StatusServiceRequest): Promise<StatusServiceResponse> {
     const one = await Service.findOneBy({ name: request.name });
     if (!one) {
@@ -225,6 +232,7 @@ export class ServiceController {
   }
 
   @Get("/:name/history")
+  @AuthGuard()
   public async history(@Data() request: HistoryServiceRequest): Promise<HistoryServiceResponse> {
     const count = await Service.countBy({ name: request.name });
     if (!count) {
@@ -276,6 +284,7 @@ export class ServiceController {
   }
 
   @Post("/:name/up")
+  @AuthGuard()
   public async up(@Data() request: UpServiceRequest): Promise<UpServiceResponse> {
     const service = await Service.findOne({ where: { name: request.name } });
     if (!service) {
@@ -311,6 +320,7 @@ export class ServiceController {
   }
 
   @Post("/:name/down")
+  @AuthGuard()
   public async down(@Data() request: DownServiceRequest): Promise<DownServiceResponse> {
     const one = await Service.findOneBy({ name: request.name });
     if (!one) {
@@ -326,6 +336,7 @@ export class ServiceController {
   // region type=app
 
   @Post("/:name/restart")
+  @AuthGuard()
   public async restart(@Data() request: RestartServiceRequest): Promise<RestartServiceResponse> {
     const one = await Service.findOneBy({ name: request.name });
     if (!one) {
@@ -353,6 +364,7 @@ export class ServiceController {
   }
 
   @Get("/:name/metrics")
+  @AuthGuard()
   public async metrics(@Param() request: MetricsServiceRequest): Promise<MetricsServiceResponse> {
     const one = await Service.findOneBy({ name: request.name });
     if (!one) {
@@ -370,6 +382,7 @@ export class ServiceController {
   // region type=job
 
   @Post("/:name/trigger")
+  @AuthGuard()
   public async trigger(@Data() request: RestartServiceRequest): Promise<RestartServiceResponse> {
     const one = await Service.findOneBy({ name: request.name });
     if (!one) {

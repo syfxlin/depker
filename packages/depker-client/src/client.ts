@@ -72,14 +72,14 @@ export class DepkerClient {
     // socket.io client
     this.socket = (nsp, params) => {
       const url = new URL(nsp, options.endpoint).toString();
-      const opts = {
-        ...options.socket?.(),
-        auth: {
-          _token: options.token?.(),
-          ...params,
-        },
-      };
-      return io(url, opts);
+      const opts = options.socket?.() ?? {};
+      const token = options.token?.();
+      if (token) {
+        const headers = opts.extraHeaders ?? {};
+        headers["Authorization"] = `Bearer ${token}`;
+        opts.extraHeaders = headers;
+      }
+      return io(url, { ...opts, auth: params });
     };
 
     // apis

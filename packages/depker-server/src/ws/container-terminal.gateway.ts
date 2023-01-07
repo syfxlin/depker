@@ -3,7 +3,7 @@ import { DockerService } from "../services/docker.service";
 import { Socket } from "socket.io";
 
 @WebSocketGateway({ namespace: "/containers/terminal" })
-export class TerminalGateway implements OnGatewayConnection {
+export class ContainerTerminalGateway implements OnGatewayConnection {
   constructor(private readonly docker: DockerService) {}
 
   public async handleConnection(socket: Socket) {

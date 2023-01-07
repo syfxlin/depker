@@ -12,12 +12,14 @@ import { ILike } from "typeorm";
 import { Data } from "../decorators/data.decorator";
 import { randomUUID } from "crypto";
 import { AuthService } from "../guards/auth.service";
+import { AuthGuard } from "../guards/auth.guard";
 
 @Controller("/api/tokens")
 export class TokenController {
   constructor(private readonly auths: AuthService) {}
 
   @Get("/")
+  @AuthGuard()
   public async list(@Query() request: ListTokenRequest): Promise<ListTokenResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:asc" } = request;
     const [by, axis] = sort.split(":");
@@ -45,6 +47,7 @@ export class TokenController {
   }
 
   @Post("/:name")
+  @AuthGuard()
   public async create(@Data() request: UpsertTokenRequest): Promise<UpsertTokenResponse> {
     const count = await Token.countBy({ name: request.name });
     if (count) {
@@ -68,6 +71,7 @@ export class TokenController {
   }
 
   @Put("/:name")
+  @AuthGuard()
   public async update(@Data() request: UpsertTokenRequest): Promise<UpsertTokenResponse> {
     const count = await Token.countBy({ name: request.name });
     if (!count) {
@@ -89,6 +93,7 @@ export class TokenController {
   }
 
   @Delete("/:name")
+  @AuthGuard()
   public async delete(@Data() request: DeleteTokenRequest): Promise<DeleteTokenResponse> {
     const count = await Token.countBy({ name: request.name });
     if (!count) {

@@ -9,12 +9,14 @@ import {
   ListImageResponse,
 } from "../views/image.view";
 import { DockerService } from "../services/docker.service";
+import { AuthGuard } from "../guards/auth.guard";
 
 @Controller("/api/images")
 export class ImageController {
   constructor(private readonly docker: DockerService) {}
 
   @Get("/")
+  @AuthGuard()
   public async list(@Data() request: ListImageRequest): Promise<ListImageResponse> {
     const { search = "", offset = 0, limit = 10, sort = "id:asc" } = request;
     const [infos, containers] = await Promise.all([this.docker.images.list(), this.docker.containers.list()]);
@@ -67,12 +69,14 @@ export class ImageController {
   }
 
   @Post("/:name")
+  @AuthGuard()
   public async create(@Data() request: CreateImageRequest): Promise<CreateImageResponse> {
     await this.docker.images.pull(request.name, true);
     return { status: "success" };
   }
 
   @Delete("/:name")
+  @AuthGuard()
   public async delete(@Data() request: DeleteImageRequest): Promise<DeleteImageResponse> {
     await this.docker.images.remove(request.name);
     return { status: "success" };

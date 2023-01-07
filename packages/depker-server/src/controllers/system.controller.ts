@@ -7,6 +7,7 @@ import { URLS } from "../constants/depker.constant";
 import parser from "parse-prometheus-text-format";
 import { MetricsResponse, VersionResponse } from "../views/system.view";
 import { HealthCheck, HealthCheckService, TypeOrmHealthIndicator } from "@nestjs/terminus";
+import { AuthGuard } from "../guards/auth.guard";
 import TimeData = Systeminformation.TimeData;
 import MemData = Systeminformation.MemData;
 import CurrentLoadData = Systeminformation.CurrentLoadData;
@@ -37,6 +38,7 @@ export class SystemController {
   }
 
   @Get("/metrics")
+  @AuthGuard()
   public async metrics(): Promise<MetricsResponse> {
     const [time, memory, load, disk, traefik]: [TimeData, MemData, CurrentLoadData, FsSizeData[], any] =
       await Promise.all([

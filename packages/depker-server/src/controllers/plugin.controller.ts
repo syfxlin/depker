@@ -19,6 +19,7 @@ import { ModuleRef } from "@nestjs/core";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PluginEvent } from "../events/plugin.event";
 import { Setting } from "../entities/setting.entity";
+import { AuthGuard } from "../guards/auth.guard";
 
 @Controller("/api/plugins")
 export class PluginController {
@@ -29,6 +30,7 @@ export class PluginController {
   ) {}
 
   @Get("/")
+  @AuthGuard()
   public async list(@Data() request: ListPluginRequest): Promise<ListPluginResponse> {
     const { search = "", offset = 0, limit = 10, sort = "name:desc" } = request;
     const plugins = Object.values(await this.plugins.plugins());
@@ -68,18 +70,21 @@ export class PluginController {
   }
 
   @Post("/:name")
+  @AuthGuard()
   public async install(@Data() request: InstallPluginRequest): Promise<InstallPluginResponse> {
     await this.plugins.install(request.name);
     return { status: "success" };
   }
 
   @Delete("/:name")
+  @AuthGuard()
   public async uninstall(@Data() request: UninstallPluginRequest): Promise<UninstallPluginResponse> {
     await this.plugins.uninstall(request.name);
     return { status: "success" };
   }
 
   @Get("/settings/:name")
+  @AuthGuard()
   public async get(@Data() request: GetPluginSettingRequest): Promise<GetPluginSettingResponse> {
     const plugins = await this.plugins.plugins();
     const plugin = plugins[request.name];
@@ -94,6 +99,7 @@ export class PluginController {
   }
 
   @Put("/settings/:name")
+  @AuthGuard()
   public async set(@Data() request: UpdatePluginSettingRequest): Promise<UpdatePluginSettingResponse> {
     const plugins = await this.plugins.plugins();
     const plugin = plugins[request.name];
@@ -113,6 +119,7 @@ export class PluginController {
   }
 
   @All("/routes/:name/:path")
+  @AuthGuard()
   public async routes(
     @Param("name") name: string,
     @Req() request: Request,

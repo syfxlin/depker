@@ -6,7 +6,7 @@ import { PATHS } from "../constants/depker.constant";
 import fs from "fs-extra";
 
 @WebSocketGateway({ namespace: "/nodes/logs" })
-export class AccessLogsGateway implements OnGatewayConnection {
+export class NodeLogsGateway implements OnGatewayConnection {
   public async handleConnection(socket: Socket) {
     const { tail = 1000 } = socket.handshake.auth;
     const file = path.join(PATHS.CONFIG, "traefik-access.log");
