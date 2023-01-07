@@ -227,7 +227,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "boolean") {
             return (
               <BooleanOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -237,7 +237,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "string") {
             return (
               <StringOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -247,7 +247,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "text") {
             return (
               <TextOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -257,7 +257,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "json") {
             return (
               <JsonOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -267,7 +267,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "number") {
             return (
               <NumberOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -277,7 +277,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "list") {
             return (
               <ListOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -287,7 +287,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "object") {
             return (
               <ObjectOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}
@@ -297,7 +297,7 @@ export const ExtensionInput = forwardRef<HTMLDivElement, ExtensionInputProps>(
           if (option.type === "select") {
             return (
               <SelectOpt
-                key={`extension-input-${option.name}`}
+                key={`input:extension:${option.name}`}
                 option={option}
                 value={value?.[option.name]}
                 onChange={(v) => onChange?.({ ...value, [option.name]: v })}

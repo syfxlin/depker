@@ -1,22 +1,18 @@
 import React from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { Box, Button, Space, Stack, Text } from "@mantine/core";
-import { css } from "@emotion/react";
+import { Box, Button, Space, Text } from "@mantine/core";
 import { Heading } from "../components/parts/Heading";
 import { useCalling } from "../hooks/use-calling";
 import { openConfirmModal } from "@mantine/modals";
 import { ServiceSettingContext } from "./ServiceSetting";
+import { Tab } from "../components/layout/Tab";
 
 export const ServiceDangerTab: React.FC = () => {
   const { service } = useOutletContext<ServiceSettingContext>();
   const navigate = useNavigate();
   const calling = useCalling();
   return (
-    <Stack
-      css={css`
-        height: 100%;
-      `}
-    >
+    <Tab>
       <Heading>Delete Service</Heading>
       <Box>
         <Text color="dimmed" size="sm">
@@ -36,7 +32,7 @@ export const ServiceDangerTab: React.FC = () => {
                 calling.calling(async (actions) => {
                   try {
                     await service.actions.delete();
-                    actions.success(`Delete service successful`, `Service delete successful.`);
+                    actions.success(`Delete service successful`, `The service has been successfully deleted.`);
                     navigate(`/services`);
                   } catch (e: any) {
                     actions.failure(`Delete service failure`, e);
@@ -49,6 +45,6 @@ export const ServiceDangerTab: React.FC = () => {
           Delete
         </Button>
       </Box>
-    </Stack>
+    </Tab>
   );
 };

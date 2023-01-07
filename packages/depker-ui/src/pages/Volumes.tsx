@@ -23,7 +23,7 @@ const Binds: React.FC<{ volume: string }> = ({ volume }) => {
       <Async query={binds.query}>
         {binds.data.map((item) => (
           <NavLink
-            key={`binds-${item}`}
+            key={`volume:${volume}:bind:${item}`}
             active
             label={item}
             icon={<TbApps />}
@@ -85,7 +85,7 @@ const Actions: React.FC<{ volume: string; actions: ReturnType<typeof useVolumes>
                 calling.calling(async (a) => {
                   try {
                     await actions.delete({ volume });
-                    a.success(`Delete volume successful`, `All binds have been disconnected.`);
+                    a.success(`Delete volume successful`, `The volume has been successfully deleted.`);
                   } catch (e: any) {
                     a.failure(`Delete volume failure`, e);
                   }
@@ -124,7 +124,7 @@ export const Volumes: React.FC = () => {
                       }
                       try {
                         await volumes.actions.create({ volume: value.volume });
-                        actions.success(`Create volume successful`, `Volume need to bind to the service to use.`);
+                        actions.success(`Create volume successful`, `The service has been successfully created.`);
                         return true;
                       } catch (e: any) {
                         actions.failure(`Create volume failure`, e);
@@ -134,7 +134,7 @@ export const Volumes: React.FC = () => {
                   >
                     {(item, setItem) => [
                       <TextInput
-                        key="volume"
+                        key="input:volume"
                         label="Host Volume"
                         description="The volume used by service storage."
                         placeholder="Host Volume Path"
@@ -156,7 +156,7 @@ export const Volumes: React.FC = () => {
       <Async query={volumes.query}>
         {volumes.data.map((item) => (
           <ListsItem
-            key={`volumes-${item}`}
+            key={`volume:${item}`}
             left={<Text weight={500}>{item}</Text>}
             right={<Actions volume={item} actions={volumes.actions} />}
           >

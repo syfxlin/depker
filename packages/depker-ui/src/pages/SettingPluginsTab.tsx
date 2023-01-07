@@ -33,7 +33,7 @@ const Setting: React.FC<{ name: string }> = ({ name }) => {
                 try {
                   await plugin.actions.save();
                   closeAllModals();
-                  actions.success(`Save successful`, `Plugin settings save successful.`);
+                  actions.success(`Save successful`, `The plugin settings has been successfully saved.`);
                 } catch (e: any) {
                   actions.failure(`Save failure`, e);
                 }
@@ -94,7 +94,7 @@ const Actions: React.FC<{
                 calling.calling(async (a) => {
                   try {
                     await actions.uninstall({ name: item.name });
-                    a.success(`Uninstall plugin successful`, `You can no longer use this plugin to create services.`);
+                    a.success(`Uninstall plugin successful`, `The plugin has been successfully uninstalled.`);
                   } catch (e: any) {
                     a.failure(`Uninstall plugin failure`, e);
                   }
@@ -123,7 +123,7 @@ export const SettingPluginsTab: React.FC = () => {
       update={plugins.update}
       buttons={[
         <Button
-          key="install-plugins"
+          key="plugin:install"
           size="xs"
           leftIcon={<TbPlus />}
           onClick={() =>
@@ -143,7 +143,7 @@ export const SettingPluginsTab: React.FC = () => {
                     }
                     try {
                       await plugins.actions.install({ name: value.name });
-                      actions.success(`Install plugin successful`, `You can use this plugin when creating a service.`);
+                      actions.success(`Install plugin successful`, `The plugin has been successfully installed.`);
                       return true;
                     } catch (e: any) {
                       actions.failure(`Install plugin failure`, e);
@@ -153,7 +153,7 @@ export const SettingPluginsTab: React.FC = () => {
                 >
                   {(item, setItem) => [
                     <TextInput
-                      key="name"
+                      key="input:name"
                       required
                       label="Name"
                       description="Plugin package spec, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
@@ -174,7 +174,7 @@ export const SettingPluginsTab: React.FC = () => {
     >
       {(item) => (
         <ListsItem
-          key={`plugins-${item.name}`}
+          key={`plugin:${item.name}`}
           left={
             <>
               <Avatar size="xs" src={client.assets.icon(item.icon)} />
@@ -191,7 +191,8 @@ export const SettingPluginsTab: React.FC = () => {
         >
           <ListsFields
             data={[
-              ["Package Spec", item.pkg],
+              ["Spec", item.pkg],
+              ["Name", item.name],
               ["Group", item.group || "-"],
               ["Buildpack Support", item.buildpack ? "Yes" : "No"],
               ["Global Options", item.options ? "Yes" : "No"],

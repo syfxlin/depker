@@ -25,6 +25,11 @@ import { SettingPluginsTab } from "./pages/SettingPluginsTab";
 import { SettingNetworksTab } from "./pages/SettingNetworksTab";
 import { SettingImagesTab } from "./pages/SettingImagesTab";
 import { SettingShellTab } from "./pages/SettingShellTab";
+import { SettingContainersTab } from "./pages/SettingContainersTab";
+import { Containers } from "./pages/Containers";
+import { ContainerMetricsTab } from "./pages/ContainerMetricsTab";
+import { ContainerTerminalTab } from "./pages/ContainerTerminalTab";
+import { ContainerLogsTab } from "./pages/ContainerLogsTab";
 
 export const App: React.FC = () => {
   return (
@@ -55,10 +60,17 @@ export const App: React.FC = () => {
             <Route path="/files/*" element={<Files />} />
             <Route path="/settings" element={<Settings />}>
               <Route index element={<SettingGeneralTab />} />
+              <Route path="containers" element={<SettingContainersTab />} />
               <Route path="images" element={<SettingImagesTab />} />
               <Route path="networks" element={<SettingNetworksTab />} />
               <Route path="plugins" element={<SettingPluginsTab />} />
               <Route path="shell" element={<SettingShellTab />} />
+            </Route>
+            <Route path="/containers/:container" element={<Containers />}>
+              <Route index element={<Navigate to="metrics" />} />
+              <Route path="metrics" element={<ContainerMetricsTab />} />
+              <Route path="logs" element={<ContainerLogsTab />} />
+              <Route path="terminal" element={<ContainerTerminalTab />} />
             </Route>
           </Route>
         </Routes>

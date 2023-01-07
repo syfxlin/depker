@@ -64,7 +64,7 @@ export const Line = forwardRef<HTMLDivElement, LineProps>((props, ref) => {
       return p(data);
     }
     const [level, time, logs] = data;
-    const part1 = DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS);
+    const part1 = DateTime.fromMillis(parseInt(time as any)).toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS);
     const part2 = level.toUpperCase().padStart(5);
     const part3 = logs;
     if (timestamp) {

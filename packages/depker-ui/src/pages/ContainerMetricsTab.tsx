@@ -4,12 +4,12 @@ import { Heading } from "../components/parts/Heading";
 import { ContainerMetrics } from "../components/parts/ContainerMetrics";
 import { Tab } from "../components/layout/Tab";
 
-export const ServiceMetricsTab: React.FC = () => {
-  const { service } = useParams<"service">();
+export const ContainerMetricsTab: React.FC = () => {
+  const { container } = useParams<"container">();
   return (
     <Tab>
-      <Heading>Service Metrics</Heading>
-      <ContainerMetrics name={service!} />
+      <Heading>Container Metrics</Heading>
+      <ContainerMetrics name={container!} />
     </Tab>
   );
 };

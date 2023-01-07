@@ -33,7 +33,7 @@ export const CronList: React.FC<CronListProps> = ({ service }) => {
             const updatedAt = DateTime.fromMillis(cron.updatedAt);
             return (
               <NavLink
-                key={`cron-${cron.id}`}
+                key={`cron:${service}:${cron.id}`}
                 action={`/services/${service}/crons/${cron.id}`}
                 label={
                   <Grid p={t.spacing.xs * 0.5}>

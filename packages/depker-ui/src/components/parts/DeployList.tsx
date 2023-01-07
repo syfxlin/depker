@@ -32,7 +32,7 @@ export const DeployList: React.FC<DeployListProps> = ({ service }) => {
             const updatedAt = DateTime.fromMillis(deploy.updatedAt);
             return (
               <NavLink
-                key={`deploy-${deploy.id}`}
+                key={`deploy:${service}:${deploy.id}`}
                 action={`/services/${service}/deploys/${deploy.id}`}
                 label={
                   <Grid p={t.spacing.xs * 0.5}>

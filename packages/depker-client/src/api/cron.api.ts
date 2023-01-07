@@ -19,17 +19,18 @@ export class CronApi extends Api {
 
   public async logs(request: LogsServiceCronRequest) {
     const name = encodeURIComponent(request.name);
-    const response = await this.client.client.get<LogsServiceCronResponse>(
-      `/api/services/${name}/crons/${request.id}/logs`,
-      { params: request }
-    );
+    const id = encodeURIComponent(request.id);
+    const response = await this.client.client.get<LogsServiceCronResponse>(`/api/services/${name}/crons/${id}/logs`, {
+      params: request,
+    });
     return response.data;
   }
 
   public async cancel(request: CancelServiceCronRequest) {
     const name = encodeURIComponent(request.name);
+    const id = encodeURIComponent(request.id);
     const response = await this.client.client.delete<CancelServiceCronResponse>(
-      `/api/services/${name}/crons/${request.id}/cancel`
+      `/api/services/${name}/crons/${id}/cancel`
     );
     return response.data;
   }

@@ -20,7 +20,7 @@ export const ObjectArrayInput = forwardRef<HTMLDivElement, ObjectArrayInputProps
           {!value?.length && <Input disabled icon={icon} placeholder={placeholder} />}
           {value?.map((item, index) => (
             <Input
-              key={`object-array-input-${index}`}
+              key={`input:object-array:${index}`}
               readOnly
               icon={icon}
               placeholder={placeholder}

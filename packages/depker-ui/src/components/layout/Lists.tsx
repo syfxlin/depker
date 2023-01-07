@@ -217,12 +217,12 @@ export const ListsFields = (props: ListsFieldsProps): ReactElement => {
   return (
     <Grid gutter="xs">
       {props.data.map(([key, value], index) => [
-        <Grid.Col key={`lists-fields-key-${key}-${index}`} span={2}>
+        <Grid.Col key={`lists:fields:key:${key}:${index}`} span={2}>
           <Text weight={500} size="sm">
             {key}
           </Text>
         </Grid.Col>,
-        <Grid.Col key={`lists-fields-value-${key}-${index}`} span={10}>
+        <Grid.Col key={`lists:fields:value:${key}:${index}`} span={10}>
           <Text size="sm">{value}</Text>
         </Grid.Col>,
       ])}

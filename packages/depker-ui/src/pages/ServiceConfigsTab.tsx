@@ -75,7 +75,7 @@ export const ServiceConfigsTab: React.FC = () => {
     () =>
       service.data && (
         <Select
-          key="type"
+          key="input:type"
           required
           readOnly
           label="Type"
@@ -198,7 +198,7 @@ export const ServiceConfigsTab: React.FC = () => {
           }}
           modals={(item, setItem) => [
             <ArrayInput
-              key="commands"
+              key="input:commands"
               label="Commands"
               description="Command to run to check health."
               placeholder="Health Check Commands"
@@ -207,7 +207,7 @@ export const ServiceConfigsTab: React.FC = () => {
               onChange={(value) => setItem({ ...item, cmd: value })}
             />,
             <NumberInput
-              key="retries"
+              key="input:retries"
               label="Retries"
               description="Consecutive failures needed to report unhealthy."
               placeholder="Health Check Retries"
@@ -216,7 +216,7 @@ export const ServiceConfigsTab: React.FC = () => {
               onChange={(value) => setItem({ ...item, retries: value })}
             />,
             <NumberInput
-              key="interval"
+              key="input:interval"
               label="Interval (s)"
               description="Time between running the check."
               placeholder="Health Check Interval"
@@ -225,7 +225,7 @@ export const ServiceConfigsTab: React.FC = () => {
               onChange={(value) => setItem({ ...item, interval: value })}
             />,
             <NumberInput
-              key="start"
+              key="input:start"
               label="Start (s)"
               description="Start period for the container to initialize before starting."
               placeholder="Health Check Start Period"
@@ -234,7 +234,7 @@ export const ServiceConfigsTab: React.FC = () => {
               onChange={(value) => setItem({ ...item, start: value })}
             />,
             <NumberInput
-              key="timeout"
+              key="input:timeout"
               label="Timeout (s)"
               description="Maximum time to allow one check to run."
               placeholder="Health Check Timeout"
@@ -457,7 +457,7 @@ export const ServiceConfigsTab: React.FC = () => {
           }}
           modals={(item, setItem) => [
             <TextInput
-              key="name"
+              key="input:name"
               required
               label="Name"
               description="Traefik middleware name."
@@ -467,7 +467,7 @@ export const ServiceConfigsTab: React.FC = () => {
               onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
             />,
             <TextInput
-              key="type"
+              key="input:type"
               required
               label="Type"
               description="Traefik middleware type."
@@ -477,7 +477,7 @@ export const ServiceConfigsTab: React.FC = () => {
               onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, type: e.target.value })}
             />,
             <ArrayInput
-              key="options"
+              key="input:options"
               label="Options"
               description="Traefik middleware options."
               placeholder="Middleware Options"
@@ -585,7 +585,7 @@ export const ServiceConfigsTab: React.FC = () => {
           })}
           modals={(item, setItem) => [
             <NumberInput
-              key="cport"
+              key="input:cport"
               placeholder="Container Port"
               icon={<TbCircleDot />}
               min={1}
@@ -599,7 +599,7 @@ export const ServiceConfigsTab: React.FC = () => {
               }}
             />,
             <Select
-              key="readonly"
+              key="input:readonly"
               placeholder="Read Only"
               icon={<TbCertificate />}
               readOnly={!item}
@@ -647,7 +647,7 @@ export const ServiceConfigsTab: React.FC = () => {
           })}
           modals={(item, setItem) => [
             <TextInput
-              key="cpath"
+              key="input:cpath"
               placeholder="Container Path"
               icon={<TbFolder />}
               readOnly={!item}
@@ -659,7 +659,7 @@ export const ServiceConfigsTab: React.FC = () => {
               }}
             />,
             <Select
-              key="readonly"
+              key="input:readonly"
               placeholder="Read Only"
               icon={<TbEditCircle />}
               readOnly={!item}

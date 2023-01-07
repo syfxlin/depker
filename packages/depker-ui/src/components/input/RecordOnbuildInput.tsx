@@ -42,7 +42,7 @@ export const RecordOnbuildInput = forwardRef<HTMLDivElement, RecordOnbuildInputP
             </Grid>
           )}
           {data.value.map((item, index) => (
-            <Grid key={`record-input-${index}`}>
+            <Grid key={`input:record-onbuild:${index}`}>
               <Grid.Col span={6}>
                 <Input
                   icon={leftIcon}

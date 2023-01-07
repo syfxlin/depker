@@ -9,6 +9,7 @@ import { Async } from "../components/core/Async";
 import { TbCheck, TbCopy } from "react-icons/all";
 import { useClipboard } from "@mantine/hooks";
 import { humanDate } from "../utils/human";
+import { Tab } from "../components/layout/Tab";
 
 const Copy: React.FC<{ commit: string }> = ({ commit }) => {
   const t = useMantineTheme();
@@ -26,13 +27,8 @@ export const ServiceHistoryTab: React.FC = () => {
   const t = useMantineTheme();
   const { service } = useParams<"service">();
   const history = useServiceHistory(service!);
-
   return (
-    <Stack
-      css={css`
-        height: 100%;
-      `}
-    >
+    <Tab>
       <Heading>Service History</Heading>
       <Async query={history.query}>
         {history.data && (
@@ -45,7 +41,7 @@ export const ServiceHistoryTab: React.FC = () => {
             <Stack spacing="xs">
               {history.data.items.map((item) => (
                 <Group
-                  key={`history-${item.commit}`}
+                  key={`history:${item.commit}`}
                   position="apart"
                   css={css`
                     padding: ${t.spacing.sm}px ${t.spacing.md}px;
@@ -71,12 +67,15 @@ export const ServiceHistoryTab: React.FC = () => {
                   </Stack>
                   <Group spacing="xs">
                     {item.refs.map((ref) => (
-                      <Badge key={`history-ref-${ref}`} color={ref.startsWith("tag:") ? "cyan" : "green"}>
+                      <Badge
+                        key={`history:${item.commit}:ref:${ref}`}
+                        color={ref.startsWith("tag:") ? "cyan" : "green"}
+                      >
                         {ref}
                       </Badge>
                     ))}
                     <Tooltip label={item.commit}>
-                      <Badge key={`history-commit-${item.commit}`} color="indigo">
+                      <Badge key={`history:${item.commit}:commit`} color="indigo">
                         sha: {item.commit.substring(0, 7)}
                       </Badge>
                     </Tooltip>
@@ -88,6 +87,6 @@ export const ServiceHistoryTab: React.FC = () => {
           </Pages>
         )}
       </Async>
-    </Stack>
+    </Tab>
   );
 };

@@ -19,8 +19,9 @@ export class DeployApi extends Api {
 
   public async logs(request: LogsServiceDeployRequest) {
     const name = encodeURIComponent(request.name);
+    const id = encodeURIComponent(request.id);
     const response = await this.client.client.get<LogsServiceDeployResponse>(
-      `/api/services/${name}/deploys/${request.id}/logs`,
+      `/api/services/${name}/deploys/${id}/logs`,
       { params: request }
     );
     return response.data;
@@ -28,8 +29,9 @@ export class DeployApi extends Api {
 
   public async cancel(request: CancelServiceDeployRequest) {
     const name = encodeURIComponent(request.name);
+    const id = encodeURIComponent(request.id);
     const response = await this.client.client.delete<CancelServiceDeployResponse>(
-      `/api/services/${name}/deploys/${request.id}/cancel`
+      `/api/services/${name}/deploys/${id}/cancel`
     );
     return response.data;
   }

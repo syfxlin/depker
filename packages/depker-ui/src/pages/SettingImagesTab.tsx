@@ -17,18 +17,21 @@ const Containers: React.FC<{
     <Stack spacing="xs">
       {item.containers.map((container) => (
         <ListsItem
-          key={`containers-${container.id}`}
+          key={`image:${item.id}:container:${container.id}`}
           left={<Text weight={500}>{container.name}</Text>}
           right={
             <>
               <Badge color="indigo">ID: {container.id.substring(0, 7)}</Badge>
-              <Badge color="cyan">Tag: {container.image}</Badge>
+              <Badge color="cyan">
+                Tag: {container.image.startsWith("sha256:") ? container.image.substring(0, 14) : container.image}
+              </Badge>
             </>
           }
         >
           <ListsFields
             data={[
               ["ID", container.id],
+              ["Name", container.name],
               ["Tag", container.image],
             ]}
           />
@@ -82,7 +85,7 @@ const Actions: React.FC<{
                     }
                     try {
                       await actions.delete({ name: value.name === "<none>:<none>" ? item.id : value.name });
-                      a.success(`Delete image successful`, `You can use this image when creating a service.`);
+                      a.success(`Delete image successful`, `The image has been successfully deleted.`);
                       return true;
                     } catch (e: any) {
                       a.failure(`Delete image failure`, e);
@@ -92,7 +95,7 @@ const Actions: React.FC<{
                 >
                   {(obj, setObj) => [
                     <Select
-                      key="name"
+                      key="input:name"
                       required
                       label="Name"
                       description="Image name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
@@ -128,7 +131,7 @@ export const SettingImagesTab: React.FC = () => {
       update={images.update}
       buttons={[
         <Button
-          key="pull-image"
+          key="image:pull"
           size="xs"
           leftIcon={<TbPlus />}
           onClick={() =>
@@ -145,7 +148,7 @@ export const SettingImagesTab: React.FC = () => {
                     }
                     try {
                       await images.actions.create({ name: value.name });
-                      actions.success(`Pull image successful`, `You can use this image when creating a service.`);
+                      actions.success(`Pull image successful`, `The image has been successfully pulled.`);
                       return true;
                     } catch (e: any) {
                       actions.failure(`Pull image failure`, e);
@@ -155,7 +158,7 @@ export const SettingImagesTab: React.FC = () => {
                 >
                   {(item, setItem) => [
                     <TextInput
-                      key="name"
+                      key="input:name"
                       required
                       label="Name"
                       description="Image name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
@@ -176,7 +179,7 @@ export const SettingImagesTab: React.FC = () => {
     >
       {(item) => (
         <ListsItem
-          key={`images-${item.id}`}
+          key={`image:${item.id}`}
           left={<Text weight={500}>{item.id.substring(7, 14)}</Text>}
           right={
             <>

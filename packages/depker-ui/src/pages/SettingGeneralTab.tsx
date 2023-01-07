@@ -175,7 +175,7 @@ export const SettingGeneralTab: React.FC = () => {
           calling.calling(async (actions) => {
             try {
               await settings.actions.save();
-              actions.success(`Save successful`, `Settings save successful.`);
+              actions.success(`Save successful`, `The settings has been successfully saved.`);
             } catch (e: any) {
               actions.failure(`Save failure`, e);
             }

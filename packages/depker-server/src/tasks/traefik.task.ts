@@ -37,11 +37,11 @@ export class TraefikTask implements OnModuleInit {
         if (force) {
           // if force reload, remove
           this.logger.log(`Recreating traefik with force reload.`);
-          await this.docker.containers.remove(traefik.Id);
+          await this.docker.containers.remove(traefik.Id, true);
         } else if (traefik.Status.includes("Exited")) {
           // if traefik container is exited, remove
           this.logger.log(`Recreating traefik with exited.`);
-          await this.docker.containers.remove(traefik.Id);
+          await this.docker.containers.remove(traefik.Id, true);
         } else {
           // if traefik container exists, restart
           this.logger.log(`Restarting traefik with running.`);
@@ -199,11 +199,11 @@ export class TraefikTask implements OnModuleInit {
         if (force) {
           // if force reload, remove
           this.logger.log(`Recreating logrotate with force reload.`);
-          await this.docker.containers.remove(logrotate.Id);
+          await this.docker.containers.remove(logrotate.Id, true);
         } else if (logrotate.Status.includes("Exited")) {
           // if logrotate container is exited, remove
           this.logger.log(`Recreating logrotate with exited.`);
-          await this.docker.containers.remove(logrotate.Id);
+          await this.docker.containers.remove(logrotate.Id, true);
         } else {
           // if logrotate container exists, restart
           this.logger.log(`Restarting logrotate with running.`);

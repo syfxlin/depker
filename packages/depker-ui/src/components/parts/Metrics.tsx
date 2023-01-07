@@ -141,7 +141,7 @@ export const Metrics: React.FC = () => {
                   `}
                 >
                   {success.map(([i, c]) => (
-                    <List.Item key={`request-success-${i}`}>
+                    <List.Item key={`request:success:${i}`}>
                       Code {i}: {c}
                     </List.Item>
                   ))}
@@ -160,7 +160,7 @@ export const Metrics: React.FC = () => {
                   `}
                 >
                   {failure4.map(([i, c]) => (
-                    <List.Item key={`request-failure4-${i}`}>
+                    <List.Item key={`request:failure4:${i}`}>
                       Code {i}: {c}
                     </List.Item>
                   ))}
@@ -179,7 +179,7 @@ export const Metrics: React.FC = () => {
                   `}
                 >
                   {failure5.map(([i, c]) => (
-                    <List.Item key={`request-failure5-${i}`}>
+                    <List.Item key={`request:failure5:${i}`}>
                       Code {i}: {c}
                     </List.Item>
                   ))}
@@ -217,7 +217,7 @@ export const Metrics: React.FC = () => {
                   `}
                 >
                   {expiring.map(([i]) => (
-                    <List.Item key={`cert-expiring-${i}`}>{i}</List.Item>
+                    <List.Item key={`cert:expiring:${i}`}>{i}</List.Item>
                   ))}
                 </List>
               ),
@@ -234,7 +234,7 @@ export const Metrics: React.FC = () => {
                   `}
                 >
                   {expired.map(([i]) => (
-                    <List.Item key={`cert-expired-${i}`}>{i}</List.Item>
+                    <List.Item key={`cert:expired:${i}`}>{i}</List.Item>
                   ))}
                 </List>
               ),
@@ -251,7 +251,7 @@ export const Metrics: React.FC = () => {
                   `}
                 >
                   {normal.map(([i]) => (
-                    <List.Item key={`cert-normal-${i}`}>{i}</List.Item>
+                    <List.Item key={`cert:normal:${i}`}>{i}</List.Item>
                   ))}
                 </List>
               ),

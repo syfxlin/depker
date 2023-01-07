@@ -31,6 +31,7 @@ import { ContainerController } from "./controllers/container.controller";
 import { ImageController } from "./controllers/image.controller";
 import { NetworkController } from "./controllers/network.controller";
 import { NodeShellGateway } from "./ws/node-shell.gateway";
+import { ContainerMetricsGateway } from "./ws/container-metrics.gateway";
 
 // entity
 export const entities = [Setting, Token, Service, Deploy, DeployLog, Cron, CronLog];
@@ -54,6 +55,12 @@ export const controllers = [
   ImageController,
   NetworkController,
 ];
-export const gateways = [ContainerTerminalGateway, ContainerLogsGateway, NodeLogsGateway, NodeShellGateway];
+export const gateways = [
+  ContainerTerminalGateway,
+  ContainerLogsGateway,
+  ContainerMetricsGateway,
+  NodeLogsGateway,
+  NodeShellGateway,
+];
 export const services = [DeployService, DockerService, StorageService, EventService];
 export const tasks = [TraefikTask, DeployTask];

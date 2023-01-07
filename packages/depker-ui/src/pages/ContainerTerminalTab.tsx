@@ -4,12 +4,12 @@ import { Heading } from "../components/parts/Heading";
 import { ContainerTerminal } from "../components/parts/ContainerTerminal";
 import { Tab } from "../components/layout/Tab";
 
-export const ServiceTerminalTab: React.FC = () => {
-  const { service } = useParams<"service">();
+export const ContainerTerminalTab: React.FC = () => {
+  const { container } = useParams<"container">();
   return (
     <Tab>
-      <Heading>Service Terminal</Heading>
-      <ContainerTerminal name={service!} />
+      <Heading>Container Terminal</Heading>
+      <ContainerTerminal name={container!} />
     </Tab>
   );
 };

@@ -23,7 +23,7 @@ const Binds: React.FC<{ port: number }> = ({ port }) => {
       <Async query={binds.query}>
         {binds.data.map((item) => (
           <NavLink
-            key={`binds-${item}`}
+            key={`port:${port}:bind:${item}`}
             active
             label={item}
             icon={<TbApps />}
@@ -67,7 +67,7 @@ const Actions: React.FC<{ port: number; actions: ReturnType<typeof usePorts>["ac
               calling.calling(async (a) => {
                 try {
                   await actions.delete({ port });
-                  a.success(`Delete port successful`, `All binds have been disconnected.`);
+                  a.success(`Delete port successful`, `The port has been successfully deleted.`);
                 } catch (e: any) {
                   a.failure(`Delete port failure`, e);
                 }
@@ -105,7 +105,7 @@ export const Ports: React.FC = () => {
                       }
                       try {
                         await ports.actions.create({ port: value.port });
-                        actions.success(`Create port successful`, `Port need to bind to the service to use.`);
+                        actions.success(`Create port successful`, `The port has been successfully created.`);
                         return true;
                       } catch (e: any) {
                         actions.failure(`Create port failure`, e);
@@ -115,7 +115,7 @@ export const Ports: React.FC = () => {
                   >
                     {(item, setItem) => [
                       <NumberInput
-                        key="port"
+                        key="input:port"
                         label="Host Port"
                         description="The port used by host port proxy."
                         placeholder="Host Port Number"
@@ -139,7 +139,7 @@ export const Ports: React.FC = () => {
       <Async query={ports.query}>
         {ports.data.map((item) => (
           <ListsItem
-            key={`ports-${item}`}
+            key={`port:${item}`}
             left={<Text weight={500}>{item}</Text>}
             right={<Actions port={item} actions={ports.actions} />}
           >

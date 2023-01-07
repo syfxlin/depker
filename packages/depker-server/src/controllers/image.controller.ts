@@ -60,7 +60,7 @@ export class ImageController {
           .filter((c) => c.ImageID === i.Id)
           .map((c) => ({
             id: c.Id,
-            name: c.Names.map((n) => n.substring(1)).join(", "),
+            name: this.docker.containers._names(c.Names),
             image: c.Image,
           })),
       }));

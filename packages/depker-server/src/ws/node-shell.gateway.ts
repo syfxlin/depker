@@ -11,7 +11,7 @@ export class NodeShellGateway implements OnGatewayConnection {
     const name = "node-shell";
     try {
       try {
-        await this.docker.containers.remove(name);
+        await this.docker.containers.remove(name, true);
       } catch (e) {
         // ignore
       }
@@ -76,7 +76,7 @@ export class NodeShellGateway implements OnGatewayConnection {
       socket.emit("error", `Attach container ${name} has error ${e.message}.`);
       socket.disconnect();
       try {
-        await this.docker.containers.remove(name);
+        await this.docker.containers.remove(name, true);
       } catch (e) {
         // ignore
       }

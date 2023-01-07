@@ -17,7 +17,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
           {!value?.length && <Input disabled icon={icon} placeholder={placeholder} />}
           {value?.map((item, index) => (
             <Input
-              key={`array-input-${index}`}
+              key={`input:array:${index}`}
               value={item ?? ""}
               icon={icon}
               placeholder={placeholder}

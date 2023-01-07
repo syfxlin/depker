@@ -21,7 +21,7 @@ export class DockerContainer {
 
   public async find(name: string) {
     const infos = await this.findAll(name);
-    return infos.find((c) => c.Names.includes(`/${name}`));
+    return infos.find((c) => this._names(c.Names) === name);
   }
 
   public async findAll(name: string) {
@@ -53,8 +53,8 @@ export class DockerContainer {
     return await this.docker.createContainer(options);
   }
 
-  public async remove(name: string) {
-    return await this.docker.getContainer(name).remove({ force: true });
+  public async remove(name: string, force?: boolean) {
+    return await this.docker.getContainer(name).remove({ force });
   }
 
   public async inspect(name: string) {
@@ -70,17 +70,9 @@ export class DockerContainer {
     const results: Record<string, ServiceStatus> = {};
     const infos = await this.docker.listContainers({ all: true });
     for (const { name, type } of items) {
-      const info = infos.find((i) => i.Names.includes(`/${name}`));
+      const info = infos.find((i) => this._names(i.Names) === name);
       if (type === "app") {
-        if (info?.State === "running") {
-          results[name] = "running";
-        } else if (info?.State === "restarting") {
-          results[name] = "restarting";
-        } else if (info?.State === "exited") {
-          results[name] = "exited";
-        } else {
-          results[name] = "stopped";
-        }
+        results[name] = this._status(info?.State);
       } else {
         if (info) {
           results[name] = "running";
@@ -155,7 +147,7 @@ export class DockerContainer {
 
   public async purge(name: string) {
     const infos = await this.docker.listContainers({ all: true });
-    const containers = infos.filter((c) => c.Labels["depker.name"] === name && !c.Names.includes(`/${name}`));
+    const containers = infos.filter((c) => c.Labels["depker.name"] === name && this._names(c.Names) !== name);
     for (const info of containers) {
       const container = this.docker.getContainer(info.Id);
       try {
@@ -171,7 +163,7 @@ export class DockerContainer {
 
   public async clean(name: string) {
     const infos = await this.docker.listContainers({ all: true });
-    const containers = infos.filter((c) => c.Labels["depker.name"] === name || c.Names.includes(`/${name}`));
+    const containers = infos.filter((c) => c.Labels["depker.name"] === name || this._names(c.Names) === name);
     for (const info of containers) {
       const container = this.docker.getContainer(info.Id);
       try {
@@ -248,6 +240,28 @@ export class DockerContainer {
       const line = data.substring(31).replace("\n", "");
       return [level, DateTime.fromISO(time).valueOf(), line] as const;
     });
+  }
+
+  public _names(names: string[]) {
+    for (const full of names) {
+      const name = full.substring(1);
+      if (name.indexOf("/") === -1) {
+        return name;
+      }
+    }
+    return names.join(",");
+  }
+
+  public _status(state: string | undefined) {
+    if (state === "running") {
+      return "running";
+    } else if (state === "restarting") {
+      return "restarting";
+    } else if (state === "exited") {
+      return "exited";
+    } else {
+      return "stopped";
+    }
   }
 }
 

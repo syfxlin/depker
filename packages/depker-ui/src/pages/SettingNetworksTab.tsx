@@ -77,7 +77,7 @@ const Containers: React.FC<{
       <Box>
         {item.containers.map((container) => (
           <ListsItem
-            key={`containers-${container.id}`}
+            key={`network:${item.id}:container:${container.id}`}
             left={<Text weight={500}>{container.name}</Text>}
             right={
               <>
@@ -119,7 +119,8 @@ const Containers: React.FC<{
             <ListsFields
               data={[
                 ["ID", container.id],
-                ["MAC", container.mac],
+                ["Name", container.name],
+                ["Mac", container.mac || "-"],
                 ["IPv4", container.ipv4 || "-"],
                 ["IPv6", container.ipv6 || "-"],
               ]}
@@ -172,7 +173,7 @@ const Actions: React.FC<{
                 calling.calling(async (a) => {
                   try {
                     await actions.delete({ name: item.name });
-                    a.success(`Delete network successful`, `You can no longer use this network to create services.`);
+                    a.success(`Delete network successful`, `The network has been successfully deleted.`);
                   } catch (e: any) {
                     a.failure(`Delete network failure`, e);
                   }
@@ -201,7 +202,7 @@ export const SettingNetworksTab: React.FC = () => {
       update={networks.update}
       buttons={[
         <Button
-          key="create-networks"
+          key="network:create"
           size="xs"
           leftIcon={<TbPlus />}
           onClick={() =>
@@ -221,7 +222,7 @@ export const SettingNetworksTab: React.FC = () => {
                     }
                     try {
                       await networks.actions.create({ name: value.name });
-                      actions.success(`Create network successful`, `You can use this network when creating a service.`);
+                      actions.success(`Create network successful`, `The network has been successfully created.`);
                       return true;
                     } catch (e: any) {
                       actions.failure(`Create network failure`, e);
@@ -231,7 +232,7 @@ export const SettingNetworksTab: React.FC = () => {
                 >
                   {(item, setItem) => [
                     <TextInput
-                      key="name"
+                      key="input:name"
                       required
                       label="Name"
                       description="Network name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
@@ -252,7 +253,7 @@ export const SettingNetworksTab: React.FC = () => {
     >
       {(item) => (
         <ListsItem
-          key={`networks-${item.name}`}
+          key={`network:${item.name}`}
           left={<Text weight={500}>{item.name}</Text>}
           right={
             <>
@@ -266,6 +267,7 @@ export const SettingNetworksTab: React.FC = () => {
           <ListsFields
             data={[
               ["ID", item.id],
+              ["Name", item.name],
               ["Driver", item.driver || "-"],
               ["Scope", item.scope || "-"],
               ["IP Gateway", item.ips.map((i) => i.gateway).join(", ") || "-"],

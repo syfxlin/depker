@@ -57,7 +57,7 @@ const AutocompleteArrayInputInner = <T,>(
             data.update(values);
           };
           return (
-            <Grid key={`selected-array-input-${index}`}>
+            <Grid key={`input:autocomplete:${index}`}>
               <Grid.Col span={4}>
                 <Autocomplete
                   data={items}
@@ -79,8 +79,8 @@ const AutocompleteArrayInputInner = <T,>(
                   }
                 />
               </Grid.Col>
-              {modals(item, setItem).map((value, index, array) => (
-                <Grid.Col key={`select-array-input-item-${index}`} span={8 / array.length}>
+              {modals(item, setItem).map((value, idx, arr) => (
+                <Grid.Col key={`input:autocomplete:${index}:item:${idx}`} span={8 / arr.length}>
                   {value}
                 </Grid.Col>
               ))}

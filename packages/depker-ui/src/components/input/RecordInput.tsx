@@ -40,7 +40,7 @@ export const RecordInput = forwardRef<HTMLDivElement, RecordInputProps>(
             </Grid>
           )}
           {data.value.map((item, index) => (
-            <Grid key={`record-input-${index}`}>
+            <Grid key={`input:record:${index}`}>
               <Grid.Col span={6}>
                 <Input
                   icon={leftIcon}

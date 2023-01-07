@@ -235,7 +235,7 @@ export const CardStats: React.FC<CardStatsProps> = ({ title, value }) => {
           </Tooltip>
           <Group>
             {values.map((item) => (
-              <Tooltip key={`card-stats-${item.name}`} disabled={!item.tooltip} label={item.tooltip}>
+              <Tooltip key={`stats:card:${item.name}`} disabled={!item.tooltip} label={item.tooltip}>
                 <Box>
                   <Text
                     css={css`

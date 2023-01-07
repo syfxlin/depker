@@ -1,20 +1,17 @@
 import React from "react";
-import { Grid, Stack } from "@mantine/core";
+import { Grid } from "@mantine/core";
 import { useParams } from "react-router-dom";
 import { Heading } from "../components/parts/Heading";
 import { css } from "@emotion/react";
 import { DeployLogs } from "../components/parts/DeployLogs";
 import { DeployList } from "../components/parts/DeployList";
+import { Tab } from "../components/layout/Tab";
 
 export const ServiceDeploysTab: React.FC = () => {
   const { service, deploy } = useParams<"service" | "deploy">();
 
   return (
-    <Stack
-      css={css`
-        height: 100%;
-      `}
-    >
+    <Tab>
       <Heading>Deploy Logs</Heading>
       <Grid
         css={css`
@@ -34,6 +31,6 @@ export const ServiceDeploysTab: React.FC = () => {
           <DeployList service={service!} />
         </Grid.Col>
       </Grid>
-    </Stack>
+    </Tab>
   );
 };

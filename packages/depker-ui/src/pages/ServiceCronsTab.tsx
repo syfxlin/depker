@@ -1,20 +1,17 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { Grid, Stack } from "@mantine/core";
+import { Grid } from "@mantine/core";
 import { css } from "@emotion/react";
 import { Heading } from "../components/parts/Heading";
 import { CronLogs } from "../components/parts/CronLogs";
 import { CronList } from "../components/parts/CronList";
+import { Tab } from "../components/layout/Tab";
 
 export const ServiceCronsTab: React.FC = () => {
   const { service, cron } = useParams<"service" | "cron">();
 
   return (
-    <Stack
-      css={css`
-        height: 100%;
-      `}
-    >
+    <Tab>
       <Heading>Cron Logs</Heading>
       <Grid
         css={css`
@@ -34,6 +31,6 @@ export const ServiceCronsTab: React.FC = () => {
           <CronList service={service!} />
         </Grid.Col>
       </Grid>
-    </Stack>
+    </Tab>
   );
 };

@@ -68,7 +68,7 @@ export const ServiceSetting: React.FC = () => {
             calling.calling(async (actions) => {
               try {
                 await service.actions.stop();
-                actions.success(`Stop successful`, `Service stop successful.`);
+                actions.success(`Stop successful`, `The service has been successfully stopped.`);
               } catch (e: any) {
                 actions.failure(`Stop failure`, e);
               }
@@ -94,14 +94,14 @@ export const ServiceSetting: React.FC = () => {
               if (service.data?.type === "app") {
                 try {
                   await service.actions.restart();
-                  actions.success(`Restart successful`, `Service restart successful.`);
+                  actions.success(`Restart successful`, `The service has been successfully restarted.`);
                 } catch (e: any) {
                   actions.failure(`Restart failure`, e);
                 }
               } else {
                 try {
                   await service.actions.trigger();
-                  actions.success(`Trigger successful`, `Service restart successful.`);
+                  actions.success(`Trigger successful`, `The service has been successfully triggered.`);
                 } catch (e: any) {
                   actions.failure(`Trigger failure`, e);
                 }
@@ -148,7 +148,7 @@ export const ServiceSetting: React.FC = () => {
           calling.calling(async (actions) => {
             try {
               await service.actions.save();
-              actions.success(`Save successful`, `Service save successful.`);
+              actions.success(`Save successful`, `The service configuration has been successfully saved.`);
             } catch (e: any) {
               actions.failure(`Save failure`, e);
             }

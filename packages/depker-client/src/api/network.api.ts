@@ -34,16 +34,18 @@ export class NetworkApi extends Api {
 
   public async connect(request: ConnectNetworkRequest) {
     const name = encodeURIComponent(request.name);
+    const container = encodeURIComponent(request.container);
     const response = await this.client.client.post<ConnectNetworkResponse>(
-      `/api/networks/${name}/connect/${request.container}`
+      `/api/networks/${name}/connect/${container}`
     );
     return response.data;
   }
 
   public async disconnect(request: DisconnectNetworkRequest) {
     const name = encodeURIComponent(request.name);
+    const container = encodeURIComponent(request.container);
     const response = await this.client.client.delete<DisconnectNetworkResponse>(
-      `/api/networks/${name}/disconnect/${request.container}`
+      `/api/networks/${name}/disconnect/${container}`
     );
     return response.data;
   }

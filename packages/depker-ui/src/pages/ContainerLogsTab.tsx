@@ -4,12 +4,12 @@ import { Heading } from "../components/parts/Heading";
 import { ContainerLogs } from "../components/parts/ContainerLogs";
 import { Tab } from "../components/layout/Tab";
 
-export const ServiceLogsTab: React.FC = () => {
-  const { service } = useParams<"service">();
+export const ContainerLogsTab: React.FC = () => {
+  const { container } = useParams<"container">();
   return (
     <Tab>
-      <Heading>Service Logs</Heading>
-      <ContainerLogs name={service!} />
+      <Heading>Container Logs</Heading>
+      <ContainerLogs name={container!} />
     </Tab>
   );
 };

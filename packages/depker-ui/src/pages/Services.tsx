@@ -77,7 +77,7 @@ export const Services: React.FC = () => {
               >
                 {(item, setItem) => [
                   <TextInput
-                    key="name"
+                    key="input:name"
                     required
                     label="Name"
                     description="Service name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
@@ -87,7 +87,7 @@ export const Services: React.FC = () => {
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
                   />,
                   <Select
-                    key="type"
+                    key="input:type"
                     required
                     label="Type"
                     description="Service type, App is a resident service, and Job is a scheduled or one-time service"
@@ -107,7 +107,7 @@ export const Services: React.FC = () => {
                     ]}
                   />,
                   <Select
-                    key="buildpack"
+                    key="input:buildpack"
                     required
                     searchable
                     label="Buildpack"
@@ -210,7 +210,7 @@ export const Services: React.FC = () => {
         >
           <Grid>
             {services.data?.items?.map((item) => (
-              <Grid.Col key={`services-${item.name}`} span={4}>
+              <Grid.Col key={`service:${item.name}`} span={4}>
                 <Card
                   withBorder
                   css={css`

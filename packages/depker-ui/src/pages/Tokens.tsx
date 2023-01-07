@@ -9,7 +9,9 @@ import { ObjectModal } from "../components/input/ObjectModal";
 import { showNotification } from "@mantine/notifications";
 import { useClipboard } from "@mantine/hooks";
 import { useCalling } from "../hooks/use-calling";
-import { Lists, ListsItem } from "../components/layout/Lists";
+import { ListsItem } from "../components/layout/Lists";
+import { Pages } from "../components/layout/Pages";
+import { Async } from "../components/core/Async";
 
 const Copy: React.FC<{ token: string }> = ({ token }) => {
   const t = useMantineTheme();
@@ -81,7 +83,7 @@ const Actions: React.FC<{ name: string; actions: ReturnType<typeof useTokens>["a
                 calling.calling(async (a) => {
                   try {
                     await actions.delete({ name });
-                    a.success(`Delete token successful`, `The generated token has expired.`);
+                    a.success(`Delete token successful`, `The token has been successfully deleted.`);
                   } catch (e: any) {
                     a.failure(`Delete token failure`, e);
                   }
@@ -152,7 +154,7 @@ export const Tokens: React.FC = () => {
                   >
                     {(item, setItem) => [
                       <TextInput
-                        key="name"
+                        key="input:name"
                         required
                         label="Name"
                         description="Token name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
@@ -172,34 +174,37 @@ export const Tokens: React.FC = () => {
         </Group>
       }
     >
-      <Lists
-        total={tokens.data?.total}
-        items={tokens.data?.items}
-        sorts={["name", "identity", "createdAt", "updatedAt"]}
-        query={tokens.query}
-        values={tokens.values}
-        update={tokens.update}
-      >
-        {(item) => (
-          <ListsItem
-            key={`tokens-${item.name}`}
-            left={
-              <Stack spacing={0}>
-                <Text weight={500}>{item.name}</Text>
-                <Text color="dimmed" size="xs">
-                  Created on {humanDate(item.createdAt)}, Updated on {humanDate(item.updatedAt)}
-                </Text>
-              </Stack>
-            }
-            right={
-              <>
-                <Badge color="indigo">identity: {item.identity}</Badge>
-                <Actions name={item.name} actions={tokens.actions} />
-              </>
-            }
-          ></ListsItem>
+      <Async query={tokens.query}>
+        {tokens.data && (
+          <Pages
+            edges
+            page={tokens.values.page}
+            size={tokens.values.size}
+            total={tokens.data?.total ?? 0}
+            onChange={tokens.update.page}
+          >
+            {tokens.data.items.map((item) => (
+              <ListsItem
+                key={`token:${item.name}`}
+                left={
+                  <Stack spacing={0}>
+                    <Text weight={500}>{item.name}</Text>
+                    <Text color="dimmed" size="xs">
+                      Created on {humanDate(item.createdAt)}, Updated on {humanDate(item.updatedAt)}
+                    </Text>
+                  </Stack>
+                }
+                right={
+                  <>
+                    <Badge color="indigo">identity: {item.identity}</Badge>
+                    <Actions name={item.name} actions={tokens.actions} />
+                  </>
+                }
+              />
+            ))}
+          </Pages>
         )}
-      </Lists>
+      </Async>
     </Main>
   );
 };
