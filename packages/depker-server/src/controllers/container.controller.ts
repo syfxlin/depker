@@ -100,39 +100,46 @@ export class ContainerController {
   }
 
   @Post("/:name")
+  @AuthGuard()
   public async create(@Data() request: CreateContainerRequest) {}
 
   @Put("/:name")
+  @AuthGuard()
   public async rename(@Data() request: RenameContainerRequest): Promise<RenameContainerResponse> {
     await this.docker.containers.rename(request.name, request.rename);
     return { status: "success" };
   }
 
   @Delete("/:name")
+  @AuthGuard()
   public async delete(@Data() request: DeleteContainerRequest): Promise<DeleteContainerResponse> {
     await this.docker.containers.remove(request.name);
     return { status: "success" };
   }
 
   @Post("/:name/start")
+  @AuthGuard()
   public async start(@Data() request: OperateContainerRequest): Promise<OperateContainerResponse> {
     await this.docker.containers.start(request.name);
     return { status: "success" };
   }
 
   @Post("/:name/restart")
+  @AuthGuard()
   public async restart(@Data() request: OperateContainerRequest): Promise<OperateContainerResponse> {
     await this.docker.containers.restart(request.name);
     return { status: "success" };
   }
 
   @Post("/:name/stop")
+  @AuthGuard()
   public async stop(@Data() request: OperateContainerRequest): Promise<OperateContainerResponse> {
     await this.docker.containers.stop(request.name);
     return { status: "success" };
   }
 
   @Post("/:name/kill")
+  @AuthGuard()
   public async kill(@Data() request: OperateContainerRequest): Promise<OperateContainerResponse> {
     await this.docker.containers.kill(request.name);
     return { status: "success" };
