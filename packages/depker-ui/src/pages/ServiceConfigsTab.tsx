@@ -77,7 +77,6 @@ export const ServiceConfigsTab: React.FC = () => {
         <Select
           key="input:type"
           required
-          readOnly
           label="Type"
           description="Service type (readonly), App is a resident service, and Job is a scheduled or one-time service"
           placeholder="Type"

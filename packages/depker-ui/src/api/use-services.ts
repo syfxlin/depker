@@ -14,7 +14,7 @@ export const useServices = () => {
     (v) => v,
     (q) => ({
       create: async (request: UpsertServiceRequest) => {
-        const response = await client.services.create(request);
+        const response = await client.services.upsert(request);
         await q.mutate();
         return response;
       },

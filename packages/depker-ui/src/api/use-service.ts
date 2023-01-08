@@ -25,7 +25,7 @@ export const useService = (name: string) => {
             return value;
           }
           try {
-            return await client.services.update(value);
+            return await client.services.upsert(value);
           } catch (e) {
             error = e;
             return value;

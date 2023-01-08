@@ -293,35 +293,6 @@ export type StatusServiceResponse = {
   status: ServiceStatus;
 };
 
-export class MetricsServiceRequest {
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 128)
-  @Matches(/^[a-zA-Z0-9._-]+$/)
-  name: string;
-}
-
-export type MetricsServiceResponse = {
-  cpu: {
-    free: number;
-    used: number;
-    total: number;
-  };
-  memory: {
-    free: number;
-    used: number;
-    total: number;
-  };
-  network: {
-    input: number;
-    output: number;
-  };
-  process: {
-    titles: string[];
-    processes: string[][];
-  };
-};
-
 export class HistoryServiceRequest {
   @IsString()
   @IsNotEmpty()

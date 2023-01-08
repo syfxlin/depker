@@ -21,8 +21,6 @@ import {
   HistoryServiceResponse,
   ListServiceRequest,
   ListServiceResponse,
-  MetricsServiceRequest,
-  MetricsServiceResponse,
   RestartServiceRequest,
   RestartServiceResponse,
   StatusServiceRequest,
@@ -106,31 +104,10 @@ export class ServiceController {
     return { total, items };
   }
 
-  @Post("/")
-  @AuthGuard()
-  public async create(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (count) {
-      throw new ConflictException(`Found service of ${request.name}.`);
-    }
-    // insert
-    await Service.insert({ name: request.name, type: request.type, buildpack: request.buildpack });
-
-    // emit event
-    await this.events.emitAsync(ServiceEvent.CREATE, request.name);
-
-    // update
-    return this.update(request);
-  }
-
+  @Post("/:name")
   @Put("/:name")
   @AuthGuard()
-  public async update(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
-    const count = await Service.countBy({ name: request.name });
-    if (!count) {
-      throw new NotFoundException(`Not found service of ${request.name}.`);
-    }
-
+  public async upsert(@Body() request: UpsertServiceRequest): Promise<UpsertServiceResponse> {
     const plugins = await this.plugins.plugins();
     const plugin = plugins[request.buildpack];
     if (!plugin || !plugin.buildpack?.handler) {
@@ -141,6 +118,7 @@ export class ServiceController {
     const service = new Service();
     service.name = request.name;
     service.buildpack = request.buildpack;
+    service.type = request.type;
     // web
     service.domain = request.domain!;
     service.rule = request.rule!;
@@ -176,7 +154,7 @@ export class ServiceController {
     service.extensions = request.extensions!;
 
     // save service
-    await Service.save(service, { reload: false });
+    await Service.upsert(service, ["name"]);
 
     // result
     const saved = await Service.findOneBy({ name: service.name });
@@ -361,20 +339,6 @@ export class ServiceController {
     await this.events.emitAsync(ServiceEvent.RESTART, request.name);
 
     return { status: "success" };
-  }
-
-  @Get("/:name/metrics")
-  @AuthGuard()
-  public async metrics(@Param() request: MetricsServiceRequest): Promise<MetricsServiceResponse> {
-    const one = await Service.findOneBy({ name: request.name });
-    if (!one) {
-      throw new NotFoundException(`Not found service of ${request.name}.`);
-    }
-    if (one.type !== "app") {
-      throw new ConflictException(`${request.name} service type is app, which does not support the restart operation.`);
-    }
-
-    return this.docker.containers.stats(request.name);
   }
 
   // endregion

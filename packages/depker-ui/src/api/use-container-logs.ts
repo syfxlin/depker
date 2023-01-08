@@ -8,7 +8,7 @@ export const useContainerLogs = (name: string, tail: number) => {
 
   useEffect(() => {
     setLogs(null);
-    const socket = client.services.logs(name, tail);
+    const socket = client.containers.logs({ name, tail });
 
     socket.on("disconnect", () => {
       setLogs((prev) => [...(prev ?? []), ["error", DateTime.utc().valueOf(), `Logs stopped.`]]);

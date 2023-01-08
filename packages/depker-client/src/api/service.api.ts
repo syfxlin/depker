@@ -10,8 +10,6 @@ import {
   HistoryServiceResponse,
   ListServiceRequest,
   ListServiceResponse,
-  MetricsServiceRequest,
-  MetricsServiceResponse,
   RestartServiceRequest,
   RestartServiceResponse,
   StatusServiceRequest,
@@ -21,7 +19,6 @@ import {
   UpServiceRequest,
   UpServiceResponse,
 } from "@syfxlin/depker-types";
-import { Socket } from "socket.io-client";
 
 export class ServiceApi extends Api {
   public async list(request?: ListServiceRequest) {
@@ -31,14 +28,9 @@ export class ServiceApi extends Api {
     return response.data;
   }
 
-  public async create(request: UpsertServiceRequest) {
-    const response = await this.client.client.post<UpsertServiceResponse>(`/api/services`, request);
-    return response.data;
-  }
-
-  public async update(request: UpsertServiceRequest) {
+  public async upsert(request: UpsertServiceRequest) {
     const name = encodeURIComponent(request.name);
-    const response = await this.client.client.put<UpsertServiceResponse>(`/api/services/${name}`, request);
+    const response = await this.client.client.post<UpsertServiceResponse>(`/api/services/${name}`, request);
     return response.data;
   }
 
@@ -86,20 +78,6 @@ export class ServiceApi extends Api {
     const name = encodeURIComponent(request.name);
     const response = await this.client.client.post<RestartServiceResponse>(`/api/services/${name}/restart`);
     return response.data;
-  }
-
-  public async metrics(request: MetricsServiceRequest) {
-    const name = encodeURIComponent(request.name);
-    const response = await this.client.client.get<MetricsServiceResponse>(`/api/services/${name}/metrics`);
-    return response.data;
-  }
-
-  public logs(name: string, tail?: number): Socket {
-    return this.client.socket("/containers/logs", { name, tail });
-  }
-
-  public terminal(name: string): Socket {
-    return this.client.socket("/containers/terminal", { name });
   }
 
   // endregion
