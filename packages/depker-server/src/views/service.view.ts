@@ -88,12 +88,12 @@ export class UpsertServiceRequest {
   buildpack: string;
 
   @IsOptional()
-  @ArrayEach([isString, isNotEmpty])
-  commands?: string[];
+  @IsString()
+  commands?: string;
 
   @IsOptional()
-  @ArrayEach([isString, isNotEmpty])
-  entrypoints?: string[];
+  @IsString()
+  entrypoints?: string;
 
   @IsOptional()
   @IsString()
@@ -241,8 +241,8 @@ export type GetServiceResponse = {
   name: string;
   type: ServiceType;
   buildpack: string;
-  commands: string[];
-  entrypoints: string[];
+  commands: string;
+  entrypoints: string;
   restart: ServiceRestart;
   pull: boolean;
   domain: string[];

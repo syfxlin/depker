@@ -14,7 +14,7 @@ export type ServiceMiddleware = {
 };
 
 export type ServiceHealthCheck = {
-  cmd?: string[];
+  cmd?: string;
   retries?: number;
   interval?: number;
   start?: number;
@@ -63,11 +63,11 @@ export class Service extends BaseEntity {
   @Column({ length: 128, nullable: false })
   buildpack: string;
 
-  @Column({ nullable: false, default: "[]", type: "simple-json" })
-  commands: string[];
+  @Column({ nullable: false, default: "", type: "text" })
+  commands: string;
 
-  @Column({ nullable: false, default: "[]", type: "simple-json" })
-  entrypoints: string[];
+  @Column({ nullable: false, default: "", type: "text" })
+  entrypoints: string;
 
   @Column({ nullable: false, default: "always" })
   restart: ServiceRestart;

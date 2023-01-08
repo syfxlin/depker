@@ -2,6 +2,7 @@ import { Controller, Delete, Get, Post, Put } from "@nestjs/common";
 import { Data } from "../decorators/data.decorator";
 import {
   CreateContainerRequest,
+  CreateContainerResponse,
   DeleteContainerRequest,
   DeleteContainerResponse,
   ListContainerRequest,
@@ -14,6 +15,7 @@ import {
 import { DockerService } from "../services/docker.service";
 import { AuthGuard } from "../guards/auth.guard";
 import { ServiceStatus } from "../entities/service.entity";
+import { IMAGES } from "../constants/depker.constant";
 
 @Controller("/api/containers")
 export class ContainerController {
@@ -102,7 +104,17 @@ export class ContainerController {
 
   @Post("/:name")
   @AuthGuard()
-  public async create(@Data() request: CreateContainerRequest) {}
+  public async create(@Data() request: CreateContainerRequest): Promise<CreateContainerResponse> {
+    request.commands = request.commands.trim().replace(/^docker\s+run\s+/, "");
+    request.commands = `docker run -d --name=${request.name} ${request.commands}`;
+    await this.docker.containers.run(IMAGES.DOCKER, [`sh`, `-c`, request.commands], undefined, {
+      HostConfig: {
+        AutoRemove: true,
+        Binds: [`/var/run/docker.sock:/var/run/docker.sock`],
+      },
+    });
+    return { status: "success" };
+  }
 
   @Put("/:name")
   @AuthGuard()

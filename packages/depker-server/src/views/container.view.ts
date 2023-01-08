@@ -64,6 +64,10 @@ export class CreateContainerRequest {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  commands: string;
 }
 
 export type CreateContainerResponse = {

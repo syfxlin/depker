@@ -2,7 +2,12 @@ import { usePageState } from "../hooks/use-page-state";
 import useSWR from "swr";
 import { client } from "./client";
 import { useSWRWrapper } from "../hooks/use-swr-wrapper";
-import { DeleteContainerRequest, OperateContainerRequest, RenameContainerRequest } from "@syfxlin/depker-client";
+import {
+  CreateContainerRequest,
+  DeleteContainerRequest,
+  OperateContainerRequest,
+  RenameContainerRequest,
+} from "@syfxlin/depker-client";
 
 export const useContainers = () => {
   const page = usePageState({ page: 1, size: 10 });
@@ -13,11 +18,11 @@ export const useContainers = () => {
     query,
     (v) => v,
     (q) => ({
-      // create: async (request: CreateImageRequest) => {
-      //   const response = await client.images.create(request);
-      //   await q.mutate();
-      //   return response;
-      // },
+      create: async (request: CreateContainerRequest) => {
+        const response = await client.containers.create(request);
+        await q.mutate();
+        return response;
+      },
       delete: async (request: DeleteContainerRequest) => {
         const response = await client.containers.delete(request);
         await q.mutate();

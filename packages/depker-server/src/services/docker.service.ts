@@ -197,11 +197,16 @@ export class DockerContainers {
     }
   }
 
-  public async run(image: string, commands: string[], lines: (line: string) => void, options: ContainerCreateOptions) {
+  public async run(
+    image: string,
+    commands: string[],
+    lines?: (line: string) => void,
+    options?: ContainerCreateOptions
+  ) {
     await this.docker.images.create(image);
     const through = new PassThrough({ encoding: "utf-8" });
     const readline = createInterface({ input: through });
-    readline.on("line", (line) => lines(line));
+    readline.on("line", (line) => lines?.(line));
     const [result] = await this.docker.run(image, commands, through, options);
     return result;
   }

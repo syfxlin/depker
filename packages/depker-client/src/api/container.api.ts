@@ -1,5 +1,7 @@
 import { Api } from "./client";
 import {
+  CreateContainerRequest,
+  CreateContainerResponse,
   DeleteContainerRequest,
   DeleteContainerResponse,
   ListContainerRequest,
@@ -17,6 +19,12 @@ import { Socket } from "socket.io-client";
 export class ContainerApi extends Api {
   public async list(request: ListContainerRequest) {
     const response = await this.client.client.get<ListContainerResponse>(`/api/containers`, { params: request });
+    return response.data;
+  }
+
+  public async create(request: CreateContainerRequest) {
+    const name = encodeURIComponent(request.name);
+    const response = await this.client.client.post<CreateContainerResponse>(`/api/containers/${name}`, request);
     return response.data;
   }
 

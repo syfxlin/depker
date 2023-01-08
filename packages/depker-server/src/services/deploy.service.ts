@@ -27,6 +27,7 @@ import { Cron } from "../entities/cron.entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DeployEvent } from "../events/deploy.event";
 import { CronEvent } from "../events/cron.event";
+import { command } from "../utils/command.util";
 
 export interface DeployBuildOptions {
   // options
@@ -48,8 +49,8 @@ export interface DeployStartOptions {
   hosts?: Record<string, string>;
   networks?: Record<string, string>;
   // extensions
-  commands?: string[];
-  entrypoints?: string[];
+  commands?: string;
+  entrypoints?: string;
   restart?: ServiceRestart;
   healthcheck?: ServiceHealthCheck;
   init?: boolean;
@@ -478,15 +479,15 @@ export class DeployService {
     };
 
     if (options.commands?.length) {
-      create.Cmd = options.commands;
+      create.Cmd = command(options.commands);
     }
     if (options.entrypoints?.length) {
-      create.Entrypoint = options.entrypoints;
+      create.Entrypoint = command(options.entrypoints);
     }
     if (options.healthcheck?.cmd) {
       const h = options.healthcheck;
       create.Healthcheck = {
-        Test: h.cmd,
+        Test: command(h.cmd),
         Retries: h.retries ?? 0,
         Interval: (h.interval ?? 0) * 1000 * 1000000,
         StartPeriod: (h.start ?? 0) * 1000 * 1000000,

@@ -196,14 +196,14 @@ export const ServiceConfigsTab: React.FC = () => {
             service.actions.update((prev) => ({ ...prev, healthcheck: value as any }));
           }}
           modals={(item, setItem) => [
-            <ArrayInput
+            <TextInput
               key="input:commands"
               label="Commands"
               description="Command to run to check health."
               placeholder="Health Check Commands"
               icon={<TbTerminal />}
               value={item.cmd}
-              onChange={(value) => setItem({ ...item, cmd: value })}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, cmd: e.target.value })}
             />,
             <NumberInput
               key="input:retries"
@@ -698,14 +698,14 @@ export const ServiceConfigsTab: React.FC = () => {
   const Commands = useMemo(
     () =>
       service.data && (
-        <ArrayInput
+        <TextInput
           label="Commands"
           description="Replace the service container start commands."
           placeholder="Commands Item"
           icon={<TbTerminal />}
           value={service.data.commands}
-          onChange={(value) => {
-            service.actions.update((prev) => ({ ...prev, commands: value }));
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            service.actions.update((prev) => ({ ...prev, commands: e.target.value }));
           }}
         />
       ),
@@ -715,14 +715,14 @@ export const ServiceConfigsTab: React.FC = () => {
   const EntryPoints = useMemo(
     () =>
       service.data && (
-        <ArrayInput
+        <TextInput
           label="Entry Points"
           description="Replace the service container entry points."
           placeholder="Entry Points Item"
           icon={<TbTerminal />}
           value={service.data.entrypoints}
-          onChange={(value) => {
-            service.actions.update((prev) => ({ ...prev, entrypoints: value }));
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            service.actions.update((prev) => ({ ...prev, entrypoints: e.target.value }));
           }}
         />
       ),

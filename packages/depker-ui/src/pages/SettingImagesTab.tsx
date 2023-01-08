@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { ActionIcon, Badge, Button, Select, Stack, Text, TextInput, Tooltip, useMantineTheme } from "@mantine/core";
 import { useCalling } from "../hooks/use-calling";
-import { TbList, TbNetwork, TbPackgeImport, TbPlus, TbTrash } from "react-icons/all";
+import { TbList, TbPackgeImport, TbPlus, TbTrash } from "react-icons/all";
 import { openModal } from "@mantine/modals";
 import { ListImageResponse } from "@syfxlin/depker-client";
 import { Lists, ListsFields, ListsItem } from "../components/layout/Lists";
@@ -163,7 +163,7 @@ export const SettingImagesTab: React.FC = () => {
                       label="Name"
                       description="Image name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
                       placeholder="Image Name"
-                      icon={<TbNetwork />}
+                      icon={<TbPackgeImport />}
                       value={item.name ?? ""}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
                     />,

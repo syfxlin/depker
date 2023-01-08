@@ -1,13 +1,26 @@
 import React, { ChangeEvent } from "react";
-import { ActionIcon, Badge, Menu, Table, Text, TextInput, Tooltip, useMantineTheme } from "@mantine/core";
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Menu,
+  Table,
+  Text,
+  Textarea,
+  TextInput,
+  Tooltip,
+  useMantineTheme,
+} from "@mantine/core";
 import { useCalling } from "../hooks/use-calling";
 import {
+  TbBox,
   TbDashboard,
   TbEdit,
-  TbNetwork,
+  TbList,
   TbPlayerPause,
   TbPlayerPlay,
   TbPlayerStop,
+  TbPlus,
   TbRefresh,
   TbSquare,
   TbTrash,
@@ -142,7 +155,7 @@ const Actions: React.FC<{
                         label="Name"
                         description="Container name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
                         placeholder="Container Name"
-                        icon={<TbNetwork />}
+                        icon={<TbBox />}
                         value={obj.name ?? ""}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setObj({ ...item, name: e.target.value })}
                       />,
@@ -210,7 +223,69 @@ export const SettingContainersTab: React.FC = () => {
       query={containers.query}
       values={containers.values}
       update={containers.update}
-      buttons={[]}
+      buttons={[
+        <Button
+          key="container:create"
+          size="xs"
+          leftIcon={<TbPlus />}
+          onClick={() =>
+            openModal({
+              title: "Create Container",
+              children: (
+                <ObjectModal
+                  button="Create"
+                  value={{}}
+                  onChange={async (value, actions) => {
+                    if (!value.name || !value.commands) {
+                      actions.failure(
+                        `Create container failure`,
+                        `Please enter the container name and run commands of the container to be created.`
+                      );
+                      return false;
+                    }
+                    try {
+                      await containers.actions.create({ name: value.name, commands: value.commands });
+                      actions.success(`Create container successful`, `The container has been successfully created.`);
+                      return true;
+                    } catch (e: any) {
+                      actions.failure(`Create container failure`, e);
+                      return false;
+                    }
+                  }}
+                >
+                  {(item, setItem) => [
+                    <TextInput
+                      key="input:name"
+                      required
+                      label="Name"
+                      description="Container name, which should be 1-128 in length and support the characters 'a-zA-Z0-9._-'."
+                      placeholder="Container Name"
+                      icon={<TbEdit />}
+                      value={item.name ?? ""}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setItem({ ...item, name: e.target.value })}
+                    />,
+                    <Textarea
+                      key="input:arguments"
+                      required
+                      label="Arguments"
+                      description="Docker run arguments"
+                      placeholder="Docker Run Arguments"
+                      autosize
+                      minRows={2}
+                      maxRows={5}
+                      icon={<TbList />}
+                      value={item.commands ?? ""}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setItem({ ...item, commands: e.target.value })}
+                    />,
+                  ]}
+                </ObjectModal>
+              ),
+            })
+          }
+        >
+          Create
+        </Button>,
+      ]}
     >
       {(item) => (
         <ListsItem
