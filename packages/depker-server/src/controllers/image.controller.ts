@@ -60,7 +60,7 @@ export class ImageController {
           .filter((c) => c.ImageID === i.Id)
           .map((c) => ({
             id: c.Id,
-            name: this.docker.containers._names(c.Names),
+            name: c.Names[0],
             image: c.Image,
           })),
       }));
@@ -71,7 +71,7 @@ export class ImageController {
   @Post("/:name")
   @AuthGuard()
   public async create(@Data() request: CreateImageRequest): Promise<CreateImageResponse> {
-    await this.docker.images.pull(request.name, true);
+    await this.docker.images.create(request.name, true);
     return { status: "success" };
   }
 

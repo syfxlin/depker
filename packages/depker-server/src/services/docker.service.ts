@@ -8,11 +8,32 @@ import { stdcopy } from "../utils/docker.util";
 import { DateTime } from "luxon";
 import { Setting } from "../entities/setting.entity";
 
-export class DockerContainer {
+export class DockerContainers {
   constructor(private readonly docker: DockerService) {}
 
   public async list() {
-    return await this.docker.listContainers({ all: true });
+    const infos = await this.docker.listContainers({ all: true });
+    for (const info of infos) {
+      // name
+      const names = info.Names.find((n) => n.substring(1).indexOf("/") === -1);
+      if (names) {
+        info.Names = [names.substring(1)];
+      } else {
+        info.Names = [info.Names.map((n) => n.substring(1)).join(",")];
+      }
+      // state
+      const state = info.State.toLowerCase();
+      if (state === "running") {
+        info.State = "running";
+      } else if (state === "restarting") {
+        info.State = "restarting";
+      } else if (state === "exited") {
+        info.State = "exited";
+      } else {
+        info.State = "stopped";
+      }
+    }
+    return infos;
   }
 
   public get(name: string) {
@@ -20,33 +41,28 @@ export class DockerContainer {
   }
 
   public async find(name: string) {
-    const infos = await this.findAll(name);
-    return infos.find((c) => this._names(c.Names) === name);
-  }
-
-  public async findAll(name: string) {
-    const infos = await this.docker.listContainers({ all: true });
-    return infos.filter((c) => c.Labels["depker.name"] === name);
+    const infos = await this.list();
+    return infos.find((c) => c.Labels["depker.name"] === name && c.Names[0] === name);
   }
 
   public async start(name: string) {
-    return await this.docker.getContainer(name).start();
+    return await this.get(name).start();
   }
 
   public async stop(name: string) {
-    return await this.docker.getContainer(name).stop();
+    return await this.get(name).stop();
   }
 
   public async restart(name: string) {
-    return await this.docker.getContainer(name).restart();
+    return await this.get(name).restart();
   }
 
   public async kill(name: string) {
-    return await this.docker.getContainer(name).kill();
+    return await this.get(name).kill();
   }
 
   public async rename(name: string, rename: string) {
-    return await this.docker.getContainer(name).rename({ name: rename });
+    return await this.get(name).rename({ name: rename });
   }
 
   public async create(options: ContainerCreateOptions) {
@@ -54,11 +70,11 @@ export class DockerContainer {
   }
 
   public async remove(name: string, force?: boolean) {
-    return await this.docker.getContainer(name).remove({ force });
+    return await this.get(name).remove({ force });
   }
 
   public async inspect(name: string) {
-    return await this.docker.getContainer(name).inspect();
+    return await this.get(name).inspect();
   }
 
   public async status(data: { name: string; type: ServiceType }): Promise<ServiceStatus>;
@@ -68,11 +84,15 @@ export class DockerContainer {
   ): Promise<ServiceStatus | Record<string, ServiceStatus>> {
     const items = data instanceof Array ? data : [data];
     const results: Record<string, ServiceStatus> = {};
-    const infos = await this.docker.listContainers({ all: true });
+    const infos = await this.list();
     for (const { name, type } of items) {
-      const info = infos.find((i) => this._names(i.Names) === name);
+      const info = infos.find((i) => i.Names[0] === name);
       if (type === "app") {
-        results[name] = this._status(info?.State);
+        if (info?.State) {
+          results[name] = info.State as ServiceStatus;
+        } else {
+          results[name] = "stopped";
+        }
       } else {
         if (info) {
           results[name] = "running";
@@ -86,7 +106,7 @@ export class DockerContainer {
 
   public async stats(name: string) {
     try {
-      const container = this.docker.getContainer(name);
+      const container = this.get(name);
 
       // metrics
       const stats = await container.stats({ stream: false });
@@ -146,10 +166,10 @@ export class DockerContainer {
   }
 
   public async purge(name: string) {
-    const infos = await this.docker.listContainers({ all: true });
-    const containers = infos.filter((c) => c.Labels["depker.name"] === name && this._names(c.Names) !== name);
+    const infos = await this.list();
+    const containers = infos.filter((c) => c.Labels["depker.name"] === name && c.Names[0] !== name);
     for (const info of containers) {
-      const container = this.docker.getContainer(info.Id);
+      const container = this.get(info.Id);
       try {
         await container.remove({ force: true });
       } catch (e: any) {
@@ -162,10 +182,10 @@ export class DockerContainer {
   }
 
   public async clean(name: string) {
-    const infos = await this.docker.listContainers({ all: true });
-    const containers = infos.filter((c) => c.Labels["depker.name"] === name || this._names(c.Names) === name);
+    const infos = await this.list();
+    const containers = infos.filter((c) => c.Labels["depker.name"] === name || c.Names[0] === name);
     for (const info of containers) {
-      const container = this.docker.getContainer(info.Id);
+      const container = this.get(info.Id);
       try {
         await container.remove({ force: true });
       } catch (e: any) {
@@ -178,7 +198,7 @@ export class DockerContainer {
   }
 
   public async run(image: string, commands: string[], lines: (line: string) => void, options: ContainerCreateOptions) {
-    await this.docker.images.pull(image);
+    await this.docker.images.create(image);
     const through = new PassThrough({ encoding: "utf-8" });
     const readline = createInterface({ input: through });
     readline.on("line", (line) => lines(line));
@@ -187,7 +207,7 @@ export class DockerContainer {
   }
 
   public async logs(name: string, tail?: number) {
-    const container = this.docker.getContainer(name as string);
+    const container = this.get(name);
     const stream = await container.logs({
       stdout: true,
       stderr: true,
@@ -212,7 +232,8 @@ export class DockerContainer {
   }
 
   public async exec(name: string, commands: string[]) {
-    const exec = await this.docker.getContainer(name).exec({
+    const container = this.get(name);
+    const exec = await container.exec({
       AttachStdin: true,
       AttachStdout: true,
       AttachStderr: true,
@@ -225,7 +246,7 @@ export class DockerContainer {
   }
 
   public async print(name: string) {
-    const container = this.docker.getContainer(name as string);
+    const container = this.get(name);
     const stream = await container.logs({
       stdout: true,
       stderr: true,
@@ -242,30 +263,12 @@ export class DockerContainer {
     });
   }
 
-  public _names(names: string[]) {
-    for (const full of names) {
-      const name = full.substring(1);
-      if (name.indexOf("/") === -1) {
-        return name;
-      }
-    }
-    return names.join(",");
-  }
-
-  public _status(state: string | undefined) {
-    if (state === "running") {
-      return "running";
-    } else if (state === "restarting") {
-      return "restarting";
-    } else if (state === "exited") {
-      return "exited";
-    } else {
-      return "stopped";
-    }
+  public async prune() {
+    await this.docker.pruneContainers();
   }
 }
 
-export class DockerImage {
+export class DockerImages {
   constructor(private readonly docker: DockerService) {}
 
   public async list() {
@@ -277,15 +280,11 @@ export class DockerImage {
   }
 
   public async find(name: string) {
-    const images = await this.docker.listImages();
+    const images = await this.list();
     return images.find((i) => i.RepoTags?.includes(name));
   }
 
-  public async remove(name: string) {
-    return await this.docker.getImage(name).remove();
-  }
-
-  public async pull(name: string, force?: boolean, lines?: (line: string) => void) {
+  public async create(name: string, force?: boolean, lines?: (line: string) => void) {
     if (force || !(await this.find(name))) {
       this.docker.logger.log(`Pulling image ${name}.`);
       await new Promise<void>((resolve, reject) => {
@@ -318,9 +317,17 @@ export class DockerImage {
     }
     return name;
   }
+
+  public async remove(name: string) {
+    return await this.get(name).remove();
+  }
+
+  public async prune() {
+    await this.docker.pruneImages();
+  }
 }
 
-export class DockerNetwork {
+export class DockerNetworks {
   constructor(private readonly docker: DockerService) {}
 
   public async depker() {
@@ -336,13 +343,12 @@ export class DockerNetwork {
   }
 
   public async find(name: string) {
-    const infos = await this.docker.listNetworks();
+    const infos = await this.list();
     return infos.find((n) => n.Name === name);
   }
 
   public async create(name: string) {
-    const infos = await this.docker.listNetworks();
-    const info = infos.find((n) => n.Name === name);
+    const info = await this.find(name);
     if (info) {
       return this.docker.getNetwork(info.Id);
     } else {
@@ -352,15 +358,19 @@ export class DockerNetwork {
   }
 
   public async remove(name: string) {
-    return await this.docker.getNetwork(name).remove();
+    return await this.get(name).remove();
   }
 
   public async connect(name: string, container: string) {
-    return await this.docker.getNetwork(name).connect({ Container: container });
+    return await this.get(name).connect({ Container: container });
   }
 
   public async disconnect(name: string, container: string) {
-    return await this.docker.getNetwork(name).disconnect({ Container: container, Force: true });
+    return await this.get(name).disconnect({ Container: container, Force: true });
+  }
+
+  public async prune() {
+    await this.docker.pruneNetworks();
   }
 }
 
@@ -369,9 +379,9 @@ export class DockerService extends Docker {
   public readonly logger = new Logger(DockerService.name);
 
   // values
-  public readonly containers = new DockerContainer(this);
-  public readonly images = new DockerImage(this);
-  public readonly networks = new DockerNetwork(this);
+  public readonly containers = new DockerContainers(this);
+  public readonly images = new DockerImages(this);
+  public readonly networks = new DockerNetworks(this);
 
   constructor() {
     if (!IS_DOCKER) {
@@ -385,10 +395,10 @@ export class DockerService extends Docker {
     }
   }
 
-  public async purge() {
+  public async prune() {
     const setting = await Setting.read();
     if (setting.purge) {
-      await Promise.all([this.pruneImages(), this.pruneVolumes()]);
+      await Promise.all([this.pruneImages(), this.pruneVolumes(), this.pruneNetworks()]);
     }
   }
 }

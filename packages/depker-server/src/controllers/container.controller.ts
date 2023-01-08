@@ -13,6 +13,7 @@ import {
 } from "../views/container.view";
 import { DockerService } from "../services/docker.service";
 import { AuthGuard } from "../guards/auth.guard";
+import { ServiceStatus } from "../entities/service.entity";
 
 @Controller("/api/containers")
 export class ContainerController {
@@ -29,7 +30,7 @@ export class ContainerController {
       if (!lower) {
         return true;
       }
-      const fields = [i.Id, this.docker.containers._names(i.Names), i.Image, i.ImageID, i.State, i.Status];
+      const fields = [i.Id, i.Names[0], i.Image, i.ImageID, i.State, i.Status];
       return fields.find((f) => f.toLowerCase().indexOf(lower) !== -1);
     });
 
@@ -43,7 +44,7 @@ export class ContainerController {
           return a.Id.localeCompare(b.Id);
         }
         if (by === "name") {
-          return this.docker.containers._names(a.Names).localeCompare(this.docker.containers._names(b.Names));
+          return a.Names[0].localeCompare(b.Names[0]);
         }
         if (by === "image") {
           return a.Image.localeCompare(b.Image);
@@ -65,12 +66,12 @@ export class ContainerController {
       .slice(offset, offset + limit)
       .map((i) => ({
         id: i.Id,
-        name: this.docker.containers._names(i.Names),
+        name: i.Names[0],
         image: i.Image,
         imageId: i.ImageID,
         command: i.Command,
         created: i.Created * 1000,
-        state: this.docker.containers._status(i.State),
+        state: i.State as ServiceStatus,
         status: i.Status,
         labels: i.Labels,
         networks: Object.entries(i.NetworkSettings.Networks).map(([name, network]) => ({

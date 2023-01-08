@@ -8,12 +8,8 @@ export class AuthGuardDecorator implements CanActivate {
 
   public async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest<Request>();
-    try {
-      await this.auths.request(request);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    await this.auths.request(request);
+    return true;
   }
 }
 

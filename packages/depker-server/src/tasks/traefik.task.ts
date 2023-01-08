@@ -30,8 +30,8 @@ export class TraefikTask implements OnModuleInit {
     fs.ensureDirSync(path.posix.join(dir, "conf.d"));
 
     const _traefik = async () => {
-      await this.docker.images.pull(IMAGES.TRAEFIK, setting.upgrade);
-      const traefik = containers.find((c) => c.Names.includes(`/${NAMES.TRAEFIK}`));
+      await this.docker.images.create(IMAGES.TRAEFIK, setting.upgrade);
+      const traefik = containers.find((c) => c.Names.includes(NAMES.TRAEFIK));
 
       if (traefik) {
         if (force) {
@@ -192,8 +192,8 @@ export class TraefikTask implements OnModuleInit {
     };
 
     const _logrotate = async () => {
-      await this.docker.images.pull(IMAGES.LOGROTATE, setting.upgrade);
-      const logrotate = containers.find((c) => c.Names.includes(`/${NAMES.LOGROTATE}`));
+      await this.docker.images.create(IMAGES.LOGROTATE, setting.upgrade);
+      const logrotate = containers.find((c) => c.Names.includes(NAMES.LOGROTATE));
 
       if (logrotate) {
         if (force) {

@@ -214,7 +214,7 @@ export class DeployService {
 
         // purge images and volumes
         process.nextTick(async () => {
-          await this.docker.purge();
+          await this.docker.prune();
         });
 
         // emit purged
@@ -458,6 +458,7 @@ export class DeployService {
       DEPKER_NAME: name,
       DEPKER_TIME: time,
       DEPKER_IMAGE: image,
+      DEPKER_CRON: cron,
     };
     const labels: Record<string, string> = {
       ...options.labels,
