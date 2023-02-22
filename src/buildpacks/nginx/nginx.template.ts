@@ -1,17 +1,22 @@
 export const dockerfile = `
+# from nginx
 FROM nginx:{{ config.nginx.version | d("alpine") }}
 
+# copy config
 COPY {{ nginx_config | render_write(".depker/nginx.conf") }} /etc/nginx/nginx.conf
 {% if ".depker/nginx" | exists %}
   COPY .depker/nginx /etc/nginx/conf.d/
 {% endif %}
 
+# copy project
 RUN rm -f /usr/share/nginx/html/*
 COPY --chown=nginx:nginx ./{{ config.nginx.root_path | d("dist") }} /usr/share/nginx/html
 
+# healthcheck
 HEALTHCHECK CMD nc -vz -w1 127.0.0.1 80
 
-{{ config.nginx.inject_dockerfile | render }}
+# inject
+{{ config.nginx.inject.dockerfile | render }}
 `;
 
 export const nginx_config = `
@@ -25,7 +30,7 @@ events {
 }
 
 include                     /etc/nginx/conf.d/*-root.conf;
-{{ config.nginx.inject_root | render }}
+{{ config.nginx.inject.root | render }}
 
 http {
   server_tokens             off;
@@ -89,10 +94,10 @@ http {
     {% endif %}
 
     include /etc/nginx/conf.d/*-server.conf;
-    {{ config.nginx.inject_server | render }}
+    {{ config.nginx.inject.server | render }}
   }
 
   include /etc/nginx/conf.d/*-http.conf;
-  {{ config.nginx.inject_http | render }}
+  {{ config.nginx.inject.http | render }}
 }
 `;

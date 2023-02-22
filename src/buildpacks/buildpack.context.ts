@@ -76,7 +76,7 @@ export class BuildpackContext {
     return file;
   }
 
-  public async render(value: string, context: Record<string, any>) {
+  public async render(value: string, context?: Record<string, any>) {
     // template
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
@@ -94,6 +94,9 @@ export class BuildpackContext {
     template.addGlobal("config", this.config);
     template.addGlobal("buildpack", this.buildpack);
     // filters
+    template.addFilter("command", function (value: string | string[]) {
+      return typeof value === "string" ? value : JSON.stringify(value);
+    });
     template.addFilter("render", function (this: FilterThis, value: string) {
       return value ? this.env.renderString(value, this.ctx) : "";
     });
@@ -122,7 +125,7 @@ export class BuildpackContext {
       const content = value ? this.env.renderString(value, this.ctx) : "";
       return self.overwrite(file, content);
     });
-    return template.renderString(value, context);
+    return template.renderString(value, context ?? {});
   }
 
   public async deploy(config?: Partial<ProjectConfig>) {
