@@ -592,6 +592,9 @@ export class DockerVolumes {
     };
 
     const inspect = async (ids: string[]): Promise<VolumeInspect[]> => {
+      if (!ids.length) {
+        return [];
+      }
       const { stdout } = await this.docker.execute([`volume`, `inspect`, `--format`, `{{json .}}`, ...ids]);
       return stdout
         .split("\n")
@@ -600,15 +603,18 @@ export class DockerVolumes {
     };
 
     const filter = async (infos: VolumeInspect[]) => {
+      if (!infos.length) {
+        return [];
+      }
       return infos
         .filter((i) => /^[0-9a-f]{64}$/.test(i.Name))
         .filter((i) => Math.abs(Date.now() - new Date(i.CreatedAt).getTime()) > 86_400_000)
         .map((i) => i.Name);
     };
 
-    const ids = await filter(await inspect(await list()));
-    if (ids.length) {
-      await this.docker.execute([`volume`, `rm`, ...ids]);
+    const names = await filter(await inspect(await list()));
+    if (names.length) {
+      await this.docker.execute([`volume`, `rm`, ...names]);
     }
   }
 }
