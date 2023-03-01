@@ -16,8 +16,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "watch": "tsup --watch",
-    "publish": "pnpm publish --access public --no-git-checks"
+    "watch": "tsup --watch"
   },
   "engines": {
     "node": ">=16.0.0",
