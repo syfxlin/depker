@@ -1,6 +1,6 @@
 {
   "name": "@syfxlin/depker",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "docker-based cloud deployment tool.",
   "keywords": [
     "depker",

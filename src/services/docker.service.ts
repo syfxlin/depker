@@ -53,12 +53,15 @@ export class DockerContainers {
       commands.push(filter);
     }
     const { stdout } = await this.docker.execute(commands);
-    return stdout.split("\n").map((i) => {
-      const data = JSON.parse(i);
-      data.Name = data.Names;
-      data.CreatedAt = new Date(data.CreatedAt).toISOString();
-      return data;
-    });
+    return stdout
+      .split("\n")
+      .filter((i) => i)
+      .map((i) => {
+        const data = JSON.parse(i);
+        data.Name = data.Names;
+        data.CreatedAt = new Date(data.CreatedAt).toISOString();
+        return data;
+      });
   }
 
   public async find(name: string): Promise<ContainerInfo | undefined> {
@@ -86,7 +89,7 @@ export class DockerContainers {
     const names = typeof name === "string" ? [name] : name;
     const commands = [`container`, `start`, ...names];
     const { stdout } = await this.docker.execute(commands);
-    const data = stdout.split("\n");
+    const data = stdout.split("\n").filter((i) => i);
     return typeof name === "string" ? data[0] : data;
   }
 
@@ -96,7 +99,7 @@ export class DockerContainers {
     const names = typeof name === "string" ? [name] : name;
     const commands = [`container`, `stop`, ...names];
     const { stdout } = await this.docker.execute(commands);
-    const data = stdout.split("\n");
+    const data = stdout.split("\n").filter((i) => i);
     return typeof name === "string" ? data[0] : data;
   }
 
@@ -106,7 +109,7 @@ export class DockerContainers {
     const names = typeof name === "string" ? [name] : name;
     const commands = [`container`, `restart`, ...names];
     const { stdout } = await this.docker.execute(commands);
-    const data = stdout.split("\n");
+    const data = stdout.split("\n").filter((i) => i);
     return typeof name === "string" ? data[0] : data;
   }
 
@@ -116,7 +119,7 @@ export class DockerContainers {
     const names = typeof name === "string" ? [name] : name;
     const commands = [`container`, `kill`, ...names];
     const { stdout } = await this.docker.execute(commands);
-    const data = stdout.split("\n");
+    const data = stdout.split("\n").filter((i) => i);
     return typeof name === "string" ? data[0] : data;
   }
 
@@ -129,7 +132,7 @@ export class DockerContainers {
       commands.push(`--force`);
     }
     const { stdout } = await this.docker.execute(commands);
-    const data = stdout.split("\n");
+    const data = stdout.split("\n").filter((i) => i);
     return typeof name === "string" ? data[0] : data;
   }
 
@@ -503,11 +506,14 @@ export class DockerImages {
       commands.push(filter);
     }
     const { stdout } = await this.docker.execute(commands);
-    return stdout.split("\n").map((i) => {
-      const data = JSON.parse(i);
-      data.CreatedAt = new Date(data.CreatedAt).toISOString();
-      return data;
-    });
+    return stdout
+      .split("\n")
+      .filter((i) => i)
+      .map((i) => {
+        const data = JSON.parse(i);
+        data.CreatedAt = new Date(data.CreatedAt).toISOString();
+        return data;
+      });
   }
 
   public async pull(name: string, force?: boolean): Promise<string> {
@@ -537,11 +543,14 @@ export class DockerNetworks {
       commands.push(filter);
     }
     const { stdout } = await this.docker.execute(commands);
-    return stdout.split("\n").map((i) => {
-      const data = JSON.parse(i);
-      data.CreatedAt = new Date(data.CreatedAt).toISOString();
-      return data;
-    });
+    return stdout
+      .split("\n")
+      .filter((i) => i)
+      .map((i) => {
+        const data = JSON.parse(i);
+        data.CreatedAt = new Date(data.CreatedAt).toISOString();
+        return data;
+      });
   }
 
   public async depker() {
@@ -570,18 +579,24 @@ export class DockerVolumes {
       commands.push(filter);
     }
     const { stdout } = await this.docker.execute(commands);
-    return stdout.split("\n").map((i) => JSON.parse(i));
+    return stdout
+      .split("\n")
+      .filter((i) => i)
+      .map((i) => JSON.parse(i));
   }
 
   public async prune() {
     const list = async (): Promise<string[]> => {
       const { stdout } = await this.docker.execute([`volume`, `ls`, `--quiet`, `--filter`, `dangling=true`]);
-      return stdout.split("\n");
+      return stdout.split("\n").filter((i) => i);
     };
 
     const inspect = async (ids: string[]): Promise<VolumeInspect[]> => {
       const { stdout } = await this.docker.execute([`volume`, `inspect`, `--format`, `{{json .}}`, ...ids]);
-      return stdout.split("\n").map((i) => JSON.parse(i));
+      return stdout
+        .split("\n")
+        .filter((i) => i)
+        .map((i) => JSON.parse(i));
     };
 
     const filter = async (infos: VolumeInspect[]) => {
