@@ -9,11 +9,11 @@ WORKDIR /app
 
 # copy package.json and lock file
 {% if "pnpm-lock.yaml" | exists %}
-  COPY package.json pnpm-lock.yaml .
+  COPY package.json pnpm-lock.yaml ./
 {% elif "yarn.lock" | exists %}
-  COPY package.json yarn.lock .
+  COPY package.json yarn.lock ./
 {% elif "package.json" | exists %}
-  COPY package*.json .
+  COPY package*.json ./
 {% endif %}
 
 # inject before install

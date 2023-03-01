@@ -1,24 +1,3 @@
-export const dockerfile = `
-# from nginx
-FROM nginx:{{ config.nginx.version | d("alpine") }}
-
-# copy config
-COPY {{ nginx_config | render_write(".depker/nginx.conf") }} /etc/nginx/nginx.conf
-{% if ".depker/nginx" | exists %}
-  COPY .depker/nginx /etc/nginx/conf.d/
-{% endif %}
-
-# copy project
-RUN rm -f /usr/share/nginx/html/*
-COPY --chown=nginx:nginx ./{{ config.nginx.root_path | d("dist") }} /usr/share/nginx/html
-
-# healthcheck
-HEALTHCHECK CMD nc -vz -w1 127.0.0.1 80
-
-# inject
-{{ config.nginx.inject.dockerfile | render }}
-`;
-
 export const nginx_config = `
 user                        nginx;
 worker_processes            auto;
@@ -66,24 +45,24 @@ http {
     {% if config.nginx.enable_dotfile != false %}
       location ~ /\\. {
         deny all;
-        access_log      off;
-        log_not_found   off;
+        access_log           off;
+        log_not_found        off;
         return 404;
       }
     {% endif %}
 
     {% if config.nginx.enable_cache != false %}
       location ~* \\.(?:css|js)$ {
-        access_log        off;
-        log_not_found     off;
-        add_header        Cache-Control "no-cache, public, must-revalidate, proxy-revalidate";
+        access_log           off;
+        log_not_found        off;
+        add_header           Cache-Control "no-cache, public, must-revalidate, proxy-revalidate";
       }
 
       location ~* \\.(?:jpg|jpeg|gif|png|ico|xml|webp|eot|woff|woff2|ttf|svg|otf)$ {
-        access_log        off;
-        log_not_found     off;
-        expires           60m;
-        add_header        Cache-Control "public";
+        access_log           off;
+        log_not_found        off;
+        expires              60m;
+        add_header           Cache-Control "public";
       }
     {% endif %}
     
@@ -100,4 +79,25 @@ http {
   include /etc/nginx/conf.d/*-http.conf;
   {{ config.nginx.inject.http | render }}
 }
+`;
+
+export const dockerfile = `
+# from nginx
+FROM nginx:{{ config.nginx.version | d("alpine") }}
+
+# copy config
+COPY {{ ${JSON.stringify(nginx_config)} | render_write(".depker/nginx.conf") }} /etc/nginx/nginx.conf
+{% if ".depker/nginx" | exists %}
+  COPY .depker/nginx /etc/nginx/conf.d/
+{% endif %}
+
+# copy project
+RUN rm -f /usr/share/nginx/html/*
+COPY --chown=nginx:nginx ./{{ config.nginx.root_path | d("dist") }} /usr/share/nginx/html
+
+# healthcheck
+HEALTHCHECK CMD nc -vz -w1 127.0.0.1 80
+
+# inject
+{{ config.nginx.inject.dockerfile | render }}
 `;
