@@ -9,7 +9,7 @@ export const NAMES = {
 };
 
 export const IMAGES = {
-  CONFIG: "syfxlin/depker-config:latest",
+  CONFIG: "ghcr.io/syfxlin/depker-config:latest",
   TRAEFIK: "traefik:latest",
   LOGROTATE: "vegardit/traefik-logrotate:latest",
 };

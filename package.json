@@ -10,11 +10,14 @@
   "license": "Apache-2.0",
   "private": false,
   "type": "module",
-  "bin": "dist/bin.js",
-  "main": "dist/main.js",
+  "main": "dist/index.js",
+  "bin": {
+    "depker": "dist/bin.js"
+  },
   "scripts": {
     "build": "tsup",
-    "watch": "tsup --watch"
+    "watch": "tsup --watch",
+    "publish": "pnpm publish --access public --no-git-checks"
   },
   "engines": {
     "node": ">=16.0.0",
