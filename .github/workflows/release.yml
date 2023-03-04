@@ -4,30 +4,28 @@ on:
   push:
     branches:
       - master
-    paths:
-      - bin/**
 jobs:
-  publish-docker:
-    name: Publish image
+  publish-npm:
+    name: Publish packages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2.0.1
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v3
+          version: 6.24.2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
-          images: ghcr.io/syfxlin/depker
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: ./bin
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Publish
+        run: pnpm dlx semantic-release --branches master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
