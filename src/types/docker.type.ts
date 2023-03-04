@@ -6,6 +6,10 @@ export type ContainerInfo = {
   Status: string;
   Size: string;
   CreatedAt: string;
+  Labels: string;
+  Ports: string;
+  Mounts: string;
+  Networks: string;
 };
 
 export type ContainerInspect = {

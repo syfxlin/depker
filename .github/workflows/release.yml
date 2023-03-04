@@ -1,8 +1,9 @@
 name: Release Cli
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - "v*"
+    branches:
+      - master
 jobs:
   publish-npm:
     name: Publish packages
@@ -24,6 +25,7 @@ jobs:
       - name: Build
         run: pnpm build
       - name: Publish
-        run: pnpm publish --access public --no-git-checks
+        run: pnpx semantic-release --branches master
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,9 +1,12 @@
+import os from "os";
 import fs from "fs-extra";
-import { IMAGES, NAMES, VOLUMES } from "../constants/depker.constant";
-import { LocalConfig, RemoteConfig } from "../types/config.type";
-import { docker, logger } from "../bin";
+import path from "path";
 import YAML from "yaml";
+import { IMAGES, NAMES, VERSION, VOLUMES } from "../constants/depker.constant";
+import { docker, logger } from "../bin";
+import { dockerfile, program } from "../constants/config.constant";
 import { Command } from "commander";
+import { LocalConfig, RemoteConfig } from "../types/config.type";
 
 export class ConfigService {
   private _local: LocalConfig | undefined = undefined;
@@ -19,18 +22,33 @@ export class ConfigService {
 
   public async remote(config?: RemoteConfig): Promise<RemoteConfig> {
     const _init = async () => {
+      logger.debug(`Remote config container not found, creating container.`);
+      const debug = this.cli.getOptionValue("debug");
+      const target = path.join(os.tmpdir(), `depker-config-${Date.now()}`);
+      await fs.ensureDir(target);
+      await fs.writeFile(path.join(target, `Dockerfile`), dockerfile);
+      await fs.writeFile(path.join(target, `depker.go`), program);
+      await docker.containers.build(IMAGES.CONFIG, target, {}, { stdio: debug ? "inherit" : "ignore" });
+      await docker.containers.run(NAMES.CONFIG, IMAGES.CONFIG, {
+        detach: true,
+        restart: "always",
+        labels: { "depker.version": VERSION },
+        volumes: [`${VOLUMES.CONFIG}:/config`],
+      });
+      logger.debug(`Remote config container init successfully.`);
+    };
+
+    const _ensure = async () => {
       const find = await docker.containers.find(NAMES.CONFIG);
       if (!find) {
-        await docker.containers.run(NAMES.CONFIG, IMAGES.CONFIG, {
-          detach: true,
-          restart: "always",
-          volumes: [`${VOLUMES.CONFIG}:/config`],
-        });
-        logger.debug(`Remote config container init successfully.`);
-      }
-      if (find && find.State !== "running") {
-        await docker.containers.start(NAMES.CONFIG);
-        logger.debug(`Remote config container start successfully.`);
+        await _init();
+      } else {
+        const state = find.State;
+        const match = find.Labels.match(/depker\.version=(\d+\.\d+\.\d+)/);
+        if (state !== "running" || match?.[1] !== VERSION) {
+          await docker.containers.remove(NAMES.CONFIG, true);
+          await _init();
+        }
       }
     };
 
@@ -56,7 +74,7 @@ export class ConfigService {
     };
 
     if (!this._remote) {
-      await _init();
+      await _ensure();
     }
 
     if (config) {

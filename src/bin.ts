@@ -1,7 +1,6 @@
 import os from "os";
 import path from "path";
-import pjson from "../package.json" assert { type: "json" };
-import { NAMES } from "./constants/depker.constant";
+import { NAMES, VERSION } from "./constants/depker.constant";
 import { ConfigService } from "./services/config.service";
 import { LoggerService } from "./services/logger.service";
 import { $auth } from "./commands/auth.command";
@@ -33,7 +32,7 @@ $docker(cli);
 $service(cli);
 $traefik(cli);
 
-cli.version(pjson.version, "-v, --version", "Output depker version number");
+cli.version(VERSION, "-v, --version", "Output depker version number");
 cli.option("--debug", "Enable debug mode", false);
 cli.option("--timestamp", "Enable timestamp output", false);
 cli.option("--config <config>", "Location of client config files", path.join(os.homedir(), ".depker"));
