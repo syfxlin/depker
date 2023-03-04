@@ -25,7 +25,7 @@ jobs:
       - name: Build
         run: pnpm build
       - name: Publish
-        run: pnpx semantic-release --branches master
+        run: pnpm dlx semantic-release --branches master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
