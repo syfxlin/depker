@@ -1,5 +1,9 @@
+import pjson from "../../package.json" assert { type: "json" };
+
 export const IS_WIN = process.platform === "win32";
 export const IS_DEV = process.env.NODE_ENV === "development";
+
+export const VERSION = pjson.version;
 
 export const NAMES = {
   DEPKER: "depker",
@@ -9,7 +13,7 @@ export const NAMES = {
 };
 
 export const IMAGES = {
-  CONFIG: "ghcr.io/syfxlin/depker-config:latest",
+  CONFIG: "syfxlin/depker-config:latest",
   TRAEFIK: "traefik:latest",
   LOGROTATE: "vegardit/traefik-logrotate:latest",
 };

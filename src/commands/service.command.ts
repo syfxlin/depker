@@ -30,6 +30,7 @@ export const $service = (cli: Command) => {
           logger.raw(`Total of ${fulls.length} services.`);
         }
       } else {
+        // TODO: 加上 ports
         logger.table(
           ["ID", "Name", "Image", "Status", "CreatedAt"],
           infos.map((i) => [$short(i.ID), i.Name, i.Image, i.State, $date(i.CreatedAt)])

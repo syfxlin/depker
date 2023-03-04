@@ -1,3 +1,27 @@
+// language=Dockerfile
+export const dockerfile = `
+# step: build
+FROM golang:alpine as builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN go build -o depker depker.go
+
+# step: depker
+FROM alpine:latest
+
+RUN apk add --no-cache vim nano
+
+COPY --from=builder /app/depker /usr/local/bin/depker
+RUN chmod +x /usr/local/bin/depker
+
+CMD depker hold
+`;
+
+// language=go
+export const program = `
 package main
 
 import (
@@ -66,7 +90,7 @@ func main() {
 		cmd := os.Args[2]
 		conf := "/config/config.yml"
 		if !exist(conf) {
-			write(conf, strings.NewReader("mail: admin@example.com\npass: password"))
+			write(conf, strings.NewReader("mail: admin@example.com\\npass: password"))
 		}
 		switch cmd {
 		case "write":
@@ -102,3 +126,4 @@ func main() {
 		}
 	}
 }
+`;
