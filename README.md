@@ -24,7 +24,7 @@ depker -v
 depker -h
 ```
 
-一些注意事项：
+Some important notes:
 
 - Depker is currently in the early testing phase, and its API may change at any time.
 - The documentation is currently being improved. Please use the 'help' command to get assistance for now.
