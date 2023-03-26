@@ -35,6 +35,7 @@ export type ProjectConfig = {
   name: string;
   buildpack: string;
   pull?: boolean;
+  cache?: boolean;
   restart?: "no" | "on-failure" | "always";
   commands?: string[];
   entrypoints?: string[];

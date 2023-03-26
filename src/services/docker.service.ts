@@ -459,6 +459,8 @@ export class DockerContainers {
     }
     if (options?.pull) {
       args.push(`--pull`);
+    }
+    if (options?.cache === false) {
       args.push(`--no-cache`);
     }
     if (options?.remove) {

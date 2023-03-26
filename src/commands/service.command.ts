@@ -10,7 +10,8 @@ export const $service = (cli: Command) => {
     .alias("services:deploy")
     .description("Deploy a service from local directory")
     .action(async (project: string) => {
-      await deploys.deploy((path.isAbsolute(project) ? project : path.join(process.cwd(), project)) ?? process.cwd());
+      const cwd = project ? (path.isAbsolute(project) ? project : path.join(process.cwd(), project)) : process.cwd();
+      await deploys.deploy(cwd);
     });
   cli
     .command("list")

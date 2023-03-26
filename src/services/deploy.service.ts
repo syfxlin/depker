@@ -106,6 +106,7 @@ export class DeployService {
     // options
     const options: ContainerBuildOptions = {
       pull: config.pull,
+      cache: config.cache,
       args: config.build_args,
       hosts: config.hosts,
       labels: config.labels,
@@ -169,7 +170,6 @@ export class DeployService {
     };
     const options: ContainerCreateOptions = {
       // basic
-      pull: config.pull ? "always" : "missing",
       restart: config.restart,
       commands: config.commands,
       entrypoints: config.entrypoints,
