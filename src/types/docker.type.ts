@@ -333,6 +333,7 @@ export type ContainerExecOptions = {
 export type ContainerBuildOptions = {
   file?: string;
   pull?: boolean;
+  cache?: boolean;
   remove?: boolean;
   // values
   args?: Record<string, string>;
