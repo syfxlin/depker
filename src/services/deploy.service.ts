@@ -152,6 +152,7 @@ export class DeployService {
     const rename = `${name}-${id}`;
 
     // args
+    const network = await docker.networks.depker();
     const envs: Record<string, string> = {
       ...config.secrets,
       DEPKER_ID: id,
@@ -166,7 +167,7 @@ export class DeployService {
       "depker.image": target,
       "depker.buildpack": buildpack,
       "traefik.enable": "true",
-      "traefik.docker.network": await docker.networks.depker(),
+      "traefik.docker.network": network,
     };
     const options: ContainerCreateOptions = {
       // basic
@@ -186,6 +187,7 @@ export class DeployService {
       ipv6: config.ipv6,
       host: config.host,
       hosts: config.hosts,
+      network: network,
       networks: config.networks,
       // resources
       cpu: config.cpu,
@@ -225,6 +227,7 @@ export class DeployService {
         labels[`traefik.http.routers.${name}-${id}-http.entrypoints`] = "http";
         labels[`traefik.http.routers.${name}-${id}-http.middlewares`] = `${name}-${id}-https`;
         labels[`traefik.http.middlewares.${name}-${id}-https.redirectscheme.scheme`] = "https";
+        middlewares.push(`${name}-${id}-https`);
       } else {
         // http
         labels[`traefik.http.routers.${name}-${id}-http.rule`] = rule;

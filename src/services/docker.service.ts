@@ -336,6 +336,10 @@ export class DockerContainers {
       args.push(`--hostname`);
       args.push(options.host);
     }
+    if (options?.network) {
+      args.push(`--network`);
+      args.push(options.network);
+    }
     for (const value of options?.dns ?? []) {
       args.push(`--dns`);
       args.push(value);
@@ -394,17 +398,19 @@ export class DockerContainers {
       args.push(value);
     }
 
-    // command
+    // entrypoint
     if (options?.entrypoints?.length) {
       args.push(`--entrypoint`);
       args.push(options.entrypoints.join(" "));
     }
-    if (options?.commands?.length) {
-      args.push(...args);
-    }
 
     // image
     args.push(image);
+
+    // command
+    if (options?.commands?.length) {
+      args.push(...options.commands);
+    }
 
     return args;
   }
