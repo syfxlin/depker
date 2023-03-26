@@ -294,6 +294,7 @@ export type ContainerCreateOptions = {
   ipv6?: string;
   host?: string;
   hosts?: Record<string, string>;
+  network?: string;
   networks?: string[];
 
   // resources
