@@ -20,12 +20,15 @@ jobs:
         with:
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
       - name: Build
-        run: pnpm build
-      - name: Publish
-        run: pnpm dlx semantic-release --branches master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o bin/depker.win.amd64.exe bin/depker.go
+          CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o bin/depker.win.arm64.exe bin/depker.go
+          CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o bin/depker.win.amd64.exe bin/depker.go
+          CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -o bin/depker.win.arm64.exe bin/depker.go
+          CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -o bin/depker.mac.amd64.exe bin/depker.go
+          CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -o bin/depker.mac.arm64.exe bin/depker.go
+#      - name: Publish
+#        run: pnpm dlx semantic-release --branches master
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

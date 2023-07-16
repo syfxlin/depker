@@ -23,7 +23,18 @@
       }
     ],
     "@semantic-release/release-notes-generator",
-    "@semantic-release/npm",
-    "@semantic-release/github"
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "label": "Windows amd64", "path": "bin/depker.win.amd64.exe" },
+          { "label": "Windows arm64", "path": "bin/depker.win.arm64.exe" },
+          { "label": "Linux amd64", "path": "bin/depker.linux.amd64" },
+          { "label": "Linux arm64", "path": "bin/depker.linux.arm64" },
+          { "label": "MacOS amd64", "path": "bin/depker.mac.amd64" },
+          { "label": "MacOS arm64", "path": "bin/depker.mac.arm64" }
+        ]
+      }
+    ]
   ]
 }
