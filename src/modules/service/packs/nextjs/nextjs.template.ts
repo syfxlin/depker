@@ -65,8 +65,6 @@ COPY . .
   RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env npm run build
 {% endif %}
 
-RUN ls
-
 # inject after build
 {{ config.nextjs.inject.after_build | render }}
 
