@@ -1,3 +1,5 @@
+import "https://deno.land/std@0.192.0/dotenv/load.ts";
+import { fs, path } from "./deps.ts";
 import { Dax, dax } from "./services/dax.service.ts";
 import { CliService } from "./services/cli.service.ts";
 import { LogService } from "./services/log.service.ts";
@@ -8,7 +10,6 @@ import { DepkerRunner } from "./types/runner.type.ts";
 import { DockerNode } from "./services/docker.node.ts";
 import { OpsService } from "./services/ops.service.ts";
 import { DepkerModule } from "./types/modules.type.ts";
-import { fs, path } from "./deps.ts";
 
 type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
 

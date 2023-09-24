@@ -8,6 +8,7 @@ export { fs, path, yaml, ignore, nunjucks };
 export { osType } from "https://deno.land/std@0.192.0/_util/os.ts";
 export { colors } from "https://deno.land/x/cliffy@v0.25.7/ansi/mod.ts";
 export { datetime } from "https://deno.land/x/ptera@v1.0.2/mod.ts";
+export { loadSync } from "https://deno.land/std@0.192.0/dotenv/mod.ts";
 export { Command } from "https://deno.land/x/cliffy@v0.25.7/command/mod.ts";
 export { Table } from "https://deno.land/x/cliffy@v0.25.7/table/mod.ts";
 export { EventEmitter } from "https://deno.land/x/event@2.0.1/mod.ts";

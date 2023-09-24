@@ -1,8 +1,7 @@
 import { Depker } from "../../depker.ts";
-import { fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
+import { fs, ignore, loadSync, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { BuildAtConfig, DeployAtConfig, Pack, ServiceConfig, StartAtConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../types/results.type.ts";
-import { loadSync } from "https://deno.land/std@0.192.0/dotenv/mod.ts";
 
 interface PackOptions {
   depker: Depker;
