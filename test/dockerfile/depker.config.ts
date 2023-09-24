@@ -1,4 +1,4 @@
-import { depker, docker, proxy, service } from "../../mod.ts";
+import { depker, docker, dockerfile, proxy, service } from "../../mod.ts";
 
 const app = depker();
 
@@ -7,9 +7,9 @@ app.use(service());
 app.master(docker());
 
 app.service(
-  image({
+  dockerfile({
     name: "nginx",
-    image: "nginx:alpine",
+    dockerfile: "FROM nginx:alpine",
   })
 );
 

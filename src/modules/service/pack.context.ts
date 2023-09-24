@@ -2,6 +2,7 @@ import { Depker } from "../../depker.ts";
 import { fs, ignore, nunjucks, osType, path } from "../../deps.ts";
 import { BuildAtConfig, DeployAtConfig, Pack, ServiceConfig, StartAtConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../types/results.type.ts";
+import { loadSync } from "https://deno.land/std@0.192.0/dotenv/mod.ts";
 
 interface PackOptions {
   depker: Depker;
@@ -40,6 +41,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     this.pack = options.pack;
     this.source = options.source;
     this.target = options.target;
+    this.config.secrets = { ...loadSync(), ...this.config.secrets };
   }
 
   public static async deployment(depker: Depker, config: ServiceConfig): Promise<void> {
@@ -218,17 +220,31 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       Args: config.build_args,
       Hosts: config.hosts,
       Labels: config.labels,
+      Secrets: {},
     };
 
     // write secrets
     if (config.secrets) {
       // prettier-ignore
-      const value = Object.entries(config.secrets).map(([k, v]) => `export ${k}=${v}\n`).join(``);
-      if (value) {
-        const file = await Deno.makeTempFile();
-        await Deno.writeTextFile(file, value);
-        options.Secrets = { secrets: file };
+      const values = Object.entries(config.secrets).map(([k, v]) => `${k}=${v}\n`);
+      if (values.length) {
+        const file1 = await Deno.makeTempFile();
+        await Deno.writeTextFile(file1, values.join(""));
+        const file2 = await Deno.makeTempFile();
+        await Deno.writeTextFile(file2, values.map((i) => `export ${i}`).join(""));
+        options.Secrets.secrets = file1;
+        options.Secrets.envs = file2;
       }
+    }
+    if (!options.Secrets?.secrets) {
+      const file = await Deno.makeTempFile();
+      await Deno.writeTextFile(file, "\n");
+      options.Secrets.secrets = file;
+    }
+    if (!options.Secrets?.envs) {
+      const file = await Deno.makeTempFile();
+      await Deno.writeTextFile(file, "\n");
+      options.Secrets.envs = file;
     }
 
     try {
@@ -372,6 +388,8 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     const labels: Record<string, string> = {
       ...config.labels,
       "depker.name": name,
+      "traefik.enable": "true",
+      "traefik.docker.network": network,
     };
     const options: ContainerCreateOptions = {
       // service

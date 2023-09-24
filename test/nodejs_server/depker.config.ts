@@ -1,4 +1,4 @@
-import { depker, docker, proxy, service } from "../../mod.ts";
+import { depker, docker, nodejs, proxy, service } from "../../mod.ts";
 
 const app = depker();
 

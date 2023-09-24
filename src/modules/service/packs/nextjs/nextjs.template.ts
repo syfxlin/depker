@@ -1,11 +1,12 @@
-import { dockerfile as dockerfile_nginx } from "../nginx/nginx.template.ts";
-
-export const dockerfile_common = `
+export const dockerfile = `
 # from nodejs
-FROM gplane/pnpm:{{ config.nodejs.version | d("alpine") }} as builder
+FROM gplane/pnpm:{{ config.nextjs.version | d("alpine") }} as builder
 
 # workdir
 WORKDIR /app
+
+# set max old space size
+ENV NODE_OPTIONS="--max_old_space_size={{ config.nextjs.memory | d("4096") }}"
 
 # copy package.json and lock file
 {% if "pnpm-lock.yaml" | exists %}
@@ -17,11 +18,11 @@ WORKDIR /app
 {% endif %}
 
 # inject before install
-{{ config.nodejs.inject.before_install | render }}
+{{ config.nextjs.inject.before_install | render }}
 
 # install node modules
-{% if config.nodejs.install %}
-  RUN {{ config.nodejs.install | command }}
+{% if config.nextjs.install %}
+  RUN {{ config.nextjs.install | command }}
 {% elif "pnpm-lock.yaml" | exists %}
   RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
       apk add --no-cache --virtual .gyp python3 make g++ && \
@@ -48,52 +49,45 @@ WORKDIR /app
 COPY . .
 
 # inject after install
-{{ config.nodejs.inject.after_install | render }}
-`;
-
-export const dockerfile_server = `
-${dockerfile_common}
-
-# set cmd
-ENTRYPOINT []
-{% if config.nodejs.start %}
-  CMD {{ config.nodejs.start | command }}
-{% elif "pnpm-lock.yaml" | exists %}
-  CMD ["pnpm", "run", "start"]
-{% elif "yarn.lock" | exists %}
-  CMD ["yarn", "run", "start"]
-{% elif "package.json" | exists %}
-  CMD ["npm", "run", "start"]
-{% elif "server.js" | exists %}
-  CMD ["node", "server.js"]
-{% elif "app.js" | exists %}
-  CMD ["node", "app.js"]
-{% elif "main.js" | exists %}
-  CMD ["node", "main.js"]
-{% elif "index.js" | exists %}
-  CMD ["node", "index.js"]
-{% endif %}
-`;
-
-export const dockerfile_static = `
-${dockerfile_common}
+{{ config.nextjs.inject.after_install | render }}
 
 # inject before build
-{{ config.nodejs.inject.before_build | render }}
+{{ config.nextjs.inject.before_build | render }}
 
 # build nodejs
-{% if config.nodejs.build %}
-  RUN {{ config.nodejs.build | command }}
+{% if config.nextjs.build %}
+  RUN {{ config.nextjs.build | command }}
 {% elif "pnpm-lock.yaml" | exists %}
-  RUN pnpm run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env pnpm run build
 {% elif "yarn.lock" | exists %}
-  RUN yarn run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env yarn run build
 {% elif "package.json" | exists %}
-  RUN npm run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env npm run build
 {% endif %}
 
-# inject after build
-{{ config.nodejs.inject.after_build | render }}
+RUN ls
 
-${dockerfile_nginx.replace("--chown=nginx:nginx ./", "--chown=nginx:nginx --from=builder /app/")}
+# inject after build
+{{ config.nextjs.inject.after_build | render }}
+
+# from nodejs
+FROM gplane/pnpm:{{ config.nextjs.version | d("alpine") }}
+
+# workdir
+WORKDIR /app
+
+# copy project
+COPY --from=builder /app/.next/standalone /app
+COPY --from=builder /app/.next/static /app/.next/static
+COPY --from=builder /app/public /app/public
+
+# inject
+{{ config.nextjs.inject.dockerfile | render }}
+
+# start nextjs
+EXPOSE 80
+ENV PORT=80
+ENV HOSTNAME=0.0.0.0
+HEALTHCHECK CMD nc -vz -w1 127.0.0.1 80
+CMD ["node", "server.js"]
 `;

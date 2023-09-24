@@ -21,7 +21,7 @@ export interface NodejsServerConfig extends ServiceConfig {
   nodejs?: {
     version?: string;
     install?: string | string[];
-    command?: string | string[];
+    start?: string | string[];
     inject?: {
       before_install?: string;
       after_install?: string;
