@@ -1,5 +1,5 @@
 import { Depker } from "../../depker.ts";
-import { fs, ignore, nunjucks, osType, path } from "../../deps.ts";
+import { fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { BuildAtConfig, DeployAtConfig, Pack, ServiceConfig, StartAtConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../types/results.type.ts";
 import { loadSync } from "https://deno.land/std@0.192.0/dotenv/mod.ts";
@@ -155,6 +155,8 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     const template = new nunjucks.Environment(loader, { autoescape: false, noCache: true });
     // functions
     template.addGlobal("env", self.env.bind(self));
+    template.addGlobal("json", JSON);
+    template.addGlobal("yaml", yaml);
     template.addGlobal("deno", Deno);
     template.addGlobal("self", self);
     template.addGlobal("depker", this.depker);

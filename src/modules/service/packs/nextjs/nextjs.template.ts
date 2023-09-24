@@ -9,11 +9,11 @@ WORKDIR /app
 ENV NODE_OPTIONS="--max_old_space_size={{ config.nextjs.memory | d("4096") }}"
 
 # copy package.json and lock file
-{% if "pnpm-lock.yaml" | exists %}
+{% if self.exists("pnpm-lock.yaml") %}
   COPY package.json pnpm-lock.yaml ./
-{% elif "yarn.lock" | exists %}
+{% elif self.exists("yarn.lock") %}
   COPY package.json yarn.lock ./
-{% elif "package.json" | exists %}
+{% elif self.exists("package.json") %}
   COPY package*.json ./
 {% endif %}
 
@@ -21,24 +21,24 @@ ENV NODE_OPTIONS="--max_old_space_size={{ config.nextjs.memory | d("4096") }}"
 {{ config.nextjs.inject.before_install | render }}
 
 # install node modules
-{% if config.nextjs.install %}
-  RUN {{ config.nextjs.install | command }}
-{% elif "pnpm-lock.yaml" | exists %}
+{% if config.nodejs.install %}
+  RUN {{ config.nodejs.install | command }}
+{% elif self.exists("pnpm-lock.yaml") %}
   RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       pnpm install --frozen-lockfile && \
       apk del .gyp
-{% elif "yarn.lock" | exists %}
+{% elif self.exists("yarn.lock") %}
   RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       yarn install --frozen-lockfile && \
       apk del .gyp
-{% elif "package-lock.json" | exists %}
+{% elif self.exists("package-lock.json") %}
   RUN --mount=type=cache,target=/root/.npm \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       npm ci && \
       apk del .gyp
-{% elif "package.json" | exists %}
+{% elif self.exists("package.json") %}
   RUN --mount=type=cache,target=/root/.npm \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       npm install && \
@@ -57,11 +57,11 @@ COPY . .
 # build nodejs
 {% if config.nextjs.build %}
   RUN {{ config.nextjs.build | command }}
-{% elif "pnpm-lock.yaml" | exists %}
+{% elif self.exists("pnpm-lock.yaml") %}
   RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env pnpm run build
-{% elif "yarn.lock" | exists %}
+{% elif self.exists("yarn.lock") %}
   RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env yarn run build
-{% elif "package.json" | exists %}
+{% elif self.exists("package.json") %}
   RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=secrets,dst=/app/.env npm run build
 {% endif %}
 

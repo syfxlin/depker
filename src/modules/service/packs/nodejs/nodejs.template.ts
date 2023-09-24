@@ -8,11 +8,11 @@ FROM gplane/pnpm:{{ config.nodejs.version | d("alpine") }} as builder
 WORKDIR /app
 
 # copy package.json and lock file
-{% if "pnpm-lock.yaml" | exists %}
+{% if self.exists("pnpm-lock.yaml") %}
   COPY package.json pnpm-lock.yaml ./
-{% elif "yarn.lock" | exists %}
+{% elif self.exists("yarn.lock") %}
   COPY package.json yarn.lock ./
-{% elif "package.json" | exists %}
+{% elif self.exists("package.json") %}
   COPY package*.json ./
 {% endif %}
 
@@ -22,22 +22,22 @@ WORKDIR /app
 # install node modules
 {% if config.nodejs.install %}
   RUN {{ config.nodejs.install | command }}
-{% elif "pnpm-lock.yaml" | exists %}
+{% elif self.exists("pnpm-lock.yaml") %}
   RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       pnpm install --frozen-lockfile && \
       apk del .gyp
-{% elif "yarn.lock" | exists %}
+{% elif self.exists("yarn.lock") %}
   RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       yarn install --frozen-lockfile && \
       apk del .gyp
-{% elif "package-lock.json" | exists %}
+{% elif self.exists("package-lock.json") %}
   RUN --mount=type=cache,target=/root/.npm \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       npm ci && \
       apk del .gyp
-{% elif "package.json" | exists %}
+{% elif self.exists("package.json") %}
   RUN --mount=type=cache,target=/root/.npm \
       apk add --no-cache --virtual .gyp python3 make g++ && \
       npm install && \
@@ -49,6 +49,25 @@ COPY . .
 
 # inject after install
 {{ config.nodejs.inject.after_install | render }}
+
+# inject before build
+{{ config.nodejs.inject.before_build | render }}
+
+# build nodejs
+{% if config.nodejs.build %}
+  RUN {{ config.nodejs.build | command }}
+{% elif self.exists("package.json") and json.parse(self.read("package.json")).scripts.build %}
+  {% if self.exists("pnpm-lock.yaml") %}
+    RUN pnpm run build
+  {% elif self.exists("yarn.lock") %}
+    RUN yarn run build
+  {% elif self.exists("package.json") %}
+    RUN npm run build
+  {% endif %}
+{% endif %}
+
+# inject after build
+{{ config.nodejs.inject.after_build | render }}
 `;
 
 export const dockerfile_server = `
@@ -58,42 +77,27 @@ ${dockerfile_common}
 ENTRYPOINT []
 {% if config.nodejs.start %}
   CMD {{ config.nodejs.start | command }}
-{% elif "pnpm-lock.yaml" | exists %}
-  CMD ["pnpm", "run", "start"]
-{% elif "yarn.lock" | exists %}
-  CMD ["yarn", "run", "start"]
-{% elif "package.json" | exists %}
-  CMD ["npm", "run", "start"]
-{% elif "server.js" | exists %}
+{% elif self.exists("package.json") and json.parse(self.read("package.json")).scripts.start %}
+  {% if self.exists("pnpm-lock.yaml") %}
+    CMD ["pnpm", "run", "start"]
+  {% elif self.exists("yarn.lock") %}
+    CMD ["yarn", "run", "start"]
+  {% elif self.exists("package.json") %}
+    CMD ["npm", "run", "start"]
+  {% endif %}
+{% elif self.exists("server.js") %}
   CMD ["node", "server.js"]
-{% elif "app.js" | exists %}
+{% elif self.exists("app.js") %}
   CMD ["node", "app.js"]
-{% elif "main.js" | exists %}
+{% elif self.exists("main.js") %}
   CMD ["node", "main.js"]
-{% elif "index.js" | exists %}
+{% elif self.exists("index.js") %}
   CMD ["node", "index.js"]
 {% endif %}
 `;
 
 export const dockerfile_static = `
 ${dockerfile_common}
-
-# inject before build
-{{ config.nodejs.inject.before_build | render }}
-
-# build nodejs
-{% if config.nodejs.build %}
-  RUN {{ config.nodejs.build | command }}
-{% elif "pnpm-lock.yaml" | exists %}
-  RUN pnpm run build
-{% elif "yarn.lock" | exists %}
-  RUN yarn run build
-{% elif "package.json" | exists %}
-  RUN npm run build
-{% endif %}
-
-# inject after build
-{{ config.nodejs.inject.after_build | render }}
 
 ${dockerfile_nginx.replace("--chown=nginx:nginx ./", "--chown=nginx:nginx --from=builder /app/")}
 `;

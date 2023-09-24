@@ -87,7 +87,7 @@ FROM nginx:{{ config.nginx.version | d("alpine") }}
 
 # copy config
 COPY {{ ${JSON.stringify(nginx_config)} | render_write(".depker/nginx.conf") }} /etc/nginx/nginx.conf
-{% if ".depker/nginx" | exists %}
+{% if self.exists(".depker/nginx") %}
   COPY .depker/nginx /etc/nginx/conf.d/
 {% endif %}
 
