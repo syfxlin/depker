@@ -2,7 +2,7 @@ import * as fs from "https://deno.land/std@0.192.0/fs/mod.ts";
 import * as path from "https://deno.land/std@0.192.0/path/mod.ts";
 import * as yaml from "https://deno.land/std@0.192.0/yaml/mod.ts";
 import ignore from "https://esm.sh/v128/ignore@5.2.4/deno/ignore.mjs";
-import nunjucks from "https://deno.land/x/nunjucks@3.2.3-2/mod.js";
+import nunjucks from "https://deno.land/x/nunjucks@3.2.4-2/mod.js";
 
 export { fs, path, yaml, ignore, nunjucks };
 export { osType } from "https://deno.land/std@0.192.0/_util/os.ts";
