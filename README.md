@@ -17,7 +17,7 @@ Depker (**dep**loyment, doc**ker**) is a deployment tool based on Docker, design
 ## Installation
 
 1. [Install Deno](https://deno.land/manual/getting_started/installation)
-2. Run the command `deno install -A https://raw.githubusercontent.com/syfxlin/depker/master/bin.ts --root /usr/local --name depker` to install depker.
+2. Run the command `deno install -A https://raw.githubusercontent.com/syfxlin/depker/master/depker.ts --root /usr/local --name depker` to install depker.
 3. Refer to the examples in the [test](https://github.com/syfxlin/depker/tree/master/test) folder to write your `depker.config.ts` configuration file
 4. Run the command, such as `depker deploy`
 
