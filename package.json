@@ -11,7 +11,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "deno run -A bin.ts"
+    "dev": "deno run -A depker.ts"
   },
   "engines": {
     "node": ">=16.0.0",
