@@ -45,7 +45,9 @@ export class Depker {
     this._master = new DockerNode(this);
     this._runner = this._master;
     // module
-    this._modules = [new ProxyModule(this), new ServiceModule(this)];
+    this._modules = [];
+    this._modules.push(new ProxyModule(this));
+    this._modules.push(new ServiceModule(this));
   }
 
   public static async create(): Promise<DepkerApp> {
