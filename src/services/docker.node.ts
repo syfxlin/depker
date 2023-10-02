@@ -58,15 +58,15 @@ export type DockerNodeOptions =
   | {
       type: "http";
       host: string;
-      port: number | string;
+      port?: number | string;
     }
   | {
       type: "https";
       host: string;
-      port: number | string;
-      ca: string;
-      cert: string;
-      key: string;
+      port?: number | string;
+      ca?: string;
+      cert?: string;
+      key?: string;
       verify?: boolean;
     };
 
@@ -94,24 +94,30 @@ export class DockerNode implements DepkerMaster {
     } else if (options?.type === "ssh") {
       this.docker = [`docker`, `--host`, `ssh://${options.host}`];
     } else if (options?.type === "http") {
-      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port}`];
+      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port ?? 2375}`];
     } else if (options?.type === "https") {
-      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port}`];
+      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port ?? 2376}`];
       // ca
-      const ca = Deno.makeTempFileSync();
-      Deno.writeTextFileSync(ca, options.ca);
-      this.docker.push(`--tlscacert`);
-      this.docker.push(ca);
+      if (options.ca) {
+        const ca = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(ca, options.ca);
+        this.docker.push(`--tlscacert`);
+        this.docker.push(ca);
+      }
       // cert
-      const cert = Deno.makeTempFileSync();
-      Deno.writeTextFileSync(cert, options.cert);
-      this.docker.push(`--tlscert`);
-      this.docker.push(cert);
+      if (options.cert) {
+        const cert = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(cert, options.cert);
+        this.docker.push(`--tlscert`);
+        this.docker.push(cert);
+      }
       // key
-      const key = Deno.makeTempFileSync();
-      Deno.writeTextFileSync(key, options.key);
-      this.docker.push(`--tlskey`);
-      this.docker.push(key);
+      if (options.key) {
+        const key = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(key, options.key);
+        this.docker.push(`--tlskey`);
+        this.docker.push(key);
+      }
       // verify
       if (options.verify !== false) {
         this.docker.push(`--tlsverify`);
