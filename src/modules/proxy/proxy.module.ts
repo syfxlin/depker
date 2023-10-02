@@ -3,10 +3,6 @@ import { Command } from "../../deps.ts";
 import { ProxyConfig } from "./proxy.type.ts";
 import { Depker } from "../../depker.ts";
 
-export function proxy() {
-  return (depker: Depker) => new ProxyModule(depker);
-}
-
 export class ProxyModule implements DepkerModule {
   public static readonly NAME = "proxy";
   public static readonly IMAGE = "traefik:latest";

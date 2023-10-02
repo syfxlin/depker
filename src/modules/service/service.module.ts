@@ -15,21 +15,12 @@ import { Command } from "../../deps.ts";
 import { PackContext } from "./pack.context.ts";
 import { DepkerModule } from "../../types/modules.type.ts";
 import { ServiceConfig } from "./service.type.ts";
-import { proxy, ProxyModule } from "../proxy/proxy.module.ts";
+import { ProxyModule } from "../proxy/proxy.module.ts";
 
 declare global {
   interface DepkerApp {
     service(config: ServiceConfig): DepkerApp;
   }
-}
-
-export function service() {
-  return (depker: Depker) => {
-    const module = new ServiceModule(depker);
-    depker.inject(ServiceModule.NAME, module.register.bind(module));
-    depker.dependency(ProxyModule.NAME, () => proxy());
-    return module;
-  };
 }
 
 export class ServiceModule implements DepkerModule {
@@ -40,6 +31,8 @@ export class ServiceModule implements DepkerModule {
   constructor(depker: Depker) {
     this._depker = depker;
     this._services = [];
+    this._depker.inject(ServiceModule.NAME, this.register.bind(this));
+    this._depker.dependency(ProxyModule.NAME, () => new ProxyModule(this._depker));
   }
 
   public get name() {
