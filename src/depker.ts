@@ -10,6 +10,8 @@ import { DepkerRunner } from "./types/runner.type.ts";
 import { DockerNode } from "./services/docker.node.ts";
 import { OpsService } from "./services/ops.service.ts";
 import { DepkerModule } from "./types/modules.type.ts";
+import { ProxyModule } from "./modules/proxy/proxy.module.ts";
+import { ServiceModule } from "./modules/service/service.module.ts";
 
 type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
 
@@ -43,7 +45,7 @@ export class Depker {
     this._master = new DockerNode(this);
     this._runner = this._master;
     // module
-    this._modules = [];
+    this._modules = [new ProxyModule(this), new ServiceModule(this)];
   }
 
   public static async create(): Promise<DepkerApp> {
