@@ -42,7 +42,7 @@ export interface Template<TE = {}>
 export type Dax<TExtras = {}> = Template<TExtras> & TExtras;
 
 export function dax<TExtras = {}>(): Dax<TExtras> {
-  const command = new CommandBuilder().stdin("null").stdout("piped").stderr("inherit");
+  const command = new CommandBuilder().stdin("null").stdout("piped").stderr("inherit").exportEnv();
   // @ts-ignore
   return build$({ commandBuilder: command });
 }
