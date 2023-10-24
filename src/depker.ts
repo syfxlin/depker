@@ -20,6 +20,10 @@ export function depker(): DepkerApp {
 }
 
 export class Depker {
+  // info
+  public readonly name: string;
+  public readonly version: string;
+  public readonly description: string;
   // runner
   private _master: DepkerMaster;
   private _runner: DepkerRunner;
@@ -34,6 +38,10 @@ export class Depker {
   private readonly _modules: Array<DepkerModule>;
 
   constructor() {
+    // info
+    this.name = "depker";
+    this.version = /\/syfxlin\/depker\/(\w+)\/mod\.ts/.exec(import.meta.url)?.[1] ?? "master";
+    this.description = "docker-based cloud deployment tool.";
     // service
     this._dax = dax();
     this._cli = new CliService(this);

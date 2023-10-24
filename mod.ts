@@ -1,3 +1,5 @@
+import { depker } from "./src/depker.ts";
+
 // services
 export * from "./src/depker.ts";
 export * from "./src/services/docker.node.ts";
@@ -20,3 +22,6 @@ export * from "./src/types/master.type.ts";
 export * from "./src/types/runner.type.ts";
 export * from "./src/types/results.type.ts";
 export * from "./src/types/modules.type.ts";
+
+// default
+export default depker();
