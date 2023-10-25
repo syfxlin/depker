@@ -225,7 +225,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     };
 
     // write secrets
-    if (config.secrets) {
+    if (config.secrets && options.Secrets) {
       // prettier-ignore
       const values = Object.entries(config.secrets).map(([k, v]) => `${k}=${v}\n`);
       if (values.length) {
@@ -237,12 +237,12 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         options.Secrets.envs = file2;
       }
     }
-    if (!options.Secrets?.secrets) {
+    if (!options.Secrets?.secrets && options.Secrets) {
       const file = await Deno.makeTempFile();
       await Deno.writeTextFile(file, "\n");
       options.Secrets.secrets = file;
     }
-    if (!options.Secrets?.envs) {
+    if (!options.Secrets?.envs && options.Secrets) {
       const file = await Deno.makeTempFile();
       await Deno.writeTextFile(file, "\n");
       options.Secrets.envs = file;

@@ -280,11 +280,14 @@ export class ProxyModule implements DepkerModule {
         ...config.labels,
       },
       Envs: {
-        // dashboard
+        // basic config
+        TRAEFIK_PING: "true",
         TRAEFIK_API: "true",
         TRAEFIK_API_DASHBOARD: "true",
-        // healthcheck
-        TRAEFIK_PING: "true",
+        TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY: "true",
+        TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT: "30",
+        TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_IDLECONNTIMEOUT: "90",
+        TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_RESPONSEHEADERTIMEOUT: "0",
         // entry points
         TRAEFIK_ENTRYPOINTS_HTTP: "true",
         TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS: ":80",
