@@ -1,4 +1,4 @@
-import "https://deno.land/std@0.204.0/dotenv/load.ts";
+import "https://deno.land/std@0.210.0/dotenv/load.ts";
 import { fs, path } from "./deps.ts";
 import { Dax, dax } from "./services/dax.service.ts";
 import { CliService } from "./services/cli.service.ts";
