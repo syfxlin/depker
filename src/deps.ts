@@ -12,13 +12,13 @@ export { loadSync } from "https://deno.land/std@0.210.0/dotenv/mod.ts";
 export { Command } from "https://deno.land/x/cliffy@v0.25.7/command/mod.ts";
 export { Table } from "https://deno.land/x/cliffy@v0.25.7/table/mod.ts";
 export { EventEmitter } from "https://deno.land/x/event@2.0.1/mod.ts";
-export { build$, CommandBuilder, RequestBuilder } from "https://deno.land/x/dax@0.35.0/mod.ts";
+export { build$, CommandBuilder, RequestBuilder } from "https://deno.land/x/dax@0.36.0/mod.ts";
 export { getFileInfoType, isSubdir, toPathString } from "https://deno.land/std@0.210.0/fs/_util.ts";
-export type { $BuiltInProperties } from "https://deno.land/x/dax@0.35.0/mod.ts";
+export type { $BuiltInProperties } from "https://deno.land/x/dax@0.36.0/mod.ts";
 
 declare module "https://deno.land/x/dax@0.31.0/mod.ts" {
   // @ts-ignore
-  import { CommandBuilder as CB, RequestBuilder as RB } from "https://deno.land/x/dax@0.35.0/mod.ts";
+  import { CommandBuilder as CB, RequestBuilder as RB } from "https://deno.land/x/dax@0.36.0/mod.ts";
 
   // @ts-ignore
   interface CommandBuilder extends CB {
