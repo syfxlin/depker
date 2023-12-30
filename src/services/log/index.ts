@@ -1,9 +1,10 @@
-import { colors, datetime, nunjucks, Table, yaml } from "../deps.ts";
-import { Depker } from "../depker.ts";
+import { Depker } from "../../depker.ts";
+import { colors, datetime, nunjucks, Table, yaml } from "../../deps.ts";
+import { LogLevel } from "./types.ts";
 
-export type LogLevel = "raw" | "step" | "debug" | "done" | "info" | "error";
+export * from "./types.ts";
 
-export class LogService {
+export class LogModule {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(private readonly depker: Depker) {}
 
@@ -34,10 +35,6 @@ export class LogService {
     template.addFilter("yaml", (value: any) => yaml.stringify(value), false);
     // @ts-ignore
     return template.renderString(value, context, undefined, undefined).trim();
-  }
-
-  public filter(value: string, context: Record<string, any>) {
-    return value ? this.parse(`{{ ${value} }}`, context) === "true" : true;
   }
 
   public json(obj: any) {

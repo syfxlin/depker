@@ -1,0 +1,15 @@
+export const defaults = [
+  `api`,
+  `ping`,
+  `serverstransport.insecureskipverify=true`,
+  `serverstransport.maxidleconnsperhost=250`,
+  `entrypoints.http.address=:80`,
+  `entrypoints.https.address=:443`,
+  `providers.file.watch=true`,
+  `providers.file.file=/etc/traefik/config.yaml`,
+  `providers.docker.exposedbydefault=false`,
+  `providers.docker.endpoint=unix:///var/run/docker.sock`,
+  `certificatesresolvers.depker.acme.email=admin@example.com`,
+  `certificatesresolvers.depker.storage=/etc/traefik/acme.json`,
+  `certificatesresolvers.depker.httpchallenge.entrypoint=http`,
+];

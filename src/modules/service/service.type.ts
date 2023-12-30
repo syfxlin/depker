@@ -20,6 +20,9 @@ export interface BuildAtConfig {
   labels?: Record<string, string>;
   secrets?: Record<string, string>;
   build_args?: Record<string, string>;
+
+  // extension
+  [key: number | string | symbol]: any;
 }
 
 export interface StartAtConfig {
@@ -90,6 +93,9 @@ export interface StartAtConfig {
   user?: string;
   workdir?: string;
   groups?: string[];
+
+  // extension
+  [key: number | string | symbol]: any;
 }
 
 export interface DeployAtConfig extends BuildAtConfig, StartAtConfig {

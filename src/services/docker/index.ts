@@ -38,10 +38,10 @@ import {
   VolumeOperation,
   VolumeRemoveOptions,
   volumes,
-} from "../types/results.type.ts";
-import { DepkerMaster } from "../types/master.type.ts";
-import { Depker } from "../depker.ts";
-import { CommandBuilder } from "../deps.ts";
+} from "../../types/results.type.ts";
+import { DepkerMaster } from "../../types/master.type.ts";
+import { Depker } from "../../depker.ts";
+import { CommandBuilder } from "../../deps.ts";
 
 export type DockerNodeOptions =
   | {
@@ -131,7 +131,10 @@ export class DockerNode implements DepkerMaster {
 }
 
 class DockerContainerOperation implements ContainerOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `container`];
@@ -230,15 +233,15 @@ class DockerContainerOperation implements ContainerOperation {
   }
 
   public create(name: string, target: string, options?: ContainerCreateOptions): CommandBuilder {
-    return this.depker.dax`${this.docker} create ${this._create_args(name, target, options)}`;
+    return this.depker.dax`${this.docker} create ${this.create_args(name, target, options)}`;
   }
 
   public run(name: string, target: string, options?: ContainerRunOptions): CommandBuilder {
-    return this.depker.dax`${this.docker} run ${this._run_args(name, target, options)}`;
+    return this.depker.dax`${this.docker} run ${this.run_args(name, target, options)}`;
   }
 
   public exec(name: string, commands: string[], options?: ContainerExecOptions): CommandBuilder {
-    return this.depker.dax`${this.docker} exec ${this._exec_args(name, commands, options)}`;
+    return this.depker.dax`${this.docker} exec ${this.exec_args(name, commands, options)}`;
   }
 
   public logs(name: string, options?: ContainerLogsOptions): CommandBuilder {
@@ -306,7 +309,7 @@ class DockerContainerOperation implements ContainerOperation {
     await this.depker.dax`${this.docker} wait ${name}`;
   }
 
-  private _create_args(name: string, target: string, options?: ContainerCreateOptions) {
+  private create_args(name: string, target: string, options?: ContainerCreateOptions) {
     const args: string[] = [`--name`, name];
 
     // basic
@@ -470,7 +473,7 @@ class DockerContainerOperation implements ContainerOperation {
     return args;
   }
 
-  private _run_args(name: string, image: string, options?: ContainerRunOptions) {
+  private run_args(name: string, image: string, options?: ContainerRunOptions) {
     const args: string[] = [];
 
     if (options?.Tty) {
@@ -487,10 +490,10 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(options.DetachKeys);
     }
 
-    return [...args, ...this._create_args(name, image, options)];
+    return [...args, ...this.create_args(name, image, options)];
   }
 
-  private _exec_args(name: string, commands: string[], options?: ContainerExecOptions) {
+  private exec_args(name: string, commands: string[], options?: ContainerExecOptions) {
     const args: string[] = [];
 
     if (options?.Tty) {
@@ -529,7 +532,10 @@ class DockerContainerOperation implements ContainerOperation {
 }
 
 class DockerBuilderOperation implements BuilderOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   public build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder {
     const args = [`--tag`, name];
@@ -590,7 +596,10 @@ class DockerBuilderOperation implements BuilderOperation {
 }
 
 class DockerNetworkOperation implements NetworkOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `network`];
@@ -703,7 +712,10 @@ class DockerNetworkOperation implements NetworkOperation {
 }
 
 class DockerVolumeOperation implements VolumeOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `volume`];
@@ -773,7 +785,10 @@ class DockerVolumeOperation implements VolumeOperation {
 }
 
 class DockerImageOperation implements ImageOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `image`];
