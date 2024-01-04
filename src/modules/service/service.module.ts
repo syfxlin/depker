@@ -9,17 +9,49 @@ import {
   ContainerStatsOptions,
   ContainerStopOptions,
   ContainerTopOptions,
-} from "../../types/results.type.ts";
-import { Depker } from "../../depker.ts";
-import { Command } from "../../deps.ts";
+} from "../../services/docker/types.ts";
+import { Depker, DepkerModule } from "../../depker.ts";
+import { Command, EnumType } from "../../deps.ts";
 import { PackContext } from "./pack.context.ts";
-import { DepkerModule } from "../../types/modules.type.ts";
 import { ServiceConfig } from "./service.type.ts";
 import { ProxyModule } from "../proxy/proxy.module.ts";
+import { ArgumentValue } from "https://deno.land/x/cliffy@v0.25.7/flags/types.ts";
 
 declare global {
   interface DepkerApp {
     service(config: ServiceConfig): DepkerApp;
+  }
+}
+
+type PruneSelect = "all" | "pre";
+
+type ActiveSelect = "active" | "latest" | string;
+
+type AllSelect = "active" | "latest" | "inactive" | "all" | string;
+
+class PruneSelectType extends EnumType<PruneSelect> {
+  constructor() {
+    super(["all", "pre"]);
+  }
+}
+
+class ActiveSelectType extends EnumType<ActiveSelect> {
+  constructor() {
+    super(["active", "latest", "<container>"]);
+  }
+
+  public parse(type: ArgumentValue): "active" | "latest" | string {
+    return type.value;
+  }
+}
+
+class AllSelectType extends EnumType<AllSelect> {
+  constructor() {
+    super(["active", "latest", "inactive", "all", "<container>"]);
+  }
+
+  public parse(type: ArgumentValue): "active" | "latest" | "inactive" | "all" | string {
+    return type.value;
   }
 }
 
@@ -40,7 +72,7 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async init() {
-    const service = new Command<Record<string, any>>().description("Manage services").default("list");
+    const service = new Command().description("Manage services").alias("service").default("list");
     this._deploy(service);
     this._list(service);
     this._inspect(service);
@@ -56,7 +88,7 @@ export class ServiceModule implements DepkerModule {
     this._stats(service);
     this._copy(service);
     this._wait(service);
-    this.depker.cli.command("service", service);
+    this.depker.cli.command("services", service);
 
     this._deploy(this.depker.cli);
     this._list(this.depker.cli);
@@ -81,29 +113,7 @@ export class ServiceModule implements DepkerModule {
     this.services.push(...configs);
   }
 
-  public async deploy(...configs: Array<string | ServiceConfig>): Promise<void> {
-    if (configs.length) {
-      for (const config of configs) {
-        if (typeof config === "string") {
-          const service = this.services.find((s) => s.name === config);
-          if (service) {
-            await PackContext.deployment(this.depker, service);
-          }
-        } else if (config) {
-          await PackContext.deployment(this.depker, config);
-        }
-      }
-    } else {
-      for (const service of this.services) {
-        await PackContext.deployment(this.depker, service);
-      }
-    }
-  }
-
-  public select(
-    items: Array<ContainerInspect>,
-    select: "active" | "latest" | "inactive" | "all" | string,
-  ): Array<ContainerInspect> {
+  public select(items: Array<ContainerInspect>, select: AllSelect): Array<ContainerInspect> {
     const inputs = [...items].sort((a, b) => b.Name.localeCompare(a.Name));
     if (select === "latest") {
       return [inputs[0]];
@@ -152,10 +162,26 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async list(
-    names: string[] = [],
-    select?: "active" | "latest" | "inactive" | "all" | string,
-  ): Promise<Record<string, Array<ContainerInspect>>> {
+  public async deploy(...configs: Array<string | ServiceConfig>): Promise<void> {
+    if (configs.length) {
+      for (const config of configs) {
+        if (typeof config === "string") {
+          const service = this.services.find((s) => s.name === config);
+          if (service) {
+            await PackContext.execute(this.depker, service);
+          }
+        } else if (config) {
+          await PackContext.execute(this.depker, config);
+        }
+      }
+    } else {
+      for (const service of this.services) {
+        await PackContext.execute(this.depker, service);
+      }
+    }
+  }
+
+  public async list(names: string[] = [], select?: AllSelect): Promise<Record<string, Array<ContainerInspect>>> {
     const infos = await this.depker.ops.container.list();
     const insps = await this.depker.ops.container.inspect(infos.map((i) => i.Id));
     const services: Record<string, Array<ContainerInspect>> = {};
@@ -178,11 +204,7 @@ export class ServiceModule implements DepkerModule {
     return inspects;
   }
 
-  public async start(
-    names: string[],
-    select?: "active" | "latest" | "inactive" | "all" | string,
-    options?: ContainerStartOptions,
-  ): Promise<void> {
+  public async start(names: string[], select?: AllSelect, options?: ContainerStartOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
       ids.push(...infos.map((i) => i.Id));
@@ -192,11 +214,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async stop(
-    names: string[],
-    select?: "active" | "latest" | "inactive" | "all" | string,
-    options?: ContainerStopOptions,
-  ): Promise<void> {
+  public async stop(names: string[], select?: AllSelect, options?: ContainerStopOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
       ids.push(...infos.map((i) => i.Id));
@@ -206,11 +224,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async kill(
-    names: string[],
-    select?: "active" | "latest" | "inactive" | "all" | string,
-    options?: ContainerKillOptions,
-  ): Promise<void> {
+  public async kill(names: string[], select?: AllSelect, options?: ContainerKillOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
       ids.push(...infos.map((i) => i.Id));
@@ -220,11 +234,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async remove(
-    names: string[],
-    select?: "active" | "latest" | "inactive" | "all" | string,
-    options?: ContainerRemoveOptions,
-  ): Promise<void> {
+  public async remove(names: string[], select?: AllSelect, options?: ContainerRemoveOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
       ids.push(...infos.map((i) => i.Id));
@@ -234,11 +244,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async rename(
-    name: string,
-    rename: string,
-    select?: "active" | "latest" | "inactive" | "all" | string,
-  ): Promise<void> {
+  public async rename(name: string, rename: string, select?: AllSelect): Promise<void> {
     for (const infos of Object.values(await this.list([name], select))) {
       for (const info of infos) {
         const exec = /^([a-zA-Z0-9][a-zA-Z0-9_.-]*)-i(\d+)$/.exec(info.Name);
@@ -251,12 +257,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async copy(
-    source: string,
-    target: string,
-    select?: "active" | "latest" | string,
-    options?: ContainerCopyOptions,
-  ) {
+  public async copy(source: string, target: string, select?: ActiveSelect, options?: ContainerCopyOptions) {
     const sources = source.split(":");
     const targets = target.split(":");
     if (sources.length > 1) {
@@ -276,7 +277,7 @@ export class ServiceModule implements DepkerModule {
       .spawn();
   }
 
-  public async prune(select?: "pre" | "all", options?: ContainerRemoveOptions) {
+  public async prune(select?: PruneSelect, options?: ContainerRemoveOptions) {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list())) {
       const outputs: string[] = [];
@@ -309,7 +310,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async wait(names: string[], select?: "active" | "latest" | "inactive" | "all" | string): Promise<void> {
+  public async wait(names: string[], select?: AllSelect): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
       ids.push(...infos.map((i) => i.Id));
@@ -319,7 +320,7 @@ export class ServiceModule implements DepkerModule {
     }
   }
 
-  public async logs(name: string, select?: "active" | "latest" | string, options?: ContainerLogsOptions) {
+  public async logs(name: string, select?: ActiveSelect, options?: ContainerLogsOptions) {
     const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
@@ -333,7 +334,7 @@ export class ServiceModule implements DepkerModule {
       .spawn();
   }
 
-  public async top(name: string, select?: "active" | "latest" | string, options?: ContainerTopOptions) {
+  public async top(name: string, select?: ActiveSelect, options?: ContainerTopOptions) {
     const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
@@ -347,7 +348,7 @@ export class ServiceModule implements DepkerModule {
       .spawn();
   }
 
-  public async stats(name: string, select?: "active" | "latest" | string, options?: ContainerStatsOptions) {
+  public async stats(name: string, select?: ActiveSelect, options?: ContainerStatsOptions) {
     const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
@@ -361,12 +362,7 @@ export class ServiceModule implements DepkerModule {
       .spawn();
   }
 
-  public async exec(
-    name: string,
-    commands: string[],
-    select?: "active" | "latest" | string,
-    options?: ContainerExecOptions,
-  ) {
+  public async exec(name: string, commands: string[], select?: ActiveSelect, options?: ContainerExecOptions) {
     const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
@@ -384,28 +380,25 @@ export class ServiceModule implements DepkerModule {
 
   // region private commands
 
-  private _deploy(cmd: Command<Record<string, any>>) {
+  private _deploy(cmd: Command) {
     cmd
       .command("deploy [name...:string]", "Deploy services")
       .alias("dep")
-      .action(async (_options: Record<string, any>, ...names: string[]) => {
+      .action(async (_options, ...names) => {
         await this.deploy(...names);
       });
   }
 
-  private _list(cmd: Command<Record<string, any>>) {
+  private _list(cmd: Command) {
     cmd
       .command("list [name...:string]", "List services")
       .alias("ls")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-f, --format <format:string>", "Pretty-print services using nunjucks template")
       .option("--json", "Pretty-print services using json")
       .option("--yaml", "Pretty-print services using yaml")
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .action(async (options, ...names) => {
         const infos = Object.entries(await this.list(names, options.select)).map((e) => ({ Name: e[0], Items: e[1] }));
         if (options.format) {
           this.depker.log.render(options.format, infos);
@@ -432,19 +425,16 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _inspect(cmd: Command<Record<string, any>>) {
+  private _inspect(cmd: Command) {
     cmd
       .command("inspect <name...:string>", "Display detailed information on one or more services")
       .alias("is")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-f, --format <format:string>", "Pretty-print services using nunjucks template")
       .option("--json", "Pretty-print services using json")
       .option("--yaml", "Pretty-print services using yaml")
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .action(async (options, ...names) => {
         const infos = Object.entries(await this.list(names, options.select)).map((e) => ({ Name: e[0], Items: e[1] }));
         if (options.format) {
           this.depker.log.render(options.format, infos);
@@ -458,18 +448,15 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _start(cmd: Command<Record<string, any>>) {
+  private _start(cmd: Command) {
     cmd
       .command("start <name...:string>", "Start one or more stopped services")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-i, --interactive", "Attach service's STDIN")
       .option("-a, --attach", "Attach STDOUT/STDERR and forward signals")
       .option("-k, --detach-keys <keys:string>", "Override the key sequence for detaching a service")
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .action(async (options, ...names) => {
         this.depker.log.step(`Starting services started.`);
         try {
           const opts: ContainerStartOptions = {};
@@ -490,22 +477,19 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _stop(cmd: Command<Record<string, any>>) {
+  private _stop(cmd: Command) {
     cmd
       .command("stop <name...:string>", "Stop one or more running services")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-t, --time <time:integer>", "Seconds to wait for stop before killing the service")
       .option("-i, --signal <signal:string>", "Signal to send to the service")
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .action(async (options, ...names) => {
         this.depker.log.step(`Stopping services started.`);
         try {
           const opts: ContainerStopOptions = {};
           if (options.time !== undefined) {
-            opts.Time = options.time;
+            opts.Time = String(options.time);
           }
           if (options.signal !== undefined) {
             opts.Signal = options.signal;
@@ -518,16 +502,13 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _kill(cmd: Command<Record<string, any>>) {
+  private _kill(cmd: Command) {
     cmd
       .command("kill <name...:string>", "Kill one or more running services")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-i, --signal <signal:string>", "Signal to send to the service")
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .action(async (options, ...names) => {
         this.depker.log.step(`Killing services started.`);
         try {
           const opts: ContainerKillOptions = {};
@@ -542,19 +523,16 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _remove(cmd: Command<Record<string, any>>) {
+  private _remove(cmd: Command) {
     cmd
       .command("remove <name...:string>", "Remove one or more services")
       .alias("rm")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-f, --force", "Force the removal of a running service")
       .option("-l, --link", "Remove the specified link")
       .option("-v, --volumes", "Remove anonymous volumes associated with the service")
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .action(async (options, ...names) => {
         this.depker.log.step(`Removing services started.`);
         try {
           const opts: ContainerRemoveOptions = {};
@@ -575,15 +553,12 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _rename(cmd: Command<Record<string, any>>) {
+  private _rename(cmd: Command) {
     cmd
       .command("rename <name:string> <rename:string>", "Rename a service")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
-      .action(async (options: Record<string, any>, name: string, rename: string) => {
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
+      .action(async (options, name, rename) => {
         this.depker.log.step(`Renaming services started.`);
         try {
           await this.rename(name, rename, options.select);
@@ -594,19 +569,21 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _prune(cmd: Command<Record<string, any>>) {
+  private _prune(cmd: Command) {
     cmd
       .command("prune", "Remove all abnormal services")
-      .option("-s, --select <select:string>", "Select the container to display in services\nAllowed Values: pre, all", {
-        default: "all",
-      })
+      .type("select", new PruneSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-f, --force", "Force the removal of stopped service")
       .option("-l, --link", "Remove the specified link")
       .option("-v, --volumes", "Remove anonymous volumes associated with the service")
-      .action(async (options: Record<string, any>) => {
+      .action(async (options) => {
         this.depker.log.step(`Pruning services started.`);
         try {
-          await this.prune(options.select, { Link: options.link, Volumes: options.volumes });
+          await this.prune(options.select as PruneSelect, {
+            Link: options.link,
+            Volumes: options.volumes,
+          });
           this.depker.log.done(`Pruning services successfully.`);
         } catch (e) {
           this.depker.log.error(`Pruning services failed.`, e);
@@ -614,14 +591,11 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _exec(cmd: Command<Record<string, any>>) {
+  private _exec(cmd: Command) {
     cmd
       .command("exec <name:string> <commands...:string>", "Run a command in a running service")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, <container>",
-        { default: "active" },
-      )
+      .type("select", new ActiveSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "active" })
       .option("-t, --tty", "Allocate a pseudo-TTY")
       .option("-d, --detach", "Override the key sequence for detaching a service")
       .option("-i, --interactive", "Keep STDIN open even if not attached")
@@ -631,7 +605,7 @@ export class ServiceModule implements DepkerModule {
       .option("-e, --env <env:string>", "Set environment variables", { collect: true })
       .option("-n, --env-file <file:string>", "Read in a file of environment variables", { collect: true })
       .option("-k, --detach-keys <keys:string>", "Override the key sequence for detaching a service")
-      .action(async (options: Record<string, any>, name: string, ...commands: string[]) => {
+      .action(async (options, name, ...commands) => {
         const opts: ContainerExecOptions = {};
         if (options.tty !== undefined) {
           opts.Tty = options.tty;
@@ -664,21 +638,18 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _logs(cmd: Command<Record<string, any>>) {
+  private _logs(cmd: Command) {
     cmd
       .command("logs <name:string>", "Fetch the logs of a service")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, <container>",
-        { default: "active" },
-      )
+      .type("select", new ActiveSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "active" })
       .option("-d, --details", "Show extra details provided to logs")
       .option("-f, --follow", "Follow log output")
       .option("-t, --timestamps", "Show timestamps")
       .option("-n, --tail <tail:string>", "Number of lines to show from the end of the logs")
       .option("-l, --since <since:string>", "Show logs since timestamp")
       .option("-r, --until <until:string>", "Show logs before a timestamp")
-      .action(async (options: Record<string, any>, name: string) => {
+      .action(async (options, name) => {
         const opts: ContainerLogsOptions = {};
         if (options.details !== undefined) {
           opts.Details = options.details;
@@ -702,16 +673,13 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _top(cmd: Command<Record<string, any>>) {
+  private _top(cmd: Command) {
     cmd
       .command("top <name:string>", "Display the running processes of a service")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, <container>",
-        { default: "active" },
-      )
+      .type("select", new ActiveSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "active" })
       .option("-o, --options <options:string>", "Input ps options")
-      .action(async (options: Record<string, any>, name: string) => {
+      .action(async (options, name) => {
         const opts: ContainerTopOptions = {};
         if (options.options !== undefined) {
           opts.Options = options.options;
@@ -720,17 +688,14 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _stats(cmd: Command<Record<string, any>>) {
+  private _stats(cmd: Command) {
     cmd
       .command("stats <name:string>", "Display a live stream of service resource usage statistics")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, <container>",
-        { default: "active" },
-      )
+      .type("select", new ActiveSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "active" })
       .option("-d, --details", "Show extra details provided to stats")
       .option("-f, --follow", "Follow stats output")
-      .action(async (options: Record<string, any>, name: string) => {
+      .action(async (options, name) => {
         const opts: ContainerStatsOptions = {};
         if (options.details !== undefined) {
           opts.NoTrunc = options.details;
@@ -742,18 +707,15 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _copy(cmd: Command<Record<string, any>>) {
+  private _copy(cmd: Command) {
     cmd
       .command("copy <source:string> <target:string>", "Copy files/folders between a service and the local filesystem")
       .alias("cp")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, <container>",
-        { default: "active" },
-      )
+      .type("select", new ActiveSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "active" })
       .option("-a, --archive", "Archive mode")
       .option("-f, --follow-link", "Always follow symbol link in SRC_PATH")
-      .action(async (options: Record<string, any>, source: string, target: string) => {
+      .action(async (options, source, target) => {
         const opts: ContainerCopyOptions = {};
         if (options.archive !== undefined) {
           opts.Archive = options.archive;
@@ -765,15 +727,12 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _wait(cmd: Command<Record<string, any>>) {
+  private _wait(cmd: Command) {
     cmd
       .command("wait <name...:string>", "Block until one or more service stop, then print their exit codes")
-      .option(
-        "-s, --select <select:string>",
-        "Select the container to display in services\nAllowed Values: active, latest, inactive, all, <container>",
-        { default: "all" },
-      )
-      .action(async (options: Record<string, any>, ...names: string[]) => {
+      .type("select", new AllSelectType())
+      .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
+      .action(async (options, ...names) => {
         await this.wait(names, options.select);
       });
   }

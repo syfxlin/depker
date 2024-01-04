@@ -1,6 +1,5 @@
-import { DepkerModule } from "../../types/modules.type.ts";
 import { Command } from "../../deps.ts";
-import { Depker } from "../../depker.ts";
+import { Depker, DepkerModule } from "../../depker.ts";
 import { defaults } from "./proxy.config.ts";
 import { ProxyConfig } from "./proxy.type.ts";
 
@@ -15,28 +14,19 @@ export class ProxyModule implements DepkerModule {
   }
 
   public async init(): Promise<void> {
-    const proxy = new Command<Record<string, any>>().description("Manage proxy");
-    const ports = new Command<Record<string, any>>().description("Manage ports");
+    const proxy = new Command().description("Manage proxy");
+    const ports = new Command().description("Manage ports").alias("port");
 
-    proxy.command("reload", "Reload a new proxy service").action(async () => {
-      this.depker.log.step(`Reloading proxy service started.`);
-      try {
-        await this.reload();
-        this.depker.log.done(`Reloading proxy service successfully.`);
-      } catch (e) {
-        this.depker.log.error(`Reloading proxy service failed.`, e);
-      }
-    });
     proxy
-      .command("remove", "Remove proxy service")
-      .option("-f, --force", "Force the removal of a running container (uses SIGKILL)")
-      .action(async (options: Record<string, any>) => {
-        this.depker.log.step(`Removing proxy service started.`);
+      .command("reload", "Reload or create a new proxy service")
+      .alias("create")
+      .action(async () => {
+        this.depker.log.step(`Reloading proxy service started.`);
         try {
-          await this.depker.ops.container.remove([ProxyModule.NAME], { Force: options.force });
-          this.depker.log.done(`Removing proxy service successfully.`);
+          await this.reload();
+          this.depker.log.done(`Reloading proxy service successfully.`);
         } catch (e) {
-          this.depker.log.error(`Removing proxy service failed.`, e);
+          this.depker.log.error(`Reloading proxy service failed.`, e);
         }
       });
 
@@ -45,7 +35,7 @@ export class ProxyModule implements DepkerModule {
       .alias("ls")
       .option("--json", "Pretty-print services using json")
       .option("--yaml", "Pretty-print services using yaml")
-      .action(async (options: Record<string, any>) => {
+      .action(async (options) => {
         try {
           const ports = await this.ports();
           if (options.json) {
@@ -65,29 +55,28 @@ export class ProxyModule implements DepkerModule {
     ports
       .command("insert <port...:integer>", "Insert proxy ports")
       .alias("add")
-      .action(async (_options: Record<string, any>, ...ports: number[]) => {
+      .action(async (_options, ...ports) => {
         this.depker.log.step(`Inserting ports started.`);
         try {
           await this.ports("insert", ports);
           this.depker.log.done(`Inserting ports successfully.`);
-        } catch (e: any) {
+        } catch (e) {
           this.depker.log.error(`Inserting ports failed.`, e);
         }
       });
     ports
       .command("remove <port...:integer>", "Remove proxy ports")
       .alias("del")
-      .action(async (_options: Record<string, any>, ...ports: number[]) => {
+      .action(async (_options, ...ports) => {
         this.depker.log.step(`Removing ports started.`);
         try {
           await this.ports("remove", ports);
           this.depker.log.done(`Removing ports successfully.`);
-        } catch (e: any) {
+        } catch (e) {
           this.depker.log.error(`Removing ports failed.`, e);
         }
       });
 
-    proxy.command("ports", ports);
     this.depker.cli.command("proxy", proxy);
     this.depker.cli.command("ports", ports);
   }
@@ -95,7 +84,11 @@ export class ProxyModule implements DepkerModule {
   // region public functions
 
   public async ports(operate?: "insert" | "remove", diffs?: number[]): Promise<number[]> {
-    const config = await this.get();
+    const config = await this.depker.cfg.config<ProxyConfig>(ProxyModule.NAME);
+    config.config = config.config ?? [];
+    config.ports = config.ports ?? [];
+    config.envs = config.envs ?? {};
+    config.labels = config.labels ?? {};
     if (!operate || !diffs?.length) {
       return config.ports;
     }
@@ -125,25 +118,23 @@ export class ProxyModule implements DepkerModule {
     return config.ports;
   }
 
-  public async get(): Promise<ProxyConfig> {
-    const config = await this.depker.cfg.config<Partial<ProxyConfig>>(ProxyModule.NAME);
-    config.config = config.config ?? [];
-    config.ports = config.ports ?? [];
-    config.envs = config.envs ?? {};
-    config.labels = config.labels ?? {};
-    return config as ProxyConfig;
-  }
-
-  public async set(config: ProxyConfig): Promise<void> {
-    config.config = config.config ?? [];
-    config.ports = config.ports ?? [];
-    config.envs = config.envs ?? {};
-    config.labels = config.labels ?? {};
-    await this.depker.cfg.config(ProxyModule.NAME, config);
-  }
-
   public async reload(config?: ProxyConfig): Promise<void> {
+    await this.depker.emit("proxy:before-reload", this);
     this.depker.log.debug(`Proxy reloading started.`);
+
+    if (config) {
+      config.config = config.config ?? [];
+      config.ports = config.ports ?? [];
+      config.envs = config.envs ?? {};
+      config.labels = config.labels ?? {};
+      await this.depker.cfg.config(ProxyModule.NAME, config);
+    } else {
+      config = await this.depker.cfg.config<ProxyConfig>(ProxyModule.NAME);
+      config.config = config.config ?? [];
+      config.ports = config.ports ?? [];
+      config.envs = config.envs ?? {};
+      config.labels = config.labels ?? {};
+    }
 
     try {
       await this.depker.ops.container.remove([ProxyModule.NAME], { Force: true });
@@ -151,14 +142,7 @@ export class ProxyModule implements DepkerModule {
       // ignore
     }
 
-    if (config) {
-      await this.set(config);
-    } else {
-      config = await this.get();
-    }
-
     const options = new Set<string>();
-
     for (const value of defaults) {
       options.add(`--${value}`);
     }
@@ -169,7 +153,6 @@ export class ProxyModule implements DepkerModule {
       options.add(`--entrypoints.tcp${value}.address=:${value}/tcp`);
       options.add(`--entrypoints.udp${value}.address=:${value}/udp`);
     }
-
     await this.depker.ops.container.run(ProxyModule.NAME, ProxyModule.IMAGE, {
       Detach: true,
       Restart: "always",
@@ -187,6 +170,7 @@ export class ProxyModule implements DepkerModule {
       ],
     });
 
+    await this.depker.emit("proxy:after-reload", this);
     this.depker.log.debug(`Proxy reloading successfully.`);
   }
 

@@ -1,9 +1,6 @@
 import "https://deno.land/std@0.210.0/dotenv/load.ts";
 import { fs, path } from "./deps.ts";
 import { Dax, dax } from "./services/dax/index.ts";
-import { DepkerMaster } from "./types/master.type.ts";
-import { DepkerRunner } from "./types/runner.type.ts";
-import { DepkerModule } from "./types/modules.type.ts";
 import { DockerNode } from "./services/docker/index.ts";
 import { ProxyModule } from "./modules/proxy/proxy.module.ts";
 import { ServiceModule } from "./modules/service/service.module.ts";
@@ -13,8 +10,15 @@ import { OpsModule } from "./services/ops/index.ts";
 import { UtiModule } from "./services/uti/index.ts";
 import { EvsModule } from "./services/evs/index.ts";
 import { CfgModule } from "./services/cfg/index.ts";
+import { DepkerMaster, DepkerRunner } from "./services/docker/types.ts";
 
-type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
+export type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
+
+export interface DepkerModule {
+  name: string;
+  init?: () => Promise<void> | void;
+  destroy?: () => Promise<void> | void;
+}
 
 export function depker(): DepkerApp {
   return new Depker() as DepkerApp;
@@ -77,20 +81,21 @@ export class Depker {
     }
   }
 
-  public file(file: string, value?: string): string | undefined {
+  public async file(file: string, value?: string): Promise<string | undefined> {
     file = path.resolve(file);
     if (value) {
-      fs.ensureDirSync(path.dirname(file));
-      Deno.writeTextFileSync(file, value);
+      await fs.ensureDir(path.dirname(file));
+      await Deno.writeTextFile(file, value);
       return value;
-    } else if (fs.existsSync(file)) {
-      return Deno.readTextFileSync(file);
+    } else if (await fs.exists(file)) {
+      return await Deno.readTextFile(file);
     } else {
       return undefined;
     }
   }
 
-  public exit(code?: number): void {
+  public async exit(code?: number): Promise<void> {
+    await this.emit("depker:exit", code ?? 0, this);
     Deno.exit(code);
   }
 
@@ -189,25 +194,38 @@ export class Depker {
 
     // execute
     try {
+      await this.emit("depker:before-init", this);
       await this._init_module();
+      await this.emit("depker:after-init", this);
       await this.cli.parse(Deno.args);
+      await this.emit("depker:before-destroy", this);
       await this._destroy_module();
+      await this.emit("depker:after-destroy", this);
     } catch (e) {
       this.log.error(e);
+      await this.emit("depker:exit", 1, this);
       Deno.exit(1);
     }
   }
 
   private async _init_module(): Promise<void> {
+    await this.emit("depker:modules:before-init", this._modules);
     for (const module of this._modules) {
+      await this.emit("depker:module:before-init", module);
       await module?.init?.();
+      await this.emit("depker:module:after-init", module);
     }
+    await this.emit("depker:modules:after-init", this._modules);
   }
 
   private async _destroy_module(): Promise<void> {
+    await this.emit("depker:modules:before-destroy", this._modules);
     for (const module of this._modules) {
+      await this.emit("depker:module:before-destroy", module);
       await module?.destroy?.();
+      await this.emit("depker:module:after-destroy", module);
     }
+    await this.emit("depker:modules:after-destroy", this._modules);
   }
 }
 

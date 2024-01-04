@@ -24,17 +24,19 @@ export class LogModule {
     return results.join("\n");
   }
 
-  // prettier-ignore
-  public parse(value: string, context: Record<string, any>) {
+  public parse(value: string, data: any) {
     const template = new nunjucks.Environment(null, { autoescape: false, noCache: true });
-    template.addGlobal("ctx", context);
     template.addGlobal("env", Deno.env);
     template.addGlobal("deno", Deno);
-    // @ts-ignore
     template.addFilter("json", (value: any) => JSON.stringify(value, undefined, 2), false);
     template.addFilter("yaml", (value: any) => yaml.stringify(value), false);
-    // @ts-ignore
-    return template.renderString(value, context, undefined, undefined).trim();
+    if (data instanceof Object) {
+      // @ts-ignore
+      return template.renderString(value, data, undefined, undefined).trim();
+    } else {
+      // @ts-ignore
+      return template.renderString(value, { it: data }, undefined, undefined).trim();
+    }
   }
 
   public json(obj: any) {
@@ -77,9 +79,13 @@ export class LogModule {
     this._output("raw", Date.now(), table.toString());
   }
 
-  public render(value: string, contexts: Array<Record<string, any>>) {
-    for (const context of contexts) {
-      this._output("raw", Date.now(), this.parse(value, context));
+  public render(value: string, data: any) {
+    if (data instanceof Array) {
+      for (const context of data) {
+        this._output("raw", Date.now(), this.parse(value, context));
+      }
+    } else {
+      this._output("raw", Date.now(), this.parse(value, data));
     }
   }
 

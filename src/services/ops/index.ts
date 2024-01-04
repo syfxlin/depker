@@ -1,11 +1,11 @@
 import {
   BuilderOperation,
   ContainerOperation,
+  DepkerMaster,
   ImageOperation,
   NetworkOperation,
   VolumeOperation,
-} from "../../types/results.type.ts";
-import { DepkerMaster } from "../../types/master.type.ts";
+} from "../docker/types.ts";
 import { Depker } from "../../depker.ts";
 
 export class OpsModule implements DepkerMaster {

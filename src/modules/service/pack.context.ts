@@ -1,7 +1,7 @@
 import { Depker } from "../../depker.ts";
 import { deepMerge, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { BuildAtConfig, DeployAtConfig, Pack, ServiceConfig, StartAtConfig } from "./service.type.ts";
-import { BuilderBuildOptions, ContainerCreateOptions } from "../../types/results.type.ts";
+import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/docker/types.ts";
 import { ServiceModule } from "./service.module.ts";
 
 interface PackOptions {
@@ -45,12 +45,13 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
   // region public operators
 
-  public static async create(depker: Depker, config: ServiceConfig): Promise<PackContext> {
+  public static async execute(depker: Depker, config: ServiceConfig): Promise<void> {
     const clone = deepMerge<ServiceConfig>({}, config);
     const source = path.resolve(clone.path ?? Deno.cwd());
     const target = Deno.makeTempDirSync({ prefix: `deploy-${clone.name}-` });
 
     // unpack
+    await depker.emit("service:deploy:before-unpack", clone, source, target);
     depker.log.info(`Unpacking service ${clone.name} started.`);
     const ig = ignore() as any;
     const gi = path.join(source, ".gitignore");
@@ -68,10 +69,6 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         return !r || !ig.ignores(r);
       },
     });
-    depker.log.done(`Unpacking service ${clone.name} successfully.`);
-
-    // replace
-    depker.log.info(`Replace placeholder ${clone.name} started.`);
     if (config.volumes) {
       for (const value of config.volumes) {
         value.hpath = depker.uti.replace(value.hpath, (key) => {
@@ -79,59 +76,91 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         });
       }
     }
-    if (config.secrets) {
+    if (config.labels || config.secrets || config.build_args) {
       const secrets = await depker.cfg.secret();
-      for (const [name, value] of Object.entries(config.secrets)) {
-        config.secrets[name] = depker.uti.replace(value, (key) => {
-          if (secrets[key] !== undefined && secrets[key] !== null) {
-            return String(secrets[key]);
-          } else {
-            return key;
-          }
-        });
+      if (config.labels) {
+        for (const [name, value] of Object.entries(config.labels)) {
+          config.labels[name] = depker.uti.replace(value, (key) => {
+            if (secrets[key] !== undefined && secrets[key] !== null) {
+              return String(secrets[key]);
+            } else {
+              return key;
+            }
+          });
+        }
+      }
+      if (config.secrets) {
+        for (const [name, value] of Object.entries(config.secrets)) {
+          config.secrets[name] = depker.uti.replace(value, (key) => {
+            if (secrets[key] !== undefined && secrets[key] !== null) {
+              return String(secrets[key]);
+            } else {
+              return key;
+            }
+          });
+        }
+      }
+      if (config.build_args) {
+        for (const [name, value] of Object.entries(config.build_args)) {
+          config.build_args[name] = depker.uti.replace(value, (key) => {
+            if (secrets[key] !== undefined && secrets[key] !== null) {
+              return String(secrets[key]);
+            } else {
+              return key;
+            }
+          });
+        }
       }
     }
-    depker.log.done(`Replace placeholder ${clone.name} successfully.`);
+    await depker.emit("service:deploy:after-unpack", clone, source, target);
+    depker.log.done(`Unpacking service ${clone.name} successfully.`);
 
-    return new PackContext({
+    // create context
+    const context = new PackContext({
       depker: depker,
       source: source,
       target: target,
       config: clone,
       pack: config[sym] as Pack,
     });
-  }
-
-  public static async deployment(depker: Depker, config: ServiceConfig): Promise<void> {
-    // create context
-    const env = await PackContext.create(depker, config);
 
     try {
       // log started
-      depker.log.step(`Deployment service ${config.name} started.`);
+      await depker.emit("service:deploy:started", context);
+      depker.log.step(`Deployment service ${clone.name} started.`);
 
       // emit init event
-      depker.log.debug(`Deployment service ${config.name} initing.`);
-      await env.pack.init?.(env);
+      await depker.emit("service:deploy:before-init", context);
+      depker.log.debug(`Deployment service ${clone.name} initing.`);
+      await context.pack.init?.(context);
+      await depker.emit("service:deploy:after-init", context);
 
       // deployment containers
-      depker.log.debug(`Deployment service ${config.name} building.`);
-      await env.pack.build?.(env);
+      await depker.emit("service:deploy:before-build", context);
+      depker.log.debug(`Deployment service ${clone.name} building.`);
+      await context.pack.build?.(context);
+      await depker.emit("service:deploy:after-build", context);
 
       // purge images and volumes
-      depker.log.debug(`Deployment service ${config.name} purging.`);
+      await depker.emit("service:deploy:before-purge", context);
+      depker.log.debug(`Deployment service ${clone.name} purging.`);
       await Promise.all([depker.ops.image.prune(), depker.ops.volume.prune(), depker.ops.network.prune()]);
+      await depker.emit("service:deploy:after-purge", context);
 
       // emit destroy event
-      depker.log.debug(`Deployment service ${config.name} destroying.`);
-      await env.pack.destroy?.(env);
+      await depker.emit("service:deploy:before-destroy", context);
+      depker.log.debug(`Deployment service ${clone.name} destroying.`);
+      await context.pack.destroy?.(context);
+      await depker.emit("service:deploy:after-destroy", context);
 
       // log successfully
-      depker.log.done(`Deployment service ${config.name} successfully.`);
+      await depker.emit("service:deploy:successfully", context);
+      depker.log.done(`Deployment service ${clone.name} successfully.`);
     } catch (e) {
       // log failed
-      depker.log.error(`Deployment service ${config.name} failure.`, e);
-      throw new Error(`Deployment service ${config.name} failure.`, { cause: e });
+      await depker.emit("service:deploy:failure", context);
+      depker.log.error(`Deployment service ${clone.name} failure.`, e);
+      throw new Error(`Deployment service ${clone.name} failure.`, { cause: e });
     }
   }
 

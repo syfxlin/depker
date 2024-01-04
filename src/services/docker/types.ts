@@ -1,6 +1,33 @@
-import { CommandBuilder } from "../deps.ts";
+import { CommandBuilder } from "../../deps.ts";
 
 // region common
+
+export type DockerNodeOptions =
+  | {
+      type: "local";
+    }
+  | {
+      type: "context";
+      name?: string;
+    }
+  | {
+      type: "ssh";
+      host?: string;
+    }
+  | {
+      type: "http";
+      host?: string;
+      port?: number | string;
+    }
+  | {
+      type: "https";
+      host?: string;
+      port?: number | string;
+      ca?: string;
+      cert?: string;
+      key?: string;
+      verify?: boolean;
+    };
 
 export interface ContainerConfig {
   Hostname?: string;
@@ -646,6 +673,21 @@ export interface BuilderOperation {
   build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder;
   save(name: string): Deno.Command;
   load(): Deno.Command;
+}
+
+// endregion
+
+// region node
+
+export interface DepkerRunner {
+  builder: BuilderOperation;
+}
+
+export interface DepkerMaster extends DepkerRunner {
+  container: ContainerOperation;
+  network: NetworkOperation;
+  volume: VolumeOperation;
+  image: ImageOperation;
 }
 
 // endregion

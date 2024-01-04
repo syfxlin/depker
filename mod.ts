@@ -17,11 +17,5 @@ export * from "./src/modules/service/packs/nextjs/nextjs.pack.ts";
 export * from "./src/modules/service/packs/nginx/nginx.pack.ts";
 export * from "./src/modules/service/packs/nodejs/nodejs.pack.ts";
 
-// types
-export * from "./src/types/master.type.ts";
-export * from "./src/types/runner.type.ts";
-export * from "./src/types/results.type.ts";
-export * from "./src/types/modules.type.ts";
-
 // default
 export default depker();

@@ -17,6 +17,8 @@ import {
   ContainerStatsOptions,
   ContainerStopOptions,
   ContainerTopOptions,
+  DepkerMaster,
+  DockerNodeOptions,
   ImageInfo,
   ImageInspect,
   ImageOperation,
@@ -38,37 +40,11 @@ import {
   VolumeOperation,
   VolumeRemoveOptions,
   volumes,
-} from "../../types/results.type.ts";
-import { DepkerMaster } from "../../types/master.type.ts";
+} from "./types.ts";
 import { Depker } from "../../depker.ts";
 import { CommandBuilder } from "../../deps.ts";
 
-export type DockerNodeOptions =
-  | {
-      type: "local";
-    }
-  | {
-      type: "context";
-      name: string;
-    }
-  | {
-      type: "ssh";
-      host: string;
-    }
-  | {
-      type: "http";
-      host: string;
-      port?: number | string;
-    }
-  | {
-      type: "https";
-      host: string;
-      port?: number | string;
-      ca?: string;
-      cert?: string;
-      key?: string;
-      verify?: boolean;
-    };
+export * from "./types.ts";
 
 export function docker(options?: DockerNodeOptions) {
   return (depker: Depker) => new DockerNode(depker, options);
@@ -90,36 +66,46 @@ export class DockerNode implements DepkerMaster {
     this.image = new DockerImageOperation(depker, this);
 
     if (options?.type === "context") {
-      this.docker = [`docker`, `--context`, options.name];
+      const name = options.name || Deno.env.get("REMOTE_NAME") || "default";
+      this.docker = [`docker`, `--context`, name];
     } else if (options?.type === "ssh") {
-      this.docker = [`docker`, `--host`, `ssh://${options.host}`];
+      const host = options.host || Deno.env.get("REMOTE_HOST") || "localhost";
+      this.docker = [`docker`, `--host`, `ssh://${host}`];
     } else if (options?.type === "http") {
-      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port ?? 2375}`];
+      const host = options.host || Deno.env.get("REMOTE_HOST") || "localhost";
+      const port = options.port || Deno.env.get("REMOTE_PORT") || 2375;
+      this.docker = [`docker`, `--host`, `tcp://${host}:${port}`];
     } else if (options?.type === "https") {
-      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port ?? 2376}`];
+      const host = options.host || Deno.env.get("REMOTE_HOST") || "localhost";
+      const port = options.port || Deno.env.get("REMOTE_PORT") || 2375;
+      this.docker = [`docker`, `--host`, `tcp://${host}:${port}`];
       // ca
-      if (options.ca) {
-        const ca = Deno.makeTempFileSync();
-        Deno.writeTextFileSync(ca, options.ca);
+      const ca = options.ca || Deno.env.get("REMOTE_CA");
+      if (ca) {
+        const file = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(file, ca);
         this.docker.push(`--tlscacert`);
-        this.docker.push(ca);
+        this.docker.push(file);
       }
       // cert
-      if (options.cert) {
-        const cert = Deno.makeTempFileSync();
-        Deno.writeTextFileSync(cert, options.cert);
+      const cert = options.cert || Deno.env.get("REMOTE_CERT");
+      if (cert) {
+        const file = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(file, cert);
         this.docker.push(`--tlscert`);
-        this.docker.push(cert);
+        this.docker.push(file);
       }
       // key
-      if (options.key) {
-        const key = Deno.makeTempFileSync();
-        Deno.writeTextFileSync(key, options.key);
+      const key = options.key || Deno.env.get("REMOTE_KEY");
+      if (key) {
+        const file = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(file, key);
         this.docker.push(`--tlskey`);
-        this.docker.push(key);
+        this.docker.push(file);
       }
       // verify
-      if (options.verify !== false) {
+      const verify = String(options.verify) || Deno.env.get("REMOTE_VERIFY");
+      if (verify !== "false") {
         this.docker.push(`--tlsverify`);
       } else {
         this.docker.push(`--tls`);
