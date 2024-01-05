@@ -57,7 +57,7 @@ export class ProxyModule implements DepkerModule {
           } else {
             this.depker.log.table(
               ["Port"],
-              ports.map((p) => [String(p)])
+              ports.map((p) => [String(p)]),
             );
           }
         } catch (e) {

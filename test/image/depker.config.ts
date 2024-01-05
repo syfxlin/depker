@@ -4,10 +4,10 @@ const app = depker();
 
 app.service(
   image({
-    name: "nginx",
+    name: "image",
     image: "nginx:alpine",
     domain: "nginx.test",
-  })
+  }),
 );
 
 export default app;

@@ -4,9 +4,9 @@ const app = depker();
 
 app.service(
   dockerfile({
-    name: "nginx",
+    name: "dockerfile",
     dockerfile: "FROM nginx:alpine",
-  })
+  }),
 );
 
 export default app;

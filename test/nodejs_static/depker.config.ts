@@ -4,8 +4,8 @@ const app = depker();
 
 app.service(
   nodejs.static({
-    name: "nginx",
-  })
+    name: "nodejs_static",
+  }),
 );
 
 export default app;

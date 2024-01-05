@@ -58,7 +58,7 @@ export class CfgModule {
           } else {
             this.depker.log.table(
               ["Name", "Value"],
-              Object.entries(secrets).map(([k, v]) => [k, String(v)] as const)
+              Object.entries(secrets).map(([k, v]) => [k, String(v)] as const),
             );
           }
         } catch (e) {

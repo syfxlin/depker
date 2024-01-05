@@ -12,11 +12,11 @@ export const dockerfile = pack<DockerfileConfig>({
     const config = ctx.config;
     if (config.dockerfile) {
       const target = await Deno.makeTempDir();
-      await Deno.writeTextFileSync(path.join(target, `Dockerfile`), config.dockerfile);
+      await Deno.writeTextFile(path.join(target, `Dockerfile`), config.dockerfile);
       await ctx.startAt(await ctx.buildAt(target, config), config);
     } else if (config.dockerfile_path) {
       const target = await Deno.makeTempDir();
-      await Deno.copyFileSync(path.resolve(config.dockerfile_path), join(target, `Dockerfile`));
+      await Deno.copyFile(path.resolve(config.dockerfile_path), path.join(target, `Dockerfile`));
       await ctx.startAt(await ctx.buildAt(target, config), config);
     } else {
       throw new Error(`Dockerfile content or Dockerfile path must be set.`);

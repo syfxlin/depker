@@ -5,7 +5,7 @@ const app = depker();
 app.service(
   nginx({
     name: "nginx",
-  })
+  }),
 );
 
 export default app;
