@@ -117,10 +117,7 @@ export class DockerNode implements DepkerMaster {
 }
 
 class DockerContainerOperation implements ContainerOperation {
-  constructor(
-    private readonly depker: Depker,
-    private readonly node: DockerNode,
-  ) {}
+  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
 
   private get docker() {
     return [...this.node.docker, `container`];
@@ -518,10 +515,7 @@ class DockerContainerOperation implements ContainerOperation {
 }
 
 class DockerBuilderOperation implements BuilderOperation {
-  constructor(
-    private readonly depker: Depker,
-    private readonly node: DockerNode,
-  ) {}
+  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
 
   public build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder {
     const args = [`--tag`, name];
@@ -582,10 +576,7 @@ class DockerBuilderOperation implements BuilderOperation {
 }
 
 class DockerNetworkOperation implements NetworkOperation {
-  constructor(
-    private readonly depker: Depker,
-    private readonly node: DockerNode,
-  ) {}
+  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
 
   private get docker() {
     return [...this.node.docker, `network`];
@@ -698,10 +689,7 @@ class DockerNetworkOperation implements NetworkOperation {
 }
 
 class DockerVolumeOperation implements VolumeOperation {
-  constructor(
-    private readonly depker: Depker,
-    private readonly node: DockerNode,
-  ) {}
+  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
 
   private get docker() {
     return [...this.node.docker, `volume`];
@@ -771,10 +759,7 @@ class DockerVolumeOperation implements VolumeOperation {
 }
 
 class DockerImageOperation implements ImageOperation {
-  constructor(
-    private readonly depker: Depker,
-    private readonly node: DockerNode,
-  ) {}
+  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
 
   private get docker() {
     return [...this.node.docker, `image`];
