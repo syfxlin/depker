@@ -31,6 +31,18 @@ export class ProxyModule implements DepkerModule {
       });
 
     ports
+      .command("reload", "Reload or create a new proxy service")
+      .alias("create")
+      .action(async () => {
+        this.depker.log.step(`Reloading proxy service started.`);
+        try {
+          await this.reload();
+          this.depker.log.done(`Reloading proxy service successfully.`);
+        } catch (e) {
+          this.depker.log.error(`Reloading proxy service failed.`, e);
+        }
+      });
+    ports
       .command("list", "List proxy ports")
       .alias("ls")
       .option("--json", "Pretty-print services using json")
