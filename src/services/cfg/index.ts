@@ -16,7 +16,7 @@ export class CfgModule {
     this.instance = undefined;
 
     // commands
-    const config = new Command().description("Manage configs").alias("config").default("view");
+    const config = new Command().description("Manage configs").alias("config").alias("cfg").default("view");
     config
       .command("view", "View configs")
       .alias("show")
@@ -42,7 +42,7 @@ export class CfgModule {
         await this.manual(options.editor);
       });
 
-    const secret = new Command().description("Manage secrets").alias("secret").default("list");
+    const secret = new Command().description("Manage secrets").alias("secret").alias("sec").default("list");
     secret
       .command("list", "List secrets")
       .alias("ls")

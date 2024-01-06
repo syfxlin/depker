@@ -72,7 +72,7 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async init() {
-    const service = new Command().description("Manage services").alias("service").default("list");
+    const service = new Command().description("Manage services").alias("service").alias("svc").default("list");
     this._deploy(service);
     this._list(service);
     this._inspect(service);

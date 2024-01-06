@@ -15,7 +15,7 @@ export class ProxyModule implements DepkerModule {
 
   public async init(): Promise<void> {
     const proxy = new Command().description("Manage proxy");
-    const ports = new Command().description("Manage ports").alias("port");
+    const ports = new Command().description("Manage ports").alias("port").alias("po");
 
     proxy
       .command("reload", "Reload or create a new proxy service")
