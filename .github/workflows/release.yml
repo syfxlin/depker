@@ -21,6 +21,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
       - name: Publish
-        run: pnpm --package=semantic-release-replace-plugin --package=semantic-release dlx semantic-release --branches master
+        run: pnpm --package=@semantic-release/git --package=semantic-release-replace-plugin --package=semantic-release dlx semantic-release --branches master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
