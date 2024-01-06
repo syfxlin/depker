@@ -62,8 +62,11 @@ export class UtiModule {
     }
   }
 
-  public replace(value: string, replacer: (name: string) => string) {
-    return value.replace(/(?<=^|[^@])(@[a-zA-Z][a-zA-Z0-9_]*|@\{[a-zA-Z][a-zA-Z0-9]*})/g, replacer);
+  public replace(value: string, replacer: (name: string) => string | boolean | number | null | undefined) {
+    return value.replace(/(?<=^|[^@])(?:@([a-zA-Z][a-zA-Z0-9_]*)|@\{([a-zA-Z][a-zA-Z0-9]*)})/g, (a, n) => {
+      const r = replacer(n);
+      return r === null || r === undefined ? a : String(r);
+    });
   }
 
   public async copy(source: string, target: string, options?: CopyOptions) {

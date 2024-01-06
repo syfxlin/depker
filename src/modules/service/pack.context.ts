@@ -81,11 +81,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       if (config.labels) {
         for (const [name, value] of Object.entries(config.labels)) {
           config.labels[name] = depker.uti.replace(value, (key) => {
-            if (secrets[key] !== undefined && secrets[key] !== null) {
-              return String(secrets[key]);
-            } else {
-              return key;
-            }
+            return secrets[key];
           });
         }
       }
