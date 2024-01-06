@@ -395,9 +395,9 @@ export class ServiceModule implements DepkerModule {
       .alias("ls")
       .type("select", new AllSelectType())
       .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
-      .option("-f, --format <format:string>", "Pretty-print services using nunjucks template")
-      .option("--json", "Pretty-print services using json")
-      .option("--yaml", "Pretty-print services using yaml")
+      .option("-f, --format <format:string>", "Pretty-print using nunjucks template")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
       .action(async (options, ...names) => {
         const infos = Object.entries(await this.list(names, options.select)).map((e) => ({ Name: e[0], Items: e[1] }));
         if (options.format) {
@@ -431,9 +431,9 @@ export class ServiceModule implements DepkerModule {
       .alias("is")
       .type("select", new AllSelectType())
       .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
-      .option("-f, --format <format:string>", "Pretty-print services using nunjucks template")
-      .option("--json", "Pretty-print services using json")
-      .option("--yaml", "Pretty-print services using yaml")
+      .option("-f, --format <format:string>", "Pretty-print using nunjucks template")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
       .action(async (options, ...names) => {
         const infos = Object.entries(await this.list(names, options.select)).map((e) => ({ Name: e[0], Items: e[1] }));
         if (options.format) {

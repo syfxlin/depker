@@ -29,6 +29,30 @@ export class ProxyModule implements DepkerModule {
           this.depker.log.error(`Reloading proxy service failed.`, e);
         }
       });
+    proxy
+      .command("view", "View dynamic configs")
+      .alias("show")
+      .option("-f, --format <format:string>", "Pretty-print using nunjucks template")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options) => {
+        const data = await this.depker.cfg.read("/proxy/config.yaml");
+        if (options.format) {
+          this.depker.log.render(options.format, data);
+        } else if (options.json) {
+          this.depker.log.json(data);
+        } else if (options.yaml) {
+          this.depker.log.yaml(data);
+        } else {
+          this.depker.log.json(data);
+        }
+      });
+    proxy
+      .command("edit", "Edit dynamic configs")
+      .option("-e, --editor <editor:string>", "Modify the file using a specific editor")
+      .action(async (options) => {
+        await this.depker.cfg.edit("/proxy/config.yaml", options.editor);
+      });
 
     ports
       .command("reload", "Reload or create a new proxy service")
@@ -45,8 +69,8 @@ export class ProxyModule implements DepkerModule {
     ports
       .command("list", "List proxy ports")
       .alias("ls")
-      .option("--json", "Pretty-print services using json")
-      .option("--yaml", "Pretty-print services using yaml")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
       .action(async (options) => {
         try {
           const ports = await this.ports();
@@ -170,7 +194,7 @@ export class ProxyModule implements DepkerModule {
       Restart: "always",
       Envs: config.envs,
       Labels: config.labels,
-      Commands: [`traefik`, ...options],
+      Commands: [...options],
       Networks: [await this.depker.ops.network.default()],
       Volumes: [`/var/depker/proxy:/etc/traefik`, `/var/run/docker.sock:/var/run/docker.sock`],
       Ports: [

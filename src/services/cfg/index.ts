@@ -20,9 +20,9 @@ export class CfgModule {
     config
       .command("view", "View configs")
       .alias("show")
-      .option("-f, --format <format:string>", "Pretty-print services using nunjucks template")
-      .option("--json", "Pretty-print services using json")
-      .option("--yaml", "Pretty-print services using yaml")
+      .option("-f, --format <format:string>", "Pretty-print using nunjucks template")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
       .action(async (options) => {
         const data = await this.config();
         if (options.format) {
@@ -46,8 +46,8 @@ export class CfgModule {
     secret
       .command("list", "List secrets")
       .alias("ls")
-      .option("--json", "Pretty-print services using json")
-      .option("--yaml", "Pretty-print services using yaml")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
       .action(async (options) => {
         try {
           const secrets = await this.secret();
@@ -112,11 +112,13 @@ export class CfgModule {
     this.depker.cli.command("secrets", secret);
   }
 
-  public path(name?: string) {
-    if (name) {
-      return `/var/depker${name.startsWith("/") ? name : `/${name}`}`;
-    } else {
+  public path(path?: string) {
+    if (!path) {
       return `/var/depker`;
+    } else if (path.startsWith("/var/depker")) {
+      return path;
+    } else {
+      return `/var/depker${path.startsWith("/") ? path : `/${path}`}`;
     }
   }
 
@@ -169,11 +171,12 @@ export class CfgModule {
   }
 
   public async edit(path: string, editor?: "vi" | "vim" | "nano" | string): Promise<void> {
+    path = this.path(path);
     const commands = [`sh`, `-c`];
     if (editor) {
-      commands.push(`apk add --no-cache ${editor} && ${editor} ${path}`);
+      commands.push(`apk add --no-cache ${editor} && mkdir -p $(dirname ${path}) && ${editor} ${path}`);
     } else {
-      commands.push(`vi ${path}`);
+      commands.push(`mkdir -p $(dirname ${path}) && vi ${path}`);
     }
     const exec = this.depker.ops.container.exec(CfgModule.NAME, commands, {
       Tty: true,
@@ -184,15 +187,18 @@ export class CfgModule {
   }
 
   public async read(path: string): Promise<string> {
-    return await this.execute(`cat ${path}`);
+    path = this.path(path);
+    return await this.execute(`cat ${path} 2>/dev/null || true`);
   }
 
   public async write(path: string, data: string): Promise<void> {
+    path = this.path(path);
     await this.execute(`mkdir -p $(dirname ${path}) && tee ${path}`, data);
   }
 
   public async remove(path: string): Promise<void> {
-    await this.execute(`rm -rf ${path}`);
+    path = this.path(path);
+    await this.execute(`rm -rf ${path} 2>/dev/null`);
   }
 
   private async execute(command: string, inputs?: string): Promise<string> {

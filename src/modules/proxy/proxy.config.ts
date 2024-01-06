@@ -6,10 +6,10 @@ export const defaults = [
   `entrypoints.http.address=:80`,
   `entrypoints.https.address=:443`,
   `providers.file.watch=true`,
-  `providers.file.file=/etc/traefik/config.yaml`,
+  `providers.file.filename=/etc/traefik/config.yaml`,
   `providers.docker.exposedbydefault=false`,
   `providers.docker.endpoint=unix:///var/run/docker.sock`,
   `certificatesresolvers.depker.acme.email=admin@example.com`,
-  `certificatesresolvers.depker.storage=/etc/traefik/acme.json`,
-  `certificatesresolvers.depker.httpchallenge.entrypoint=http`,
+  `certificatesresolvers.depker.acme.httpchallenge.entrypoint=http`,
+  `certificatesresolvers.depker.acme.storage=/etc/traefik/acme.json`,
 ];
