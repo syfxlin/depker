@@ -1,7 +1,8 @@
 import { Depker } from "../../depker.ts";
-import { fs, ignore, loadSync, nunjucks, osType, path, yaml } from "../../deps.ts";
+import { deepMerge, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { BuildAtConfig, DeployAtConfig, Pack, ServiceConfig, StartAtConfig } from "./service.type.ts";
-import { BuilderBuildOptions, ContainerCreateOptions } from "../../types/results.type.ts";
+import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/docker/types.ts";
+import { ServiceModule } from "./service.module.ts";
 
 interface PackOptions {
   depker: Depker;
@@ -40,19 +41,19 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     this.pack = options.pack;
     this.source = options.source;
     this.target = options.target;
-    this.config.secrets = { ...loadSync(), ...this.config.secrets };
   }
 
-  public static async deployment(depker: Depker, config: ServiceConfig): Promise<void> {
-    // values
-    // @ts-ignore
-    const pack = config[sym] as Pack;
-    const source = path.resolve(config.path ?? Deno.cwd());
-    const target = Deno.makeTempDirSync({ prefix: `deploy-${config.name}-` });
+  // region public operators
+
+  public static async execute(depker: Depker, config: ServiceConfig): Promise<void> {
+    const clone = deepMerge<ServiceConfig>({}, config);
+    const source = path.resolve(clone.path ?? Deno.cwd());
+    const target = Deno.makeTempDirSync({ prefix: `deploy-${clone.name}-` });
 
     // unpack
-    depker.log.info(`Unpacking service ${config.name} started.`);
-    const ig = ignore();
+    await depker.emit("service:deploy:before-unpack", clone, source, target);
+    depker.log.info(`Unpacking service ${clone.name} started.`);
+    const ig = ignore() as any;
     const gi = path.join(source, ".gitignore");
     const di = path.join(source, ".depkerignore");
     if (await fs.exists(gi)) {
@@ -68,56 +69,100 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         return !r || !ig.ignores(r);
       },
     });
-    depker.log.done(`Unpacking service ${config.name} successfully.`);
+    if (config.volumes) {
+      for (const value of config.volumes) {
+        value.hpath = depker.uti.replace(value.hpath, (key) => {
+          return depker.cfg.path(key);
+        });
+      }
+    }
+    if (config.labels || config.secrets || config.build_args) {
+      const secrets = await depker.cfg.secret();
+      if (config.labels) {
+        for (const [name, value] of Object.entries(config.labels)) {
+          config.labels[name] = depker.uti.replace(value, (key) => {
+            return secrets[key];
+          });
+        }
+      }
+      if (config.secrets) {
+        for (const [name, value] of Object.entries(config.secrets)) {
+          config.secrets[name] = depker.uti.replace(value, (key) => {
+            if (secrets[key] !== undefined && secrets[key] !== null) {
+              return String(secrets[key]);
+            } else {
+              return key;
+            }
+          });
+        }
+      }
+      if (config.build_args) {
+        for (const [name, value] of Object.entries(config.build_args)) {
+          config.build_args[name] = depker.uti.replace(value, (key) => {
+            if (secrets[key] !== undefined && secrets[key] !== null) {
+              return String(secrets[key]);
+            } else {
+              return key;
+            }
+          });
+        }
+      }
+    }
+    await depker.emit("service:deploy:after-unpack", clone, source, target);
+    depker.log.done(`Unpacking service ${clone.name} successfully.`);
 
     // create context
-    const env = new PackContext({ depker, config, pack, source, target });
+    const context = new PackContext({
+      depker: depker,
+      source: source,
+      target: target,
+      config: clone,
+      pack: config[sym] as Pack,
+    });
 
     try {
       // log started
-      depker.log.step(`Deployment service ${config.name} started.`);
+      await depker.emit("service:deploy:started", context);
+      depker.log.step(`Deployment service ${clone.name} started.`);
 
       // emit init event
-      depker.log.debug(`Deployment service ${config.name} initing.`);
-      await pack.init?.(env);
-
-      // purge residual containers
-      depker.log.step(`Purge ${config.name} residual containers started.`);
-      await PackContext._clear(depker);
+      await depker.emit("service:deploy:before-init", context);
+      depker.log.debug(`Deployment service ${clone.name} initing.`);
+      await context.pack.init?.(context);
+      await depker.emit("service:deploy:after-init", context);
 
       // deployment containers
-      depker.log.debug(`Deployment service ${config.name} building.`);
-      await pack.build?.(env);
-
-      // purge containers
-      await PackContext._clear(depker);
+      await depker.emit("service:deploy:before-build", context);
+      depker.log.debug(`Deployment service ${clone.name} building.`);
+      await context.pack.build?.(context);
+      await depker.emit("service:deploy:after-build", context);
 
       // purge images and volumes
+      await depker.emit("service:deploy:before-purge", context);
+      depker.log.debug(`Deployment service ${clone.name} purging.`);
       await Promise.all([depker.ops.image.prune(), depker.ops.volume.prune(), depker.ops.network.prune()]);
+      await depker.emit("service:deploy:after-purge", context);
 
       // emit destroy event
-      depker.log.debug(`Deployment service ${config.name} destroying.`);
-      await pack.destroy?.(env);
+      await depker.emit("service:deploy:before-destroy", context);
+      depker.log.debug(`Deployment service ${clone.name} destroying.`);
+      await context.pack.destroy?.(context);
+      await depker.emit("service:deploy:after-destroy", context);
 
       // log successfully
-      depker.log.done(`Deployment service ${config.name} successfully.`);
+      await depker.emit("service:deploy:successfully", context);
+      depker.log.done(`Deployment service ${clone.name} successfully.`);
     } catch (e) {
       // log failed
-      depker.log.error(`Deployment service ${config.name} failure.`, e);
-      throw new Error(`Deployment service ${config.name} failure.`, { cause: e });
+      await depker.emit("service:deploy:failure", context);
+      depker.log.error(`Deployment service ${clone.name} failure.`, e);
+      throw new Error(`Deployment service ${clone.name} failure.`, { cause: e });
     }
   }
 
-  // region functions
+  // endregion
 
-  public env(name: string, value?: string) {
-    if (value) {
-      Deno.env.set(name, value);
-      return value;
-    } else {
-      return Deno.env.get(name);
-    }
-  }
+  // region public functions
 
   public dockerfile(data: string) {
     this.overwrite("Dockerfile", data);
@@ -153,7 +198,6 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     const loader = new nunjucks.FileSystemLoader(path.resolve(this.target));
     const template = new nunjucks.Environment(loader, { autoescape: false, noCache: true });
     // functions
-    template.addGlobal("env", self.env.bind(self));
     template.addGlobal("json", JSON);
     template.addGlobal("yaml", yaml);
     template.addGlobal("deno", Deno);
@@ -197,10 +241,6 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     });
     return template.renderString(value, context ?? {});
   }
-
-  // endregion
-
-  // region deploy
 
   public async deploy() {
     return await this.deployAt(this.target, this.config);
@@ -292,103 +332,26 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
   public async startAt(target: string, config: StartAtConfig): Promise<string> {
     // values
-    const id = String(Date.now());
-    const name = config.name;
-
-    // log started
-    this.depker.log.step(`Start container ${name} started.`);
-
-    // running
-    const running = await this._find(name);
-
-    // creating
-    const deploying = await this._create(id, target, config);
-
-    try {
-      // starting
-      await this.depker.ops.container.start([deploying]);
-
-      // wait healthcheck, max timeout 1h
-      this.depker.log.info(`Waiting container ${name} to finished.`);
-      for (let i = 1; i <= 1200; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const infos = await this.depker.ops.container.inspect([deploying]);
-        if (infos) {
-          const status = infos[0].State.Status.toLowerCase();
-          const health = infos[0].State.Health?.Status?.toLowerCase();
-          if (status !== "created" && health !== "starting") {
-            if (status === "running" && (!health || health === "healthy")) {
-              break;
-            } else {
-              throw new Error(`Start container ${name} is unhealthy.`);
-            }
-          }
-        }
-        if (i % 5 === 0) {
-          this.depker.log.raw(`Waiting: ${i * 2}s`);
-        }
-      }
-
-      // rename
-      try {
-        if (running) {
-          await this.depker.ops.container.stop([running]);
-        }
-      } catch (e) {
-        // ignore
-      }
-      try {
-        if (running) {
-          await this.depker.ops.container.rename(running, `${name}-${Date.now()}`);
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      await this.depker.ops.container.rename(deploying, name);
-      this.depker.log.done(`Start container ${name} successfully.`);
-      return deploying;
-    } catch (e) {
-      // rename
-      try {
-        if (running) {
-          await this.depker.ops.container.start([running]);
-        }
-      } catch (e) {
-        // ignore
-      }
-      try {
-        if (running) {
-          await this.depker.ops.container.rename(running, name);
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      // print logs
-      this.depker.log.error(`Start container ${name} failure.`, e);
-      throw new Error(`Start container ${name} failure.`, { cause: e });
-    }
-  }
-
-  private async _find(name: string) {
-    const info = await this.depker.ops.container.find(name);
-    return info?.Id;
-  }
-
-  private async _create(id: string, target: string, config: StartAtConfig) {
-    const name = config.name;
-    const rename = `${name}-${id}`;
+    const id = `${Date.now()}`;
+    const name = `${config.name}`;
+    const full = `${name}-i${id}`;
     const network = await this.depker.ops.network.default();
 
-    // values
+    // started
+    this.depker.log.step(`Start container ${full} started.`);
+
+    // config
     const envs: Record<string, string> = {
       ...config.secrets,
+      DEPKER_ID: id,
       DEPKER_NAME: name,
+      DEPKER_VERSION: this.depker.version,
     };
     const labels: Record<string, string> = {
       ...config.labels,
+      "depker.id": id,
       "depker.name": name,
+      "depker.version": this.depker.version,
       "traefik.enable": "true",
       "traefik.docker.network": network,
     };
@@ -444,36 +407,36 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       const middlewares: string[] = [];
 
       // service
-      labels[`traefik.http.routers.${name}-${id}.service`] = `${name}-${id}`;
-      labels[`traefik.http.services.${name}-${id}.loadbalancer.server.scheme`] = scheme;
-      labels[`traefik.http.services.${name}-${id}.loadbalancer.server.port`] = String(port);
+      labels[`traefik.http.routers.${name}.service`] = `${name}`;
+      labels[`traefik.http.services.${name}.loadbalancer.server.scheme`] = scheme;
+      labels[`traefik.http.services.${name}.loadbalancer.server.port`] = String(port);
 
       // route
       if (config.tls) {
         // https
-        labels[`traefik.http.routers.${name}-${id}.rule`] = rule;
-        labels[`traefik.http.routers.${name}-${id}.entrypoints`] = "https";
-        labels[`traefik.http.routers.${name}-${id}.tls.certresolver`] = "depker";
+        labels[`traefik.http.routers.${name}.rule`] = rule;
+        labels[`traefik.http.routers.${name}.entrypoints`] = "https";
+        labels[`traefik.http.routers.${name}.tls.certresolver`] = "depker";
         // http
-        labels[`traefik.http.routers.${name}-${id}-http.rule`] = rule;
-        labels[`traefik.http.routers.${name}-${id}-http.entrypoints`] = "http";
-        labels[`traefik.http.routers.${name}-${id}-http.middlewares`] = `${name}-${id}-https`;
-        labels[`traefik.http.middlewares.${name}-${id}-https.redirectscheme.scheme`] = "https";
-        middlewares.push(`${name}-${id}-https`);
+        labels[`traefik.http.routers.${name}-http.rule`] = rule;
+        labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
+        labels[`traefik.http.routers.${name}-http.middlewares`] = `${name}-https`;
+        labels[`traefik.http.middlewares.${name}-https.redirectscheme.scheme`] = "https";
+        middlewares.push(`${name}-https`);
       } else {
         // http
-        labels[`traefik.http.routers.${name}-${id}-http.rule`] = rule;
-        labels[`traefik.http.routers.${name}-${id}-http.entrypoints`] = "http";
+        labels[`traefik.http.routers.${name}-http.rule`] = rule;
+        labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
       }
 
       // middleware
       for (const middleware of config.middlewares ?? []) {
         for (const [k, v] of Object.entries(middleware.options ?? {})) {
-          labels[`traefik.http.middlewares.${name}-${id}-${middleware.name}.${middleware.type}.${k}`] = v;
-          middlewares.push(`${name}-${id}-${middleware.name}`);
+          labels[`traefik.http.middlewares.${name}-${middleware.name}.${middleware.type}.${k}`] = v;
+          middlewares.push(`${name}-${middleware.name}`);
         }
       }
-      labels[`traefik.http.routers.${name}-${id}.middlewares`] = [...new Set(middlewares)].join(",");
+      labels[`traefik.http.routers.${name}.middlewares`] = [...new Set(middlewares)].join(",");
     }
 
     // ports
@@ -483,11 +446,11 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       const hport = port.hport;
       const cport = port.cport;
       if (proto === "tcp") {
-        labels[`traefik.${proto}.routers.${name}-${id}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
+        labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
       }
-      labels[`traefik.${proto}.routers.${name}-${id}-${proto}-${cport}.entrypoints`] = `${proto}${hport}`;
-      labels[`traefik.${proto}.routers.${name}-${id}-${proto}-${cport}.service`] = `${name}-${id}-${proto}-${cport}`;
-      labels[`traefik.${proto}.services.${name}-${id}-${proto}-${cport}.loadbalancer.server.port`] = String(cport);
+      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.entrypoints`] = `${proto}${hport}`;
+      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.service`] = `${name}-${proto}-${cport}`;
+      labels[`traefik.${proto}.services.${name}-${proto}-${cport}.loadbalancer.server.port`] = String(cport);
     }
 
     // volumes
@@ -497,37 +460,41 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     }
 
     try {
-      // log start
-      this.depker.log.done(`Create container ${name} started.`);
+      // creating
+      await this.depker.ops.container.create(full, target, options);
+      // starting
+      await this.depker.ops.container.start([full]);
 
-      // create container
-      await this.depker.ops.container.create(rename, target, options);
-
-      // log successfully
-      this.depker.log.done(`Create container ${name} successfully.`);
-      return rename;
-    } catch (e: any) {
-      // log failed
-      this.depker.log.error(`Create container ${name} failure.`, e);
-      throw new Error(`Create container ${name} failure.`, { cause: e });
-    }
-  }
-
-  private static async _clear(depker: Depker) {
-    const infos = await depker.ops.container.list();
-    const insps = await depker.ops.container.inspect(infos.map((i) => i.Id));
-    const needs = new Set<string>();
-    for (const insp of insps) {
-      const oname = insp.Name;
-      const dname = insp.Config.Labels["depker.name"];
-      if (dname && dname !== oname) {
-        needs.add(insp.Id);
+      // wait healthcheck, max timeout 1h
+      this.depker.log.info(`Waiting container ${full} to finished.`);
+      for (let i = 1; i <= 1200; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const infos = await this.depker.ops.container.inspect([full]);
+        if (infos) {
+          const status = infos[0].State.Status.toLowerCase();
+          const health = infos[0].State.Health?.Status?.toLowerCase();
+          if (status !== "created" && health !== "starting") {
+            if (status === "running" && (!health || health === "healthy")) {
+              break;
+            } else {
+              throw new Error(`Start container ${full} is unhealthy.`);
+            }
+          }
+        }
+        if (i % 5 === 0) {
+          this.depker.log.raw(`Waiting: ${i * 2}s`);
+        }
       }
-    }
-    if (needs.size) {
-      await depker.ops.container.remove([...needs], {
-        Force: true,
-      });
+
+      this.depker.log.done(`Start container ${full} successfully.`);
+      return full;
+    } catch (e) {
+      // failure
+      this.depker.log.error(`Start container ${full} failure.`, e);
+      throw new Error(`Start container ${full} failure.`, { cause: e });
+    } finally {
+      // cleanup
+      await this.depker.module<ServiceModule>(ServiceModule.NAME)?.prune("pre");
     }
   }
 

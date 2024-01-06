@@ -24,6 +24,24 @@
       }
     ],
     "@semantic-release/release-notes-generator",
+    [
+      "semantic-release-replace-plugin",
+      {
+        "replacements": [
+          {
+            "files": ["src/depker.ts"],
+            "from": "__VERSION__",
+            "to": "${nextRelease.version}"
+          }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["src/depker.ts"]
+      }
+    ],
     "@semantic-release/github"
   ]
 }

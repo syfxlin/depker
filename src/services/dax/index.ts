@@ -1,4 +1,4 @@
-import { $BuiltInProperties, build$, CommandBuilder, RequestBuilder } from "../deps.ts";
+import { $BuiltInProperties, build$, CommandBuilder, RequestBuilder } from "../../deps.ts";
 
 CommandBuilder.prototype.jsonl = async function <T = any>(this: CommandBuilder): Promise<T> {
   const lines = await this.lines();
@@ -11,7 +11,7 @@ RequestBuilder.prototype.jsonl = async function <T = any>(this: RequestBuilder):
   return lines.map((i) => JSON.parse(i)) as T;
 };
 
-export interface Template<TE = {}>
+interface Template<TE = {}>
   extends Omit<
     // @ts-ignore
     $BuiltInProperties<TE>,

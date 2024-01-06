@@ -1,5 +1,5 @@
-import { Depker } from "../depker.ts";
-import { datetime, fs, getFileInfoType, isSubdir, osType, path, toPathString } from "../deps.ts";
+import { Depker } from "../../depker.ts";
+import { datetime, fs, getFileInfoType, isSubdir, osType, path, toPathString } from "../../deps.ts";
 
 interface CopyOptions {
   overwrite?: boolean;
@@ -10,7 +10,7 @@ interface IntCopyOptions extends CopyOptions {
   folder?: boolean;
 }
 
-export class UtiService {
+export class UtiModule {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(private readonly depker: Depker) {}
 
@@ -52,6 +52,21 @@ export class UtiService {
 
   public date(value: string | number) {
     return datetime(value).toLocal().format("YYYY/MM/dd HH:mm:ss");
+  }
+
+  public status(status: string, health?: string) {
+    if (health) {
+      return `${status} (${health})`;
+    } else {
+      return `${status}`;
+    }
+  }
+
+  public replace(value: string, replacer: (name: string) => string | boolean | number | null | undefined) {
+    return value.replace(/(?<=^|[^@])(?:@([a-zA-Z][a-zA-Z0-9_]*)|@\{([a-zA-Z][a-zA-Z0-9]*)})/g, (a, n) => {
+      const r = replacer(n);
+      return r === null || r === undefined ? a : String(r);
+    });
   }
 
   public async copy(source: string, target: string, options?: CopyOptions) {

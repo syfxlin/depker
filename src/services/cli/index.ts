@@ -1,8 +1,7 @@
-import { Depker } from "../depker.ts";
-import { Command } from "../deps.ts";
+import { Depker } from "../../depker.ts";
+import { Command } from "../../deps.ts";
 
-export class CliService extends Command<Record<string, any>> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+export class CliModule extends Command {
   constructor(private readonly depker: Depker) {
     super();
     this.name(depker.name);

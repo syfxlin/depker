@@ -17,6 +17,8 @@ import {
   ContainerStatsOptions,
   ContainerStopOptions,
   ContainerTopOptions,
+  DepkerMaster,
+  DockerNodeOptions,
   ImageInfo,
   ImageInspect,
   ImageOperation,
@@ -38,37 +40,11 @@ import {
   VolumeOperation,
   VolumeRemoveOptions,
   volumes,
-} from "../types/results.type.ts";
-import { DepkerMaster } from "../types/master.type.ts";
-import { Depker } from "../depker.ts";
-import { CommandBuilder } from "../deps.ts";
+} from "./types.ts";
+import { Depker } from "../../depker.ts";
+import { CommandBuilder } from "../../deps.ts";
 
-export type DockerNodeOptions =
-  | {
-      type: "local";
-    }
-  | {
-      type: "context";
-      name: string;
-    }
-  | {
-      type: "ssh";
-      host: string;
-    }
-  | {
-      type: "http";
-      host: string;
-      port?: number | string;
-    }
-  | {
-      type: "https";
-      host: string;
-      port?: number | string;
-      ca?: string;
-      cert?: string;
-      key?: string;
-      verify?: boolean;
-    };
+export * from "./types.ts";
 
 export function docker(options?: DockerNodeOptions) {
   return (depker: Depker) => new DockerNode(depker, options);
@@ -90,36 +66,46 @@ export class DockerNode implements DepkerMaster {
     this.image = new DockerImageOperation(depker, this);
 
     if (options?.type === "context") {
-      this.docker = [`docker`, `--context`, options.name];
+      const name = options.name || Deno.env.get("REMOTE_NAME") || "default";
+      this.docker = [`docker`, `--context`, name];
     } else if (options?.type === "ssh") {
-      this.docker = [`docker`, `--host`, `ssh://${options.host}`];
+      const host = options.host || Deno.env.get("REMOTE_HOST") || "localhost";
+      this.docker = [`docker`, `--host`, `ssh://${host}`];
     } else if (options?.type === "http") {
-      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port ?? 2375}`];
+      const host = options.host || Deno.env.get("REMOTE_HOST") || "localhost";
+      const port = options.port || Deno.env.get("REMOTE_PORT") || 2375;
+      this.docker = [`docker`, `--host`, `tcp://${host}:${port}`];
     } else if (options?.type === "https") {
-      this.docker = [`docker`, `--host`, `tcp://${options.host}:${options.port ?? 2376}`];
+      const host = options.host || Deno.env.get("REMOTE_HOST") || "localhost";
+      const port = options.port || Deno.env.get("REMOTE_PORT") || 2375;
+      this.docker = [`docker`, `--host`, `tcp://${host}:${port}`];
       // ca
-      if (options.ca) {
-        const ca = Deno.makeTempFileSync();
-        Deno.writeTextFileSync(ca, options.ca);
+      const ca = options.ca || Deno.env.get("REMOTE_CA");
+      if (ca) {
+        const file = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(file, ca);
         this.docker.push(`--tlscacert`);
-        this.docker.push(ca);
+        this.docker.push(file);
       }
       // cert
-      if (options.cert) {
-        const cert = Deno.makeTempFileSync();
-        Deno.writeTextFileSync(cert, options.cert);
+      const cert = options.cert || Deno.env.get("REMOTE_CERT");
+      if (cert) {
+        const file = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(file, cert);
         this.docker.push(`--tlscert`);
-        this.docker.push(cert);
+        this.docker.push(file);
       }
       // key
-      if (options.key) {
-        const key = Deno.makeTempFileSync();
-        Deno.writeTextFileSync(key, options.key);
+      const key = options.key || Deno.env.get("REMOTE_KEY");
+      if (key) {
+        const file = Deno.makeTempFileSync();
+        Deno.writeTextFileSync(file, key);
         this.docker.push(`--tlskey`);
-        this.docker.push(key);
+        this.docker.push(file);
       }
       // verify
-      if (options.verify !== false) {
+      const verify = String(options.verify) || Deno.env.get("REMOTE_VERIFY");
+      if (verify !== "false") {
         this.docker.push(`--tlsverify`);
       } else {
         this.docker.push(`--tls`);
@@ -131,7 +117,10 @@ export class DockerNode implements DepkerMaster {
 }
 
 class DockerContainerOperation implements ContainerOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `container`];
@@ -230,15 +219,15 @@ class DockerContainerOperation implements ContainerOperation {
   }
 
   public create(name: string, target: string, options?: ContainerCreateOptions): CommandBuilder {
-    return this.depker.dax`${this.docker} create ${this._create_args(name, target, options)}`;
+    return this.depker.dax`${this.docker} create ${this.create_args(name, target, options)}`;
   }
 
   public run(name: string, target: string, options?: ContainerRunOptions): CommandBuilder {
-    return this.depker.dax`${this.docker} run ${this._run_args(name, target, options)}`;
+    return this.depker.dax`${this.docker} run ${this.run_args(name, target, options)}`;
   }
 
   public exec(name: string, commands: string[], options?: ContainerExecOptions): CommandBuilder {
-    return this.depker.dax`${this.docker} exec ${this._exec_args(name, commands, options)}`;
+    return this.depker.dax`${this.docker} exec ${this.exec_args(name, commands, options)}`;
   }
 
   public logs(name: string, options?: ContainerLogsOptions): CommandBuilder {
@@ -306,7 +295,7 @@ class DockerContainerOperation implements ContainerOperation {
     await this.depker.dax`${this.docker} wait ${name}`;
   }
 
-  private _create_args(name: string, target: string, options?: ContainerCreateOptions) {
+  private create_args(name: string, target: string, options?: ContainerCreateOptions) {
     const args: string[] = [`--name`, name];
 
     // basic
@@ -470,7 +459,7 @@ class DockerContainerOperation implements ContainerOperation {
     return args;
   }
 
-  private _run_args(name: string, image: string, options?: ContainerRunOptions) {
+  private run_args(name: string, image: string, options?: ContainerRunOptions) {
     const args: string[] = [];
 
     if (options?.Tty) {
@@ -487,10 +476,10 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(options.DetachKeys);
     }
 
-    return [...args, ...this._create_args(name, image, options)];
+    return [...args, ...this.create_args(name, image, options)];
   }
 
-  private _exec_args(name: string, commands: string[], options?: ContainerExecOptions) {
+  private exec_args(name: string, commands: string[], options?: ContainerExecOptions) {
     const args: string[] = [];
 
     if (options?.Tty) {
@@ -529,7 +518,10 @@ class DockerContainerOperation implements ContainerOperation {
 }
 
 class DockerBuilderOperation implements BuilderOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   public build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder {
     const args = [`--tag`, name];
@@ -590,7 +582,10 @@ class DockerBuilderOperation implements BuilderOperation {
 }
 
 class DockerNetworkOperation implements NetworkOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `network`];
@@ -703,7 +698,10 @@ class DockerNetworkOperation implements NetworkOperation {
 }
 
 class DockerVolumeOperation implements VolumeOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `volume`];
@@ -773,7 +771,10 @@ class DockerVolumeOperation implements VolumeOperation {
 }
 
 class DockerImageOperation implements ImageOperation {
-  constructor(private readonly depker: Depker, private readonly node: DockerNode) {}
+  constructor(
+    private readonly depker: Depker,
+    private readonly node: DockerNode,
+  ) {}
 
   private get docker() {
     return [...this.node.docker, `image`];

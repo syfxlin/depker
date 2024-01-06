@@ -1,9 +1,10 @@
-import { colors, datetime, nunjucks, Table, yaml } from "../deps.ts";
-import { Depker } from "../depker.ts";
+import { Depker } from "../../depker.ts";
+import { colors, datetime, nunjucks, Table, yaml } from "../../deps.ts";
+import { LogLevel } from "./types.ts";
 
-export type LogLevel = "raw" | "step" | "debug" | "done" | "info" | "error";
+export * from "./types.ts";
 
-export class LogService {
+export class LogModule {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(private readonly depker: Depker) {}
 
@@ -23,21 +24,19 @@ export class LogService {
     return results.join("\n");
   }
 
-  // prettier-ignore
-  public parse(value: string, context: Record<string, any>) {
+  public parse(value: string, data: any) {
     const template = new nunjucks.Environment(null, { autoescape: false, noCache: true });
-    template.addGlobal("ctx", context);
     template.addGlobal("env", Deno.env);
     template.addGlobal("deno", Deno);
-    // @ts-ignore
     template.addFilter("json", (value: any) => JSON.stringify(value, undefined, 2), false);
     template.addFilter("yaml", (value: any) => yaml.stringify(value), false);
-    // @ts-ignore
-    return template.renderString(value, context, undefined, undefined).trim();
-  }
-
-  public filter(value: string, context: Record<string, any>) {
-    return value ? this.parse(`{{ ${value} }}`, context) === "true" : true;
+    if (data instanceof Object) {
+      // @ts-ignore
+      return template.renderString(value, data, undefined, undefined).trim();
+    } else {
+      // @ts-ignore
+      return template.renderString(value, { it: data }, undefined, undefined).trim();
+    }
   }
 
   public json(obj: any) {
@@ -80,9 +79,13 @@ export class LogService {
     this._output("raw", Date.now(), table.toString());
   }
 
-  public render(value: string, contexts: Array<Record<string, any>>) {
-    for (const context of contexts) {
-      this._output("raw", Date.now(), this.parse(value, context));
+  public render(value: string, data: any) {
+    if (data instanceof Array) {
+      for (const context of data) {
+        this._output("raw", Date.now(), this.parse(value, context));
+      }
+    } else {
+      this._output("raw", Date.now(), this.parse(value, data));
     }
   }
 

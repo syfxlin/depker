@@ -1,14 +1,14 @@
 import {
   BuilderOperation,
   ContainerOperation,
+  DepkerMaster,
   ImageOperation,
   NetworkOperation,
   VolumeOperation,
-} from "../types/results.type.ts";
-import { DepkerMaster } from "../types/master.type.ts";
-import { Depker } from "../depker.ts";
+} from "../docker/types.ts";
+import { Depker } from "../../depker.ts";
 
-export class OpsService implements DepkerMaster {
+export class OpsModule implements DepkerMaster {
   constructor(private readonly depker: Depker) {}
 
   public get container(): ContainerOperation {

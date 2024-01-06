@@ -1,19 +1,24 @@
-import "https://deno.land/std@0.204.0/dotenv/load.ts";
+import "https://deno.land/std@0.210.0/dotenv/load.ts";
 import { fs, path } from "./deps.ts";
-import { Dax, dax } from "./services/dax.service.ts";
-import { CliService } from "./services/cli.service.ts";
-import { LogService } from "./services/log.service.ts";
-import { EvsService } from "./services/evs.service.ts";
-import { UtiService } from "./services/uti.service.ts";
-import { DepkerMaster } from "./types/master.type.ts";
-import { DepkerRunner } from "./types/runner.type.ts";
-import { DockerNode } from "./services/docker.node.ts";
-import { OpsService } from "./services/ops.service.ts";
-import { DepkerModule } from "./types/modules.type.ts";
+import { Dax, dax } from "./services/dax/index.ts";
+import { DockerNode } from "./services/docker/index.ts";
 import { ProxyModule } from "./modules/proxy/proxy.module.ts";
 import { ServiceModule } from "./modules/service/service.module.ts";
+import { CliModule } from "./services/cli/index.ts";
+import { LogModule } from "./services/log/index.ts";
+import { OpsModule } from "./services/ops/index.ts";
+import { UtiModule } from "./services/uti/index.ts";
+import { EvsModule } from "./services/evs/index.ts";
+import { CfgModule } from "./services/cfg/index.ts";
+import { DepkerMaster, DepkerRunner } from "./services/docker/types.ts";
 
-type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
+export type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
+
+export interface DepkerModule {
+  name: string;
+  init?: () => Promise<void> | void;
+  destroy?: () => Promise<void> | void;
+}
 
 export function depker(): DepkerApp {
   return new Depker() as DepkerApp;
@@ -28,27 +33,29 @@ export class Depker {
   private _master: DepkerMaster;
   private _runner: DepkerRunner;
   // service
-  private readonly _dax: Dax;
-  private readonly _cli: CliService;
-  private readonly _log: LogService;
-  private readonly _evs: EvsService;
-  private readonly _ops: OpsService;
-  private readonly _uti: UtiService;
+  public readonly dax: Dax;
+  public readonly cli: CliModule;
+  public readonly log: LogModule;
+  public readonly ops: OpsModule;
+  public readonly evs: EvsModule;
+  public readonly uti: UtiModule;
+  public readonly cfg: CfgModule;
   // module
   private readonly _modules: Array<DepkerModule>;
 
   constructor() {
     // info
     this.name = "depker";
-    this.version = /\/syfxlin\/depker\/(\w+)\/mod\.ts/.exec(import.meta.url)?.[1] ?? "master";
+    this.version = "__VERSION__";
     this.description = "docker-based cloud deployment tool.";
     // service
-    this._dax = dax();
-    this._cli = new CliService(this);
-    this._log = new LogService(this);
-    this._evs = new EvsService(this);
-    this._ops = new OpsService(this);
-    this._uti = new UtiService(this);
+    this.dax = dax();
+    this.cli = new CliModule(this);
+    this.log = new LogModule(this);
+    this.ops = new OpsModule(this);
+    this.evs = new EvsModule(this);
+    this.uti = new UtiModule(this);
+    this.cfg = new CfgModule(this);
     // runner
     this._master = new DockerNode(this);
     this._runner = this._master;
@@ -56,47 +63,6 @@ export class Depker {
     this._modules = [];
     this._modules.push(new ProxyModule(this));
     this._modules.push(new ServiceModule(this));
-  }
-
-  public static async create(): Promise<DepkerApp> {
-    const root = Deno.cwd();
-    const paths = [
-      path.join(root, "depker.config.ts"),
-      path.join(root, ".depker/depker.config.ts"),
-      path.join(root, "depker.config.js"),
-      path.join(root, ".depker/depker.config.js"),
-    ];
-    for (const p of paths) {
-      if (await fs.exists(p)) {
-        const mod = await import(path.toFileUrl(p).toString());
-        return mod?.default ?? mod;
-      }
-    }
-    return new Depker() as DepkerApp;
-  }
-
-  public get dax(): Dax {
-    return this._dax;
-  }
-
-  public get cli(): CliService {
-    return this._cli;
-  }
-
-  public get log(): LogService {
-    return this._log;
-  }
-
-  public get evs(): EvsService {
-    return this._evs;
-  }
-
-  public get ops(): OpsService {
-    return this._ops;
-  }
-
-  public get uti(): UtiService {
-    return this._uti;
   }
 
   public cwd(dir?: string): string {
@@ -115,40 +81,41 @@ export class Depker {
     }
   }
 
-  public file(file: string, value?: string): string | undefined {
+  public async file(file: string, value?: string): Promise<string | undefined> {
     file = path.resolve(file);
     if (value) {
-      fs.ensureDirSync(path.dirname(file));
-      Deno.writeTextFileSync(file, value);
+      await fs.ensureDir(path.dirname(file));
+      await Deno.writeTextFile(file, value);
       return value;
-    } else if (fs.existsSync(file)) {
-      return Deno.readTextFileSync(file);
+    } else if (await fs.exists(file)) {
+      return await Deno.readTextFile(file);
     } else {
       return undefined;
     }
   }
 
-  public exit(code?: number): void {
+  public async exit(code?: number): Promise<void> {
+    await this.emit("depker:exit", code ?? 0, this);
     Deno.exit(code);
   }
 
   public on(name: string, listener: (...args: any[]) => void): DepkerApp {
-    this._evs.on(name, listener);
+    this.evs.on(name, listener);
     return this as unknown as DepkerApp;
   }
 
   public once(name: string, listener: (...args: any[]) => void): DepkerApp {
-    this._evs.once(name, listener);
+    this.evs.once(name, listener);
     return this as unknown as DepkerApp;
   }
 
   public async off(name: string, listener: (...args: any[]) => void): Promise<DepkerApp> {
-    await this._evs.off(name, listener);
+    await this.evs.off(name, listener);
     return this as unknown as DepkerApp;
   }
 
   public async emit(name: string, ...args: any[]): Promise<DepkerApp> {
-    await this._evs.emit(name, ...args);
+    await this.evs.emit(name, ...args);
     return this as unknown as DepkerApp;
   }
 
@@ -191,22 +158,22 @@ export class Depker {
     return this as unknown as DepkerApp;
   }
 
-  public inject(name: string, value: any): DepkerApp {
+  public inject(name: string, builder: (depker: Depker) => any): DepkerApp {
     // @ts-ignore
-    this[name] = value;
+    this[name] = builder(this);
     return this as unknown as DepkerApp;
   }
 
-  public dependency(name: string, builder: () => DepkerCallback<DepkerModule>): DepkerApp {
+  public dependency(name: string, builder: (depker: Depker) => DepkerModule): DepkerApp {
     if (!this._modules.find((i) => i.name === name)) {
-      this.use(builder());
+      this.use(builder(this));
     }
     return this as unknown as DepkerApp;
   }
 
   public async execute(): Promise<void> {
     // prepare
-    this._cli.option("--debug", "Enable debug mode", {
+    this.cli.option("--debug", "Enable debug mode", {
       global: true,
       default: false,
       action: (options) => {
@@ -215,7 +182,7 @@ export class Depker {
         }
       },
     });
-    this._cli.option("--timestamp", "Enable timestamp output", {
+    this.cli.option("--timestamp", "Enable timestamp output", {
       global: true,
       default: false,
       action: (options) => {
@@ -227,25 +194,38 @@ export class Depker {
 
     // execute
     try {
+      await this.emit("depker:before-init", this);
       await this._init_module();
-      await this._cli.parse(Deno.args);
+      await this.emit("depker:after-init", this);
+      await this.cli.parse(Deno.args);
+      await this.emit("depker:before-destroy", this);
       await this._destroy_module();
+      await this.emit("depker:after-destroy", this);
     } catch (e) {
-      this._log.error(e);
+      this.log.error(e);
+      await this.emit("depker:exit", 1, this);
       Deno.exit(1);
     }
   }
 
   private async _init_module(): Promise<void> {
+    await this.emit("depker:modules:before-init", this._modules);
     for (const module of this._modules) {
+      await this.emit("depker:module:before-init", module);
       await module?.init?.();
+      await this.emit("depker:module:after-init", module);
     }
+    await this.emit("depker:modules:after-init", this._modules);
   }
 
   private async _destroy_module(): Promise<void> {
+    await this.emit("depker:modules:before-destroy", this._modules);
     for (const module of this._modules) {
+      await this.emit("depker:module:before-destroy", module);
       await module?.destroy?.();
+      await this.emit("depker:module:after-destroy", module);
     }
+    await this.emit("depker:modules:after-destroy", this._modules);
   }
 }
 
