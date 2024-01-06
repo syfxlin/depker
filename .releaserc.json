@@ -30,8 +30,8 @@
         "replacements": [
           {
             "files": ["src/depker.ts"],
-            "from": "__VERSION__",
-            "to": "${nextRelease.version}"
+            "from": "this.version = \".*\"",
+            "to": "this.version = \"${nextRelease.version}\""
           }
         ]
       }
