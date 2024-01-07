@@ -1,17 +1,28 @@
 import { fs, path } from "./src/deps.ts";
 
 const lookup = async () => {
-  const root = Deno.cwd();
-  const paths = [
-    path.join(root, "depker.config.ts"),
-    path.join(root, ".depker/depker.config.ts"),
-    path.join(root, "depker.config.js"),
-    path.join(root, ".depker/depker.config.js"),
-    path.join(root, "depker.config.cjs"),
-    path.join(root, ".depker/depker.config.cjs"),
-    path.join(root, "depker.config.mjs"),
-    path.join(root, ".depker/depker.config.mjs"),
-  ];
+  const paths = [] as string[];
+  const roots = [Deno.cwd(), Deno.build.os === "windows" ? Deno.env.get("USERPROFILE") : Deno.env.get("HOME")];
+  for (const r of roots) {
+    if (r) {
+      paths.push(path.join(r, "depker.config.ts"));
+      paths.push(path.join(r, "depker.config.js"));
+      paths.push(path.join(r, "depker.config.cjs"));
+      paths.push(path.join(r, "depker.config.mjs"));
+      paths.push(path.join(r, ".depker/depker.config.ts"));
+      paths.push(path.join(r, ".depker/depker.config.js"));
+      paths.push(path.join(r, ".depker/depker.config.cjs"));
+      paths.push(path.join(r, ".depker/depker.config.mjs"));
+      paths.push(path.join(r, ".depker/depker.ts"));
+      paths.push(path.join(r, ".depker/depker.js"));
+      paths.push(path.join(r, ".depker/depker.cjs"));
+      paths.push(path.join(r, ".depker/depker.mjs"));
+      paths.push(path.join(r, ".depker/config.ts"));
+      paths.push(path.join(r, ".depker/config.js"));
+      paths.push(path.join(r, ".depker/config.cjs"));
+      paths.push(path.join(r, ".depker/config.mjs"));
+    }
+  }
   for (const p of paths) {
     if (await fs.exists(p)) {
       return path.toFileUrl(p).toString();
