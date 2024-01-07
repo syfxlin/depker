@@ -21,10 +21,12 @@ export interface DepkerModule {
 }
 
 export function depker(): DepkerApp {
-  return new Depker() as DepkerApp;
+  return Depker.create();
 }
 
 export class Depker {
+  // singleton
+  private static instance: DepkerApp;
   // info
   public readonly name: string;
   public readonly version: string;
@@ -43,7 +45,14 @@ export class Depker {
   // module
   private readonly _modules: Array<DepkerModule>;
 
-  constructor() {
+  public static create(): DepkerApp {
+    if (!Depker.instance) {
+      Depker.instance = new Depker() as DepkerApp;
+    }
+    return Depker.instance;
+  }
+
+  private constructor() {
     // info
     this.name = "depker";
     this.version = "5.1.1";
