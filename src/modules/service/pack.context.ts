@@ -1,5 +1,5 @@
 import { Depker } from "../../depker.ts";
-import { deepMerge, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
+import { deepMerge, fs, ignore, load, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { BuildAtConfig, DeployAtConfig, Pack, ServiceConfig, StartAtConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/docker/types.ts";
 import { ServiceModule } from "./service.module.ts";
@@ -69,6 +69,10 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         return !r || !ig.ignores(r);
       },
     });
+    const envs = await load({ examplePath: undefined });
+    if (Object.keys(envs).length) {
+      config.secrets = { ...config.secrets, ...envs };
+    }
     if (config.volumes) {
       for (const value of config.volumes) {
         value.hpath = depker.uti.replace(value.hpath, (key) => {
