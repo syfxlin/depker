@@ -45,14 +45,14 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
   // region public operators
 
-  public static async execute(depker: Depker, config: ServiceConfig): Promise<void> {
-    const clone = deepMerge<ServiceConfig>({}, config);
-    const source = path.resolve(clone.path ?? Deno.cwd());
-    const target = Deno.makeTempDirSync({ prefix: `deploy-${clone.name}-` });
+  public static async execute(depker: Depker, input: ServiceConfig): Promise<void> {
+    const config = deepMerge<ServiceConfig>({}, input);
+    const source = path.resolve(config.path ?? Deno.cwd());
+    const target = Deno.makeTempDirSync({ prefix: `deploy-${config.name}-` });
 
     // unpack
-    await depker.emit("service:deploy:before-unpack", clone, source, target);
-    depker.log.info(`Unpacking service ${clone.name} started.`);
+    await depker.emit("service:deploy:before-unpack", config, source, target);
+    depker.log.info(`Unpacking service ${config.name} started.`);
     const ig = ignore() as any;
     const gi = path.join(source, ".gitignore");
     const di = path.join(source, ".depkerignore");
@@ -112,55 +112,55 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         }
       }
     }
-    await depker.emit("service:deploy:after-unpack", clone, source, target);
-    depker.log.done(`Unpacking service ${clone.name} successfully.`);
+    await depker.emit("service:deploy:after-unpack", config, source, target);
+    depker.log.done(`Unpacking service ${config.name} successfully.`);
 
     // create context
     const context = new PackContext({
       depker: depker,
       source: source,
       target: target,
-      config: clone,
+      config: config,
       pack: config[sym] as Pack,
     });
 
     try {
       // log started
       await depker.emit("service:deploy:started", context);
-      depker.log.step(`Deployment service ${clone.name} started.`);
+      depker.log.step(`Deployment service ${config.name} started.`);
 
       // emit init event
       await depker.emit("service:deploy:before-init", context);
-      depker.log.debug(`Deployment service ${clone.name} initing.`);
+      depker.log.debug(`Deployment service ${config.name} initing.`);
       await context.pack.init?.(context);
       await depker.emit("service:deploy:after-init", context);
 
       // deployment containers
       await depker.emit("service:deploy:before-build", context);
-      depker.log.debug(`Deployment service ${clone.name} building.`);
+      depker.log.debug(`Deployment service ${config.name} building.`);
       await context.pack.build?.(context);
       await depker.emit("service:deploy:after-build", context);
 
       // purge images and volumes
       await depker.emit("service:deploy:before-purge", context);
-      depker.log.debug(`Deployment service ${clone.name} purging.`);
+      depker.log.debug(`Deployment service ${config.name} purging.`);
       await Promise.all([depker.ops.image.prune(), depker.ops.volume.prune(), depker.ops.network.prune()]);
       await depker.emit("service:deploy:after-purge", context);
 
       // emit destroy event
       await depker.emit("service:deploy:before-destroy", context);
-      depker.log.debug(`Deployment service ${clone.name} destroying.`);
+      depker.log.debug(`Deployment service ${config.name} destroying.`);
       await context.pack.destroy?.(context);
       await depker.emit("service:deploy:after-destroy", context);
 
       // log successfully
       await depker.emit("service:deploy:successfully", context);
-      depker.log.done(`Deployment service ${clone.name} successfully.`);
+      depker.log.done(`Deployment service ${config.name} successfully.`);
     } catch (e) {
       // log failed
       await depker.emit("service:deploy:failure", context);
-      depker.log.error(`Deployment service ${clone.name} failure.`, e);
-      throw new Error(`Deployment service ${clone.name} failure.`, { cause: e });
+      depker.log.error(`Deployment service ${config.name} failure.`, e);
+      throw new Error(`Deployment service ${config.name} failure.`, { cause: e });
     }
   }
 
