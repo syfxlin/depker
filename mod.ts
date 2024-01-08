@@ -13,9 +13,10 @@ export * from "./src/modules/service/service.type.ts";
 // packs
 export * from "./src/modules/service/packs/dockerfile/dockerfile.pack.ts";
 export * from "./src/modules/service/packs/image/image.pack.ts";
-export * from "./src/modules/service/packs/nextjs/nextjs.pack.ts";
 export * from "./src/modules/service/packs/nginx/nginx.pack.ts";
 export * from "./src/modules/service/packs/nodejs/nodejs.pack.ts";
+export * from "./src/modules/service/packs/nextjs/nextjs.pack.ts";
+export * from "./src/modules/service/packs/coline/coline.pack.ts";
 
 // default
 export default depker();

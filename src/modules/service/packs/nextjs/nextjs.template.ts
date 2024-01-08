@@ -1,6 +1,6 @@
 export const dockerfile = `
 # from nodejs
-FROM gplane/pnpm:{{ config.nextjs.version | d("alpine") }} as builder
+FROM gplane/pnpm:{{ config.nextjs.version | d("alpine") }} AS builder
 
 # workdir
 WORKDIR /app
@@ -21,8 +21,8 @@ ENV NODE_OPTIONS="--max_old_space_size={{ config.nextjs.memory | d("4096") }}"
 {{ config.nextjs.inject.before_install | render }}
 
 # install node modules
-{% if config.nodejs.install %}
-  RUN {{ config.nodejs.install | command }}
+{% if config.nextjs.install %}
+  RUN {{ config.nextjs.install | command }}
 {% elif self.exists("pnpm-lock.yaml") %}
   RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
       apk add --no-cache --virtual .gyp python3 make g++ && \

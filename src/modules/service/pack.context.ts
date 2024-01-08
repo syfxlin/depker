@@ -119,7 +119,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
   }
 
   public dockerfile(data: string) {
-    this.overwrite("Dockerfile", data);
+    this.overwrite("Dockerfile", data.trim());
   }
 
   public exists(file: string) {
