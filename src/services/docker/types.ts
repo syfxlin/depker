@@ -330,9 +330,7 @@ export interface ContainerCreateOptions {
   Init?: boolean;
   Remove?: boolean;
   Envs?: Record<string, string>;
-  EnvFiles?: string[];
   Labels?: Record<string, string>;
-  LabelFiles?: string[];
   Ports?: string[];
   Volumes?: string[];
   // healthcheck
@@ -384,7 +382,6 @@ export interface ContainerExecOptions {
   User?: string;
   Workdir?: string;
   Envs?: Record<string, string>;
-  EnvFiles?: string[];
 }
 
 export interface ContainerLogsOptions {
@@ -477,6 +474,7 @@ export interface BuilderBuildOptions {
   Remove?: boolean;
   // values
   Args?: Record<string, string>;
+  Envs?: Record<string, string>;
   Labels?: Record<string, string>;
   Secrets?: Record<string, string>;
   // networks

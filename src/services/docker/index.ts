@@ -320,17 +320,9 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(`--env`);
       args.push(`${name}=${value}`);
     }
-    for (const value of options?.EnvFiles ?? []) {
-      args.push(`--env-file`);
-      args.push(value);
-    }
     for (const [name, value] of Object.entries(options?.Labels ?? {})) {
       args.push(`--label`);
       args.push(`${name}=${value}`);
-    }
-    for (const value of options?.LabelFiles ?? []) {
-      args.push(`--label-file`);
-      args.push(value);
     }
     for (const value of options?.Ports ?? []) {
       args.push(`--publish`);
@@ -506,10 +498,6 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(`--env`);
       args.push(`${name}=${value}`);
     }
-    for (const value of options?.EnvFiles ?? []) {
-      args.push(`--env-file`);
-      args.push(value);
-    }
 
     args.push(name);
     args.push(...commands);
@@ -539,6 +527,10 @@ class DockerBuilderOperation implements BuilderOperation {
     if (options?.Remove) {
       args.push(`--rm`);
     }
+    for (const name of options?.Networks ?? []) {
+      args.push(`--network`);
+      args.push(name);
+    }
     for (const [name, value] of Object.entries(options?.Args ?? {})) {
       args.push(`--build-arg`);
       args.push(`${name}=${value}`);
@@ -555,9 +547,25 @@ class DockerBuilderOperation implements BuilderOperation {
       args.push(`--add-host`);
       args.push(`${name}:${value}`);
     }
-    for (const name of options?.Networks ?? []) {
-      args.push(`--network`);
-      args.push(name);
+    if (options?.Envs) {
+      const values = Object.entries(options.Envs).map(([k, v]) => `${k}=${v}\n`);
+      const file1 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file1, values.join(""));
+      args.push(`--secret`);
+      args.push(`id=depker-envs,src=${file1}`);
+      const file2 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file2, values.map((i) => `export ${i}`).join(""));
+      args.push(`--secret`);
+      args.push(`id=depker-export-envs,src=${file2}`);
+    } else {
+      const file1 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file1, "\n");
+      args.push(`--secret`);
+      args.push(`id=depker-envs,src=${file1}`);
+      const file2 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file2, "\n");
+      args.push(`--secret`);
+      args.push(`id=depker-export-envs,src=${file2}`);
     }
 
     // extensions
