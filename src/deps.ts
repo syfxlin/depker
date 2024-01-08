@@ -1,14 +1,14 @@
 import * as fs from "https://deno.land/std@0.210.0/fs/mod.ts";
 import * as path from "https://deno.land/std@0.210.0/path/mod.ts";
 import * as yaml from "https://deno.land/std@0.210.0/yaml/mod.ts";
+import * as dotenv from "https://deno.land/std@0.210.0/dotenv/mod.ts";
 import ignore from "https://esm.sh/v128/ignore@5.2.4/deno/ignore.mjs";
 import nunjucks from "https://deno.land/x/nunjucks@3.2.4/mod.js";
 
-export { fs, path, yaml, ignore, nunjucks };
+export { fs, path, yaml, dotenv, ignore, nunjucks };
 export { osType } from "https://deno.land/std@0.210.0/path/_os.ts";
 export { colors } from "https://deno.land/x/cliffy@v0.25.7/ansi/mod.ts";
 export { datetime } from "https://deno.land/x/ptera@v1.0.2/mod.ts";
-export { load } from "https://deno.land/std@0.210.0/dotenv/mod.ts";
 export { deepMerge } from "https://deno.land/std@0.210.0/collections/mod.ts";
 export { Command, EnumType } from "https://deno.land/x/cliffy@v0.25.7/command/mod.ts";
 export { Table } from "https://deno.land/x/cliffy@v0.25.7/table/mod.ts";

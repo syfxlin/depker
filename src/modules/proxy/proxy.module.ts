@@ -41,10 +41,8 @@ export class ProxyModule implements DepkerModule {
           this.depker.log.render(options.format, data);
         } else if (options.json) {
           this.depker.log.json(data);
-        } else if (options.yaml) {
-          this.depker.log.yaml(data);
         } else {
-          this.depker.log.json(data);
+          this.depker.log.yaml(data);
         }
       });
     proxy

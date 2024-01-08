@@ -440,10 +440,8 @@ export class ServiceModule implements DepkerModule {
           this.depker.log.render(options.format, infos);
         } else if (options.json) {
           this.depker.log.json(infos);
-        } else if (options.yaml) {
-          this.depker.log.yaml(infos);
         } else {
-          this.depker.log.json(infos);
+          this.depker.log.yaml(infos);
         }
       });
   }
@@ -603,7 +601,6 @@ export class ServiceModule implements DepkerModule {
       .option("-u, --user <user:string>", "Username or UID (format: <name|uid>[:<group|gid>])")
       .option("-w, --workdir <dir:string>", "Working directory inside the service")
       .option("-e, --env <env:string>", "Set environment variables", { collect: true })
-      .option("-n, --env-file <file:string>", "Read in a file of environment variables", { collect: true })
       .option("-k, --detach-keys <keys:string>", "Override the key sequence for detaching a service")
       .action(async (options, name, ...commands) => {
         const opts: ContainerExecOptions = {};
@@ -630,9 +627,6 @@ export class ServiceModule implements DepkerModule {
         }
         if (options.env !== undefined) {
           opts.Envs = this.depker.uti.kv(options.env);
-        }
-        if (options.envFile !== undefined) {
-          opts.EnvFiles = options.envFile;
         }
         await this.exec(name, commands, options.select, opts);
       });
