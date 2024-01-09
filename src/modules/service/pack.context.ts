@@ -1,6 +1,6 @@
 import { Depker } from "../../depker.ts";
 import { ServiceModule } from "./service.module.ts";
-import { deepMerge, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
+import { deepMerge, dotenv, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { Pack, ServiceConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/run/types.ts";
 
@@ -211,23 +211,24 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     };
 
     if (config.build_args || config.secrets || config.labels) {
+      const dotenvs = await dotenv.load({ examplePath: undefined, defaultsPath: undefined });
       const secrets = await this.depker.cfg.secret();
       if (config.build_args) {
         for (const [key, val] of Object.entries(config.build_args)) {
           options.Args = options.Args ?? {};
-          options.Args[key] = this.depker.uti.replace(val, (name) => secrets[name]);
+          options.Args[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
           options.Envs = options.Envs ?? {};
-          options.Envs[key] = this.depker.uti.replace(val, (name) => secrets[name]);
+          options.Envs[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.labels) {
         for (const [key, val] of Object.entries(config.labels)) {
           options.Labels = options.Labels ?? {};
-          options.Labels[key] = this.depker.uti.replace(val, (name) => secrets[name]);
+          options.Labels[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
     }
@@ -397,17 +398,18 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
     // secrets
     if (config.secrets || config.labels) {
+      const dotenvs = await dotenv.load({ examplePath: undefined, defaultsPath: undefined });
       const secrets = await this.depker.cfg.secret();
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
           options.Envs = options.Envs ?? {};
-          options.Envs[key] = this.depker.uti.replace(val, (name) => secrets[name]);
+          options.Envs[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.labels) {
         for (const [key, val] of Object.entries(config.labels)) {
           options.Labels = options.Labels ?? {};
-          options.Labels[key] = this.depker.uti.replace(val, (name) => secrets[name]);
+          options.Labels[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
     }
