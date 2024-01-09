@@ -7,7 +7,7 @@ export interface ImageConfig extends ServiceConfig {
 
 export const image = pack<ImageConfig>({
   build: async (ctx) => {
-    ctx.dockerfile(`FROM ${ctx.config.image}`);
-    await ctx.deploy();
+    ctx.config.$$image = ctx.config.image;
+    await ctx.start();
   },
 });

@@ -9,7 +9,7 @@ import {
   ContainerStatsOptions,
   ContainerStopOptions,
   ContainerTopOptions,
-} from "../../services/docker/types.ts";
+} from "../../services/run/types.ts";
 import { Depker, DepkerModule } from "../../depker.ts";
 import { Command, EnumType } from "../../deps.ts";
 import { PackContext } from "./pack.context.ts";

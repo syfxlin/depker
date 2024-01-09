@@ -678,10 +678,12 @@ export interface BuilderOperation {
 // region node
 
 export interface DepkerRunner {
+  id: string;
   builder: BuilderOperation;
 }
 
 export interface DepkerMaster extends DepkerRunner {
+  id: string;
   container: ContainerOperation;
   network: NetworkOperation;
   volume: VolumeOperation;

@@ -2,7 +2,7 @@ import { depker } from "./src/depker.ts";
 
 // services
 export * from "./src/depker.ts";
-export * from "./src/services/docker/index.ts";
+export * from "./src/services/run/index.ts";
 
 // modules
 export * from "./src/modules/proxy/proxy.module.ts";

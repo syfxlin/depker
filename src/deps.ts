@@ -2,10 +2,11 @@ import * as fs from "https://deno.land/std@0.211.0/fs/mod.ts";
 import * as path from "https://deno.land/std@0.211.0/path/mod.ts";
 import * as yaml from "https://deno.land/std@0.211.0/yaml/mod.ts";
 import * as dotenv from "https://deno.land/std@0.211.0/dotenv/mod.ts";
+import hash from "https://deno.land/x/object_hash@2.0.3.1/mod.ts";
 import ignore from "https://esm.sh/v128/ignore@5.2.4/deno/ignore.mjs";
 import nunjucks from "https://deno.land/x/nunjucks@3.2.4/mod.js";
 
-export { fs, path, yaml, dotenv, ignore, nunjucks };
+export { fs, path, yaml, hash, dotenv, ignore, nunjucks };
 export { osType } from "https://deno.land/std@0.211.0/path/_os.ts";
 export { colors } from "https://deno.land/x/cliffy@v0.25.7/ansi/mod.ts";
 export { datetime } from "https://deno.land/x/ptera@v1.0.2/mod.ts";

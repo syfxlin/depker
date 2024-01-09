@@ -1,6 +1,6 @@
 import { fs, path } from "./deps.ts";
 import { Dax, dax } from "./services/dax/index.ts";
-import { DockerNode } from "./services/docker/index.ts";
+import { DockerNode } from "./services/run/index.ts";
 import { ProxyModule } from "./modules/proxy/proxy.module.ts";
 import { ServiceModule } from "./modules/service/service.module.ts";
 import { CliModule } from "./services/cli/index.ts";
@@ -9,7 +9,7 @@ import { OpsModule } from "./services/ops/index.ts";
 import { UtiModule } from "./services/uti/index.ts";
 import { EvsModule } from "./services/evs/index.ts";
 import { CfgModule } from "./services/cfg/index.ts";
-import { DepkerMaster, DepkerRunner } from "./services/docker/types.ts";
+import { DepkerMaster, DepkerRunner } from "./services/run/types.ts";
 
 export type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
 

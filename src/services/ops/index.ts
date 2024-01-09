@@ -5,11 +5,18 @@ import {
   ImageOperation,
   NetworkOperation,
   VolumeOperation,
-} from "../docker/types.ts";
+} from "../run/types.ts";
 import { Depker } from "../../depker.ts";
+import { hash } from "../../deps.ts";
 
 export class OpsModule implements DepkerMaster {
   constructor(private readonly depker: Depker) {}
+
+  public get id() {
+    const master = this.depker.master();
+    const runner = this.depker.runner();
+    return hash([master.id, runner.id]);
+  }
 
   public get container(): ContainerOperation {
     return this.depker.master().container;
@@ -32,10 +39,12 @@ export class OpsModule implements DepkerMaster {
   }
 
   public async transfer(name: string, progress: (size: number | null) => void): Promise<void> {
-    if (this.depker.master() != this.depker.runner()) {
+    const master = this.depker.master();
+    const runner = this.depker.runner();
+    if (master.id !== runner.id) {
       const size = { value: 0 };
-      const save = this.depker.runner().builder.save(name).spawn();
-      const load = this.depker.master().builder.load().spawn();
+      const save = runner.builder.save(name).spawn();
+      const load = master.builder.load().spawn();
       const transform = new TransformStream<Uint8Array>({
         transform: (chunk, controller) => {
           size.value += chunk.length;

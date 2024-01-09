@@ -2,7 +2,7 @@ import { Depker } from "../../depker.ts";
 import { ServiceModule } from "./service.module.ts";
 import { deepMerge, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
 import { Pack, ServiceConfig } from "./service.type.ts";
-import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/docker/types.ts";
+import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/run/types.ts";
 
 interface PackOptions<Config extends ServiceConfig = ServiceConfig> {
   depker: Depker;
@@ -14,14 +14,13 @@ interface PackOptions<Config extends ServiceConfig = ServiceConfig> {
 export function pack<C extends ServiceConfig = ServiceConfig>(pack: Pack<C>) {
   return (config: C) => {
     // @ts-ignore
-    config[PackContext.PACK] = pack;
+    config.$$pack = pack;
     return config;
   };
 }
 
 export class PackContext<Config extends ServiceConfig = ServiceConfig> {
   // constants
-  public static readonly PACK = Symbol("pack");
   public static readonly OS_TYPE = osType;
 
   // defined
@@ -107,7 +106,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
   private constructor(options: PackOptions<Config>) {
     this.id = String(Date.now());
-    this.pack = options.config[PackContext.PACK];
+    this.pack = options.config.$$pack;
     this.depker = options.depker;
     this.config = options.config;
     this.source = options.source;
@@ -273,13 +272,13 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     }
   }
 
-  public async start(apply?: (config: Config) => Promise<Config> | Config): Promise<string> {
+  public async start(apply?: (config: Config) => Promise<Config> | Config): Promise<void> {
     // config
     const config: Config = apply ? await apply(this.config) : this.config;
 
     // values
     const name = `${config.name}-i${this.id}`;
-    const image = `depker/${config.name}:${this.id}`;
+    const image = config.$$image ? config.$$image : `depker/${config.name}:${this.id}`;
     const network = await this.depker.ops.network.default();
 
     // started
@@ -450,7 +449,6 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       }
 
       this.depker.log.done(`Start container ${name} successfully.`);
-      return name;
     } catch (e) {
       // failure
       this.depker.log.error(`Start container ${name} failure.`, e);

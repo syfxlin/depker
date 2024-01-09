@@ -38,7 +38,7 @@ import {
   VolumeRemoveOptions,
 } from "./types.ts";
 import { Depker } from "../../depker.ts";
-import { CommandBuilder } from "../../deps.ts";
+import { CommandBuilder, hash } from "../../deps.ts";
 import { containers, images, networks, volumes } from "./parser.ts";
 
 export * from "./types.ts";
@@ -48,6 +48,7 @@ export function docker(options?: DockerNodeOptions) {
 }
 
 export class DockerNode implements DepkerMaster {
+  public readonly id: string;
   public readonly docker: string[];
   public readonly container: DockerContainerOperation;
   public readonly builder: DockerBuilderOperation;
@@ -110,6 +111,8 @@ export class DockerNode implements DepkerMaster {
     } else {
       this.docker = [`docker`];
     }
+
+    this.id = hash(this.docker);
   }
 }
 
