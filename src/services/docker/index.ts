@@ -12,7 +12,6 @@ import {
   ContainerRemoveOptions,
   ContainerRestartOptions,
   ContainerRunOptions,
-  containers,
   ContainerStartOptions,
   ContainerStatsOptions,
   ContainerStopOptions,
@@ -25,7 +24,6 @@ import {
   ImagePullOptions,
   ImagePushOptions,
   ImageRemoveOptions,
-  images,
   NetworkConnectOptions,
   NetworkCreateOptions,
   NetworkDisconnectOptions,
@@ -33,16 +31,15 @@ import {
   NetworkInspect,
   NetworkOperation,
   NetworkRemoveOptions,
-  networks,
   VolumeCreateOptions,
   VolumeInfo,
   VolumeInspect,
   VolumeOperation,
   VolumeRemoveOptions,
-  volumes,
 } from "./types.ts";
 import { Depker } from "../../depker.ts";
 import { CommandBuilder } from "../../deps.ts";
+import { containers, images, networks, volumes } from "./parser.ts";
 
 export * from "./types.ts";
 

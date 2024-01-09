@@ -11,6 +11,7 @@ export * from "./src/modules/service/service.module.ts";
 export * from "./src/modules/service/service.type.ts";
 
 // packs
+export * from "./src/modules/service/pack.context.ts";
 export * from "./src/modules/service/packs/dockerfile/dockerfile.pack.ts";
 export * from "./src/modules/service/packs/image/image.pack.ts";
 export * from "./src/modules/service/packs/nginx/nginx.pack.ts";
