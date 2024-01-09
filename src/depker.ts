@@ -179,7 +179,7 @@ export class Depker {
     return this as unknown as DepkerApp;
   }
 
-  public async execute(): Promise<void> {
+  public async execute(path: string): Promise<void> {
     // prepare
     this.cli.option("--debug", "Enable debug mode", {
       global: true,
@@ -198,6 +198,9 @@ export class Depker {
           Deno.env.set("DEPKER_OPTION_TIMESTAMP", "true");
         }
       },
+    });
+    this.cli.command("update", "Check and update depker").action(async () => {
+      await this.dax`deno cache -r ${path}`.stdin("inherit").stdout("inherit").stderr("inherit").spawn();
     });
 
     // execute
