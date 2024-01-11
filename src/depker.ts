@@ -179,20 +179,8 @@ export class Depker {
     return this as unknown as DepkerApp;
   }
 
-  public async execute(): Promise<void> {
-    try {
-      await this._init();
-      await this.cli.parse(Deno.args);
-      await this._destroy();
-    } catch (e) {
-      this.log.error(e);
-      await this.emit("depker:exit", 1, this);
-      Deno.exit(1);
-    }
-  }
-
-  private async _init(): Promise<void> {
-    await this.emit("depker:before-init", this);
+  public async execute(path: string): Promise<void> {
+    // prepare
     this.cli.option("--debug", "Enable debug mode", {
       global: true,
       default: false,
@@ -214,6 +202,21 @@ export class Depker {
     this.cli.command("update", "Check and update depker").action(async () => {
       await this.dax`deno cache -r ${path}`.stdin("inherit").stdout("inherit").stderr("inherit").spawn();
     });
+
+    // execute
+    try {
+      await this._init();
+      await this.cli.parse(Deno.args);
+      await this._destroy();
+    } catch (e) {
+      this.log.error(e);
+      await this.emit("depker:exit", 1, this);
+      Deno.exit(1);
+    }
+  }
+
+  private async _init(): Promise<void> {
+    await this.emit("depker:before-init", this);
     await this._init_module();
     await this.emit("depker:after-init", this);
   }
