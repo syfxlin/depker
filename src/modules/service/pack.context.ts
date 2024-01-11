@@ -88,7 +88,11 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       // purge images and volumes
       await this.depker.emit("service:deploy:before-purge", this);
       this.depker.log.debug(`Deployment service ${this.config.name} purging.`);
-      await Promise.all([depker.ops.image.prune(), depker.ops.volume.prune(), depker.ops.network.prune()]);
+      await Promise.all([
+        this.depker.ops.image.prune(),
+        this.depker.ops.volume.prune(),
+        this.depker.ops.network.prune(),
+      ]);
       await this.depker.emit("service:deploy:after-purge", this);
 
       // emit destroy event
