@@ -67,5 +67,5 @@ export const lookup = async (): Promise<string> => {
 
 export const execute = async (path: string): Promise<void> => {
   const depker = await import(path).then((mod) => mod?.depker ?? mod?.default ?? mod);
-  await depker.execute(path);
+  await depker.execute();
 };
