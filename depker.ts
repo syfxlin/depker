@@ -1,3 +1,3 @@
-import { execute, lookup } from "./src/deps.ts";
+import { Depker } from "./src/depker.ts";
 
-await execute(await lookup());
+await Depker.create();

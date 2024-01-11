@@ -19,20 +19,16 @@ export interface DepkerModule {
   destroy?: () => Promise<void> | void;
 }
 
-export function depker(): DepkerApp {
-  return Depker.create();
+declare global {
+  interface DepkerApp extends Depker {}
+  const depker: DepkerApp;
 }
 
 export class Depker {
-  // singleton
-  private static instance: DepkerApp;
   // info
   public readonly name: string;
   public readonly version: string;
   public readonly description: string;
-  // runner
-  private _master: DepkerMaster;
-  private _runner: DepkerRunner;
   // service
   public readonly dax: Dax;
   public readonly cli: CliModule;
@@ -41,15 +37,11 @@ export class Depker {
   public readonly evs: EvsModule;
   public readonly uti: UtiModule;
   public readonly cfg: CfgModule;
+  // runner
+  private _master: DepkerMaster;
+  private _runner: DepkerRunner;
   // module
   private readonly _modules: Array<DepkerModule>;
-
-  public static create(): DepkerApp {
-    if (!Depker.instance) {
-      Depker.instance = new Depker() as DepkerApp;
-    }
-    return Depker.instance;
-  }
 
   private constructor() {
     // info
@@ -179,8 +171,59 @@ export class Depker {
     return this as unknown as DepkerApp;
   }
 
-  public async execute(path: string): Promise<void> {
-    // prepare
+  public static async create(): Promise<void> {
+    const depker = new Depker();
+    await depker._assign();
+    await depker._import();
+    try {
+      await depker._init();
+      await depker.cli.parse(Deno.args);
+      await depker._destroy();
+    } catch (e) {
+      depker.log.error(e);
+      await depker.emit("depker:exit", 1, this);
+      Deno.exit(1);
+    }
+  }
+
+  private async _assign(): Promise<void> {
+    Object.assign(globalThis, { depker: this });
+  }
+
+  private async _import(): Promise<void> {
+    const roots = [Deno.cwd(), Deno.build.os === "windows" ? Deno.env.get("USERPROFILE") : Deno.env.get("HOME")];
+    for (const root of roots) {
+      if (root) {
+        const paths = [
+          path.join(root, "depker.config.ts"),
+          path.join(root, "depker.config.js"),
+          path.join(root, "depker.config.cjs"),
+          path.join(root, "depker.config.mjs"),
+          path.join(root, ".depker/depker.config.ts"),
+          path.join(root, ".depker/depker.config.js"),
+          path.join(root, ".depker/depker.config.cjs"),
+          path.join(root, ".depker/depker.config.mjs"),
+          path.join(root, ".depker/depker.ts"),
+          path.join(root, ".depker/depker.js"),
+          path.join(root, ".depker/depker.cjs"),
+          path.join(root, ".depker/depker.mjs"),
+          path.join(root, ".depker/config.ts"),
+          path.join(root, ".depker/config.js"),
+          path.join(root, ".depker/config.cjs"),
+          path.join(root, ".depker/config.mjs"),
+        ];
+        for (const p of paths) {
+          if (await fs.exists(p)) {
+            await import(path.toFileUrl(p).toString());
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  private async _init(): Promise<void> {
+    await this.emit("depker:before-init", this);
     this.cli.option("--debug", "Enable debug mode", {
       global: true,
       default: false,
@@ -202,21 +245,14 @@ export class Depker {
     this.cli.command("update", "Check and update depker").action(async () => {
       await this.dax`deno cache -r ${path}`.stdin("inherit").stdout("inherit").stderr("inherit").spawn();
     });
+    await this._init_module();
+    await this.emit("depker:after-init", this);
+  }
 
-    // execute
-    try {
-      await this.emit("depker:before-init", this);
-      await this._init_module();
-      await this.emit("depker:after-init", this);
-      await this.cli.parse(Deno.args);
-      await this.emit("depker:before-destroy", this);
-      await this._destroy_module();
-      await this.emit("depker:after-destroy", this);
-    } catch (e) {
-      this.log.error(e);
-      await this.emit("depker:exit", 1, this);
-      Deno.exit(1);
-    }
+  private async _destroy(): Promise<void> {
+    await this.emit("depker:before-destroy", this);
+    await this._destroy_module();
+    await this.emit("depker:after-destroy", this);
   }
 
   private async _init_module(): Promise<void> {
@@ -238,9 +274,4 @@ export class Depker {
     }
     await this.emit("depker:modules:after-destroy", this._modules);
   }
-}
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface DepkerApp extends Depker {}
 }
