@@ -10,7 +10,7 @@ WORKDIR /app
 ENV NODE_OPTIONS="--max_old_space_size={{ config.coline.memory | d("4096") }}"
 
 # clone project
-ADD https://github.com/syfxlin/blog.git#master /app
+ADD https://github.com/syfxlin/next-theme-coline.git#master /app
 
 # inject before install
 {{ config.coline.inject.before_install | render }}
