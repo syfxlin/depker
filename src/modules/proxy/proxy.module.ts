@@ -1,5 +1,5 @@
-import { Command } from "../../deps.ts";
 import { Depker, DepkerModule } from "../../depker.ts";
+import { command } from "../../deps.ts";
 import { defaults } from "./proxy.config.ts";
 import { ProxyConfig } from "./proxy.type.ts";
 
@@ -14,8 +14,8 @@ export class ProxyModule implements DepkerModule {
   }
 
   public async init(): Promise<void> {
-    const proxy = new Command().description("Manage proxy");
-    const ports = new Command().description("Manage ports").alias("port").alias("po");
+    const proxy = new command.Command().description("Manage proxy");
+    const ports = new command.Command().description("Manage ports").alias("port").alias("po");
 
     proxy
       .command("reload", "Reload or create a new proxy service")

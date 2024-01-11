@@ -1,6 +1,17 @@
 import { Depker } from "../../depker.ts";
 import { ServiceModule } from "./service.module.ts";
-import { deepMerge, dotenv, fs, ignore, nunjucks, osType, path, yaml } from "../../deps.ts";
+import {
+  collections,
+  dotenv,
+  fs,
+  getFileInfoType,
+  ignore,
+  isSubdir,
+  nunjucks,
+  path,
+  toPathString,
+  yaml,
+} from "../../deps.ts";
 import { Pack, ServiceConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/run/types.ts";
 
@@ -9,6 +20,11 @@ interface PackOptions<Config extends ServiceConfig = ServiceConfig> {
   config: Config;
   source: string;
   target: string;
+}
+
+interface CopyOptions {
+  filter?: (path: string) => boolean;
+  folder?: boolean;
 }
 
 export function pack<C extends ServiceConfig = ServiceConfig>(pack: Pack<C>) {
@@ -20,9 +36,6 @@ export function pack<C extends ServiceConfig = ServiceConfig>(pack: Pack<C>) {
 }
 
 export class PackContext<Config extends ServiceConfig = ServiceConfig> {
-  // constants
-  public static readonly OS_TYPE = osType;
-
   // defined
   public readonly depker: Depker;
   public readonly config: Config;
@@ -33,75 +46,11 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
   public readonly source: string;
   public readonly target: string;
 
-  public static async execute(depker: Depker, input: ServiceConfig) {
-    // values
-    const config = deepMerge<ServiceConfig>({}, input);
+  public static create(depker: Depker, input: ServiceConfig) {
+    const config = collections.deepMerge<ServiceConfig>({}, input);
     const source = path.resolve(config.path ?? Deno.cwd());
     const target = Deno.makeTempDirSync({ prefix: `deploy-${config.name}-` });
-
-    // unpack
-    await depker.emit("service:deploy:before-unpack", config, source, target);
-    depker.log.info(`Unpacking service ${config.name} started.`);
-    const ig = ignore() as any;
-    const gi = path.join(source, ".gitignore");
-    const di = path.join(source, ".depkerignore");
-    if (await fs.exists(gi)) {
-      ig.add(await Deno.readTextFile(gi));
-    }
-    if (await fs.exists(di)) {
-      ig.add(await Deno.readTextFile(di));
-    }
-    await depker.uti.copy(source, target, {
-      overwrite: true,
-      filter: (p) => {
-        const r = path.relative(source, p);
-        return !r || !ig.ignores(r);
-      },
-    });
-    await depker.emit("service:deploy:after-unpack", config, source, target);
-    depker.log.done(`Unpacking service ${config.name} successfully.`);
-
-    // create
-    const context = new PackContext({ depker, config, source, target });
-
-    try {
-      // log started
-      await depker.emit("service:deploy:started", context);
-      depker.log.step(`Deployment service ${config.name} started.`);
-
-      // emit init event
-      await depker.emit("service:deploy:before-init", context);
-      depker.log.debug(`Deployment service ${config.name} initing.`);
-      await context.pack.init?.(context);
-      await depker.emit("service:deploy:after-init", context);
-
-      // deployment containers
-      await depker.emit("service:deploy:before-build", context);
-      depker.log.debug(`Deployment service ${config.name} building.`);
-      await context.pack.build?.(context);
-      await depker.emit("service:deploy:after-build", context);
-
-      // purge images and volumes
-      await depker.emit("service:deploy:before-purge", context);
-      depker.log.debug(`Deployment service ${config.name} purging.`);
-      await Promise.all([depker.ops.image.prune(), depker.ops.volume.prune(), depker.ops.network.prune()]);
-      await depker.emit("service:deploy:after-purge", context);
-
-      // emit destroy event
-      await depker.emit("service:deploy:before-destroy", context);
-      depker.log.debug(`Deployment service ${config.name} destroying.`);
-      await context.pack.destroy?.(context);
-      await depker.emit("service:deploy:after-destroy", context);
-
-      // log successfully
-      await depker.emit("service:deploy:successfully", context);
-      depker.log.done(`Deployment service ${config.name} successfully.`);
-    } catch (e) {
-      // log failed
-      await depker.emit("service:deploy:failure", context);
-      depker.log.error(`Deployment service ${config.name} failure.`, e);
-      throw new Error(`Deployment service ${config.name} failure.`, { cause: e });
-    }
+    return new PackContext({ depker, config, source, target });
   }
 
   private constructor(options: PackOptions<Config>) {
@@ -113,8 +62,50 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     this.target = options.target;
   }
 
-  public async execute(config: ServiceConfig) {
-    return PackContext.execute(this.depker, config);
+  public async execute() {
+    try {
+      // unpack
+      this.depker.log.info(`Unpacking service ${this.config.name} started.`);
+      await this._copy(this.source, this.target);
+      this.depker.log.done(`Unpacking service ${this.config.name} successfully.`);
+
+      // log started
+      await this.depker.emit("service:deploy:started", this);
+      this.depker.log.step(`Deployment service ${this.config.name} started.`);
+
+      // emit init event
+      await this.depker.emit("service:deploy:before-init", this);
+      this.depker.log.debug(`Deployment service ${this.config.name} initing.`);
+      await this.pack.init?.(this);
+      await this.depker.emit("service:deploy:after-init", this);
+
+      // deployment containers
+      await this.depker.emit("service:deploy:before-build", this);
+      this.depker.log.debug(`Deployment service ${this.config.name} building.`);
+      await this.pack.build?.(this);
+      await this.depker.emit("service:deploy:after-build", this);
+
+      // purge images and volumes
+      await this.depker.emit("service:deploy:before-purge", this);
+      this.depker.log.debug(`Deployment service ${this.config.name} purging.`);
+      await Promise.all([depker.ops.image.prune(), depker.ops.volume.prune(), depker.ops.network.prune()]);
+      await this.depker.emit("service:deploy:after-purge", this);
+
+      // emit destroy event
+      await this.depker.emit("service:deploy:before-destroy", this);
+      this.depker.log.debug(`Deployment service ${this.config.name} destroying.`);
+      await this.pack.destroy?.(this);
+      await this.depker.emit("service:deploy:after-destroy", this);
+
+      // log successfully
+      await this.depker.emit("service:deploy:successfully", this);
+      this.depker.log.done(`Deployment service ${this.config.name} successfully.`);
+    } catch (e) {
+      // log failed
+      await this.depker.emit("service:deploy:failure", this);
+      this.depker.log.error(`Deployment service ${this.config.name} failure.`, e);
+      throw new Error(`Deployment service ${this.config.name} failure.`, { cause: e });
+    }
   }
 
   public dockerfile(data: string) {
@@ -216,19 +207,19 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       if (config.build_args) {
         for (const [key, val] of Object.entries(config.build_args)) {
           options.Args = options.Args ?? {};
-          options.Args[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Args[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
           options.Envs = options.Envs ?? {};
-          options.Envs[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Envs[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.labels) {
         for (const [key, val] of Object.entries(config.labels)) {
           options.Labels = options.Labels ?? {};
-          options.Labels[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Labels[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
     }
@@ -260,7 +251,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
       // transfer image
       const size = { value: 0 };
-      const interval = setInterval(() => this.depker.log.raw(`Transferring: ${this.depker.uti.bytes(size.value)}`), 2000);
+      const interval = setInterval(() => this.depker.log.raw(`Transferring: ${this.depker.log.byte(size.value)}`), 2000);
       await this.depker.ops.transfer(image, (v) => (size.value = v ?? size.value));
       clearInterval(interval);
 
@@ -403,20 +394,20 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
           options.Envs = options.Envs ?? {};
-          options.Envs[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Envs[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.labels) {
         for (const [key, val] of Object.entries(config.labels)) {
           options.Labels = options.Labels ?? {};
-          options.Labels[key] = this.depker.uti.replace(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Labels[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
         }
       }
     }
 
     // volumes
     for (const volume of config.volumes ?? []) {
-      const hpath = this.depker.uti.replace(volume.hpath, (key) => this.depker.cfg.path(key));
+      const hpath = this._placeholder(volume.hpath, (key) => this.depker.cfg.path(key));
       const cpath = volume.cpath;
       const readonly = volume.readonly ? "ro" : "rw";
       options.Volumes = options.Volumes ?? [];
@@ -464,5 +455,112 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
   public async deploy(apply?: (config: Config) => Promise<Config> | Config): Promise<void> {
     await this.build(apply);
     await this.start(apply);
+  }
+
+  private _placeholder(value: string, replacer: (name: string) => string | boolean | number | null | undefined) {
+    return value.replace(/(?<=^|[^@])(?:@([a-zA-Z][a-zA-Z0-9_]*)|@\{([a-zA-Z][a-zA-Z0-9]*)})/g, (a, n) => {
+      const r = replacer(n);
+      return r === null || r === undefined ? a : String(r);
+    });
+  }
+
+  private async _copy(source: string, target: string) {
+    const _source = path.resolve(toPathString(source));
+    const _target = path.resolve(toPathString(target));
+
+    if (_source === _target) {
+      throw new Error("Source and destination cannot be the same.");
+    }
+
+    const info = await Deno.lstat(_source);
+    if (info.isDirectory && isSubdir(_source, _target)) {
+      throw new Error(`Cannot copy '${_source}' to a subdirectory of itself, '${_target}'.`);
+    }
+
+    const ig = ignore() as any;
+    const gi = path.join(_source, ".gitignore");
+    const di = path.join(_source, ".depkerignore");
+    if (await fs.exists(gi)) {
+      ig.add(await Deno.readTextFile(gi));
+    }
+    if (await fs.exists(di)) {
+      ig.add(await Deno.readTextFile(di));
+    }
+
+    const _options: CopyOptions = {
+      filter: (p) => {
+        const r = path.relative(source, p);
+        return !r || !ig.ignores(r);
+      },
+    };
+
+    if (info.isSymlink) {
+      await this._copyLink(_source, _target, _options);
+    } else if (info.isDirectory) {
+      await this._copyDir(_source, _target, _options);
+    } else if (info.isFile) {
+      await this._copyFile(_source, _target, _options);
+    }
+  }
+
+  private async _validCopy(source: string, target: string, options?: CopyOptions) {
+    let info: Deno.FileInfo | undefined = undefined;
+    try {
+      info = await Deno.lstat(target);
+    } catch (err) {
+      if (err instanceof Deno.errors.NotFound) {
+        return;
+      }
+      throw err;
+    }
+    if (options?.folder && !info.isDirectory) {
+      throw new Error(`Cannot overwrite non-directory '${source}' with directory '${target}'.`);
+    }
+  }
+
+  private async _copyLink(source: string, target: string, options?: CopyOptions) {
+    if (options?.filter && !options.filter(source)) {
+      return;
+    }
+    await this._validCopy(source, target, options);
+    const origin = await Deno.readLink(source);
+    const type = getFileInfoType(await Deno.lstat(source));
+    if (Deno.build.os === "windows") {
+      await Deno.symlink(origin, target, { type: type === "dir" ? "dir" : "file" });
+    } else {
+      await Deno.symlink(origin, target);
+    }
+  }
+
+  private async _copyDir(source: string, target: string, options?: CopyOptions) {
+    if (options?.filter && !options.filter(source)) {
+      return;
+    }
+
+    await this._validCopy(source, target, { ...options, folder: true });
+    await fs.ensureDir(target);
+
+    source = toPathString(source);
+    target = toPathString(target);
+
+    for await (const entry of Deno.readDir(source)) {
+      const sourcePath = path.join(source, entry.name);
+      const targetPath = path.join(target, path.basename(sourcePath));
+      if (entry.isSymlink) {
+        await this._copyLink(sourcePath, targetPath, options);
+      } else if (entry.isDirectory) {
+        await this._copyDir(sourcePath, targetPath, options);
+      } else if (entry.isFile) {
+        await this._copyFile(sourcePath, targetPath, options);
+      }
+    }
+  }
+
+  private async _copyFile(source: string, target: string, options?: CopyOptions) {
+    if (options?.filter && !options.filter(source)) {
+      return;
+    }
+    await this._validCopy(source, target, options);
+    await Deno.copyFile(source, target);
   }
 }

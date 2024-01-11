@@ -1,6 +1,6 @@
 import { Depker } from "../../depker.ts";
 import { Configs, Secrets } from "./types.ts";
-import { Command, dotenv, path, yaml } from "../../deps.ts";
+import { command, dotenv, path, yaml } from "../../deps.ts";
 
 export * from "./types.ts";
 
@@ -16,7 +16,7 @@ export class CfgModule {
     this.instance = undefined;
 
     // commands
-    const config = new Command().description("Manage configs").alias("config").alias("cfg").default("view");
+    const config = new command.Command().description("Manage configs").alias("config").alias("cfg").default("view");
     config
       .command("view", "View configs")
       .alias("show")
@@ -66,7 +66,7 @@ export class CfgModule {
         }
       });
 
-    const secret = new Command().description("Manage secrets").alias("secret").alias("sec").default("list");
+    const secret = new command.Command().description("Manage secrets").alias("secret").alias("sec").default("list");
     secret
       .command("list", "List secrets")
       .alias("ls")

@@ -38,7 +38,7 @@ import {
   VolumeRemoveOptions,
 } from "./types.ts";
 import { Depker } from "../../depker.ts";
-import { CommandBuilder, hash } from "../../deps.ts";
+import { dax, hash } from "../../deps.ts";
 import { containers, images, networks, volumes } from "./parser.ts";
 
 export * from "./types.ts";
@@ -218,19 +218,19 @@ class DockerContainerOperation implements ContainerOperation {
     await this.depker.dax`${this.docker} prune --force --filter until=24h`;
   }
 
-  public create(name: string, target: string, options?: ContainerCreateOptions): CommandBuilder {
+  public create(name: string, target: string, options?: ContainerCreateOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} create ${this.create_args(name, target, options)}`;
   }
 
-  public run(name: string, target: string, options?: ContainerRunOptions): CommandBuilder {
+  public run(name: string, target: string, options?: ContainerRunOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} run ${this.run_args(name, target, options)}`;
   }
 
-  public exec(name: string, commands: string[], options?: ContainerExecOptions): CommandBuilder {
+  public exec(name: string, commands: string[], options?: ContainerExecOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} exec ${this.exec_args(name, commands, options)}`;
   }
 
-  public logs(name: string, options?: ContainerLogsOptions): CommandBuilder {
+  public logs(name: string, options?: ContainerLogsOptions): dax.CommandBuilder {
     const args: string[] = [];
 
     if (options?.Details) {
@@ -258,11 +258,11 @@ class DockerContainerOperation implements ContainerOperation {
     return this.depker.dax`${this.docker} logs ${name} ${args}`;
   }
 
-  public top(name: string, options?: ContainerTopOptions): CommandBuilder {
+  public top(name: string, options?: ContainerTopOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} top ${name} ${options?.Options ? [options.Options] : []}`;
   }
 
-  public stats(name: string, options?: ContainerStatsOptions): CommandBuilder {
+  public stats(name: string, options?: ContainerStatsOptions): dax.CommandBuilder {
     const args: string[] = [];
 
     if (options?.All) {
@@ -278,7 +278,7 @@ class DockerContainerOperation implements ContainerOperation {
     return this.depker.dax`${this.docker} stats ${args} ${name}`;
   }
 
-  public copy(source: string, target: string, options?: ContainerCopyOptions): CommandBuilder {
+  public copy(source: string, target: string, options?: ContainerCopyOptions): dax.CommandBuilder {
     const args: string[] = [];
 
     if (options?.Archive) {
@@ -511,7 +511,7 @@ class DockerBuilderOperation implements BuilderOperation {
     private readonly node: DockerNode,
   ) {}
 
-  public build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder {
+  public build(name: string, target: string, options?: BuilderBuildOptions): dax.CommandBuilder {
     const args = [`--tag`, name];
 
     if (options?.File) {
@@ -808,7 +808,7 @@ class DockerImageOperation implements ImageOperation {
     return infos.map((info) => images.inspect(info));
   }
 
-  public pull(name: string, options?: ImagePullOptions): CommandBuilder {
+  public pull(name: string, options?: ImagePullOptions): dax.CommandBuilder {
     const args: string[] = [];
     if (options?.AllTags) {
       args.push(`--all-tags`);
@@ -820,7 +820,7 @@ class DockerImageOperation implements ImageOperation {
     return this.depker.dax`${this.docker} pull ${args} ${name}`;
   }
 
-  public push(name: string, options?: ImagePushOptions): CommandBuilder {
+  public push(name: string, options?: ImagePushOptions): dax.CommandBuilder {
     const args: string[] = [];
     if (options?.AllTags) {
       args.push(`--all-tags`);

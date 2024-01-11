@@ -1,5 +1,5 @@
 import { Depker } from "../../depker.ts";
-import { colors, datetime, nunjucks, Table, yaml } from "../../deps.ts";
+import { ansi, date, nunjucks, table, yaml } from "../../deps.ts";
 import { LogLevel } from "./types.ts";
 
 export * from "./types.ts";
@@ -47,6 +47,19 @@ export class LogModule {
     this.raw(yaml.stringify(obj, { skipInvalid: true, noRefs: true, indent: 2 }).trim());
   }
 
+  public byte(value: number) {
+    const units = [`B`, `KB`, `MB`, `GB`, `TB`, `PB`];
+    while (value > 1024 && units.length > 1) {
+      units.shift();
+      value /= 1024;
+    }
+    return `${value.toFixed(2)} ${units[0]}`;
+  }
+
+  public date(value: string | number) {
+    return date.datetime(value).toLocal().format("YYYY-MM-dd HH:mm:ss");
+  }
+
   public raw(...message: string[]) {
     this._output("raw", Date.now(), this.format(...message));
   }
@@ -72,11 +85,11 @@ export class LogModule {
   }
 
   public table(header: string[], body: string[][]) {
-    const table = new Table()
-      .header(header.map((i) => colors.bold.cyan(i)))
+    const t = new table.Table()
+      .header(header.map((i) => ansi.colors.bold.cyan(i)))
       .body(body)
       .border(true);
-    this._output("raw", Date.now(), table.toString());
+    this._output("raw", Date.now(), t.toString());
   }
 
   public render(value: string, data: any) {
@@ -98,17 +111,17 @@ export class LogModule {
       return;
     }
     // prettier-ignore
-    const data = Deno.env.get("DEPKER_OPTION_TIMESTAMP") ? `[${datetime(parseInt(time as any)).format("yyyy/MM/dd HH:mm:ss")}] ${message}` : message;
+    const data = Deno.env.get("DEPKER_OPTION_TIMESTAMP") ? `[${this.date(parseInt(time as any))}] ${message}` : message;
     if (level === "step") {
-      console.log(`${colors.bold.cyan("[STEP] ❯ ")}${data}`);
+      console.log(`${ansi.colors.bold.cyan("[STEP] ❯ ")}${data}`);
     } else if (level === "debug") {
-      console.log(`${colors.bold.gray("[DEBUG] ☰ ")}${data}`);
+      console.log(`${ansi.colors.bold.gray("[DEBUG] ☰ ")}${data}`);
     } else if (level === "info") {
-      console.log(`${colors.bold.blue("[INFO] i ")}${data}`);
+      console.log(`${ansi.colors.bold.blue("[INFO] i ")}${data}`);
     } else if (level === "done") {
-      console.log(`${colors.bold.green("[DONE] ✔ ")}${data}`);
+      console.log(`${ansi.colors.bold.green("[DONE] ✔ ")}${data}`);
     } else if (level === "error") {
-      console.error(`${colors.bold.red("[ERROR] ✖ ")}${data}`);
+      console.error(`${ansi.colors.bold.red("[ERROR] ✖ ")}${data}`);
     }
   }
 }

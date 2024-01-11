@@ -10,12 +10,11 @@ import {
   ContainerStopOptions,
   ContainerTopOptions,
 } from "../../services/run/types.ts";
+import { command } from "../../deps.ts";
 import { Depker, DepkerModule } from "../../depker.ts";
-import { Command, EnumType } from "../../deps.ts";
 import { PackContext } from "./pack.context.ts";
 import { ServiceConfig } from "./service.type.ts";
 import { ProxyModule } from "../proxy/proxy.module.ts";
-import { ArgumentValue } from "https://deno.land/x/cliffy@v0.25.7/flags/types.ts";
 
 declare global {
   interface DepkerApp {
@@ -29,28 +28,28 @@ type ActiveSelect = "active" | "latest" | string;
 
 type AllSelect = "active" | "latest" | "inactive" | "all" | string;
 
-class PruneSelectType extends EnumType<PruneSelect> {
+class PruneSelectType extends command.EnumType<PruneSelect> {
   constructor() {
     super(["all", "pre"]);
   }
 }
 
-class ActiveSelectType extends EnumType<ActiveSelect> {
+class ActiveSelectType extends command.EnumType<ActiveSelect> {
   constructor() {
     super(["active", "latest", "<container>"]);
   }
 
-  public parse(type: ArgumentValue): "active" | "latest" | string {
+  public parse(type: command.ArgumentValue): "active" | "latest" | string {
     return type.value;
   }
 }
 
-class AllSelectType extends EnumType<AllSelect> {
+class AllSelectType extends command.EnumType<AllSelect> {
   constructor() {
     super(["active", "latest", "inactive", "all", "<container>"]);
   }
 
-  public parse(type: ArgumentValue): "active" | "latest" | "inactive" | "all" | string {
+  public parse(type: command.ArgumentValue): "active" | "latest" | "inactive" | "all" | string {
     return type.value;
   }
 }
@@ -72,7 +71,7 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async init() {
-    const service = new Command().description("Manage services").alias("service").alias("svc").default("list");
+    const service = new command.Command().description("Manage services").alias("service").alias("svc").default("list");
     this._deploy(service);
     this._list(service);
     this._inspect(service);
@@ -153,7 +152,7 @@ export class ServiceModule implements DepkerModule {
     } else {
       const outputs: Array<ContainerInspect> = [];
       for (const item of inputs) {
-        if (select === item.Id || select === item.Name || select === this.depker.uti.short(item.Id)) {
+        if (select === item.Id || select === item.Name || (select.length > 7 && item.Id.startsWith(select))) {
           outputs.push(item);
           break;
         }
@@ -168,15 +167,15 @@ export class ServiceModule implements DepkerModule {
         if (typeof config === "string") {
           const service = this.services.find((s) => s.name === config);
           if (service) {
-            await PackContext.execute(this.depker, service);
+            await PackContext.create(this.depker, service).execute();
           }
         } else if (config) {
-          await PackContext.execute(this.depker, config);
+          await PackContext.create(this.depker, config).execute();
         }
       }
     } else {
       for (const service of this.services) {
-        await PackContext.execute(this.depker, service);
+        await PackContext.create(this.depker, service).execute();
       }
     }
   }
@@ -380,7 +379,7 @@ export class ServiceModule implements DepkerModule {
 
   // region private commands
 
-  private _deploy(cmd: Command) {
+  private _deploy(cmd: command.Command) {
     cmd
       .command("deploy [name...:string]", "Deploy services")
       .alias("dep")
@@ -389,7 +388,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _list(cmd: Command) {
+  private _list(cmd: command.Command) {
     cmd
       .command("list [name...:string]", "List services")
       .alias("ls")
@@ -414,10 +413,10 @@ export class ServiceModule implements DepkerModule {
             return [
               `${info.Name}`,
               `${item.Name}`,
-              `${this.depker.uti.status(item.State.Status, item.State?.Health?.Status)}`,
+              `${item.State.Status}${item.State?.Health?.Status ? ` (${item.State?.Health?.Status})` : ``}`,
               `${item.Config.Image}`,
-              `${this.depker.uti.date(item.Created)}`,
-              `${info.Items.map((i) => `${i.Name} [${this.depker.uti.status(i.State.Status, i.State?.Health?.Status)}]`).join("\n")}`,
+              `${this.depker.log.date(item.Created)}`,
+              `${info.Items.map((i) => `${i.Name} [${i.State.Status}${i.State?.Health?.Status ? ` (${i.State?.Health?.Status})` : ``}]`).join("\n")}`,
             ];
           });
           this.depker.log.table(header, body);
@@ -425,7 +424,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _inspect(cmd: Command) {
+  private _inspect(cmd: command.Command) {
     cmd
       .command("inspect <name...:string>", "Display detailed information on one or more services")
       .alias("is")
@@ -446,14 +445,13 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _start(cmd: Command) {
+  private _start(cmd: command.Command) {
     cmd
       .command("start <name...:string>", "Start one or more stopped services")
       .type("select", new AllSelectType())
       .option("-s, --select <select:select>", "Select the container to display in services", { default: "all" })
       .option("-i, --interactive", "Attach service's STDIN")
       .option("-a, --attach", "Attach STDOUT/STDERR and forward signals")
-      .option("-k, --detach-keys <keys:string>", "Override the key sequence for detaching a service")
       .action(async (options, ...names) => {
         this.depker.log.step(`Starting services started.`);
         try {
@@ -464,9 +462,6 @@ export class ServiceModule implements DepkerModule {
           if (options.attach !== undefined) {
             opts.Attach = options.attach;
           }
-          if (options.detachKeys !== undefined) {
-            opts.DetachKeys = options.detachKeys;
-          }
           await this.start(names, options.select, opts);
           this.depker.log.done(`Starting services successfully.`);
         } catch (e) {
@@ -475,7 +470,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _stop(cmd: Command) {
+  private _stop(cmd: command.Command) {
     cmd
       .command("stop <name...:string>", "Stop one or more running services")
       .type("select", new AllSelectType())
@@ -500,7 +495,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _kill(cmd: Command) {
+  private _kill(cmd: command.Command) {
     cmd
       .command("kill <name...:string>", "Kill one or more running services")
       .type("select", new AllSelectType())
@@ -521,7 +516,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _remove(cmd: Command) {
+  private _remove(cmd: command.Command) {
     cmd
       .command("remove <name...:string>", "Remove one or more services")
       .alias("rm")
@@ -551,7 +546,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _rename(cmd: Command) {
+  private _rename(cmd: command.Command) {
     cmd
       .command("rename <name:string> <rename:string>", "Rename a service")
       .type("select", new AllSelectType())
@@ -567,7 +562,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _prune(cmd: Command) {
+  private _prune(cmd: command.Command) {
     cmd
       .command("prune", "Remove all abnormal services")
       .type("select", new PruneSelectType())
@@ -589,7 +584,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _exec(cmd: Command) {
+  private _exec(cmd: command.Command) {
     cmd
       .command("exec <name:string> <commands...:string>", "Run a command in a running service")
       .type("select", new ActiveSelectType())
@@ -600,8 +595,6 @@ export class ServiceModule implements DepkerModule {
       .option("-p, --privileged", "Give extended privileges to the command")
       .option("-u, --user <user:string>", "Username or UID (format: <name|uid>[:<group|gid>])")
       .option("-w, --workdir <dir:string>", "Working directory inside the service")
-      .option("-e, --env <env:string>", "Set environment variables", { collect: true })
-      .option("-k, --detach-keys <keys:string>", "Override the key sequence for detaching a service")
       .action(async (options, name, ...commands) => {
         const opts: ContainerExecOptions = {};
         if (options.tty !== undefined) {
@@ -609,9 +602,6 @@ export class ServiceModule implements DepkerModule {
         }
         if (options.detach !== undefined) {
           opts.Detach = options.detach;
-        }
-        if (options.detachKeys !== undefined) {
-          opts.DetachKeys = options.detachKeys;
         }
         if (options.interactive !== undefined) {
           opts.Interactive = options.interactive;
@@ -625,14 +615,11 @@ export class ServiceModule implements DepkerModule {
         if (options.workdir !== undefined) {
           opts.Workdir = options.workdir;
         }
-        if (options.env !== undefined) {
-          opts.Envs = this.depker.uti.kv(options.env);
-        }
         await this.exec(name, commands, options.select, opts);
       });
   }
 
-  private _logs(cmd: Command) {
+  private _logs(cmd: command.Command) {
     cmd
       .command("logs <name:string>", "Fetch the logs of a service")
       .type("select", new ActiveSelectType())
@@ -667,7 +654,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _top(cmd: Command) {
+  private _top(cmd: command.Command) {
     cmd
       .command("top <name:string>", "Display the running processes of a service")
       .type("select", new ActiveSelectType())
@@ -682,7 +669,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _stats(cmd: Command) {
+  private _stats(cmd: command.Command) {
     cmd
       .command("stats <name:string>", "Display a live stream of service resource usage statistics")
       .type("select", new ActiveSelectType())
@@ -701,7 +688,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _copy(cmd: Command) {
+  private _copy(cmd: command.Command) {
     cmd
       .command("copy <source:string> <target:string>", "Copy files/folders between a service and the local filesystem")
       .alias("cp")
@@ -721,7 +708,7 @@ export class ServiceModule implements DepkerModule {
       });
   }
 
-  private _wait(cmd: Command) {
+  private _wait(cmd: command.Command) {
     cmd
       .command("wait <name...:string>", "Block until one or more service stop, then print their exit codes")
       .type("select", new AllSelectType())

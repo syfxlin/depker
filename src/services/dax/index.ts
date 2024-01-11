@@ -1,11 +1,11 @@
-import { $BuiltInProperties, build$, CommandBuilder, RequestBuilder } from "../../deps.ts";
+import { dax } from "../../deps.ts";
 
-CommandBuilder.prototype.jsonl = async function <T = any>(this: CommandBuilder): Promise<T> {
+dax.CommandBuilder.prototype.jsonl = async function <T = any>(this: dax.CommandBuilder): Promise<T> {
   const lines = await this.lines();
   return lines.map((i) => JSON.parse(i)) as T;
 };
 
-RequestBuilder.prototype.jsonl = async function <T = any>(this: RequestBuilder): Promise<T> {
+dax.RequestBuilder.prototype.jsonl = async function <T = any>(this: dax.RequestBuilder): Promise<T> {
   const texts = await this.text();
   const lines = texts.split(/\r?\n/g);
   return lines.map((i) => JSON.parse(i)) as T;
@@ -14,7 +14,7 @@ RequestBuilder.prototype.jsonl = async function <T = any>(this: RequestBuilder):
 interface Template<TE = {}>
   extends Omit<
     // @ts-ignore
-    $BuiltInProperties<TE>,
+    dax.$BuiltInProperties<TE>,
     | "log"
     | "logLight"
     | "logStep"
@@ -36,13 +36,13 @@ interface Template<TE = {}>
     | "prompt"
     | "progress"
   > {
-  (strings: TemplateStringsArray, ...exprs: any[]): CommandBuilder;
+  (strings: TemplateStringsArray, ...exprs: any[]): dax.CommandBuilder;
 }
 
 export type Dax<TExtras = {}> = Template<TExtras> & TExtras;
 
-export function dax<TExtras = {}>(): Dax<TExtras> {
-  const command = new CommandBuilder().stdin("null").stdout("piped").stderr("inherit").env(Deno.env.toObject());
+export function createDax<TExtras = {}>(): Dax<TExtras> {
+  const command = new dax.CommandBuilder().stdin("null").stdout("piped").stderr("inherit").env(Deno.env.toObject());
   // @ts-ignore
-  return build$({ commandBuilder: command });
+  return dax.build$({ commandBuilder: command });
 }

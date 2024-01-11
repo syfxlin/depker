@@ -1,4 +1,4 @@
-import { CommandBuilder } from "../../deps.ts";
+import { dax } from "../../deps.ts";
 
 // region common
 
@@ -625,13 +625,13 @@ export interface ContainerOperation {
   remove(name: string[], options?: ContainerRemoveOptions): Promise<void>;
   rename(name: string, rename: string): Promise<void>;
   prune(): Promise<void>;
-  create(name: string, target: string, options?: ContainerCreateOptions): CommandBuilder;
-  run(name: string, target: string, options?: ContainerRunOptions): CommandBuilder;
-  exec(name: string, commands: string[], options?: ContainerExecOptions): CommandBuilder;
-  logs(name: string, options?: ContainerLogsOptions): CommandBuilder;
-  top(name: string, options?: ContainerTopOptions): CommandBuilder;
-  stats(name: string, options?: ContainerStatsOptions): CommandBuilder;
-  copy(source: string, target: string, options?: ContainerCopyOptions): CommandBuilder;
+  create(name: string, target: string, options?: ContainerCreateOptions): dax.CommandBuilder;
+  run(name: string, target: string, options?: ContainerRunOptions): dax.CommandBuilder;
+  exec(name: string, commands: string[], options?: ContainerExecOptions): dax.CommandBuilder;
+  logs(name: string, options?: ContainerLogsOptions): dax.CommandBuilder;
+  top(name: string, options?: ContainerTopOptions): dax.CommandBuilder;
+  stats(name: string, options?: ContainerStatsOptions): dax.CommandBuilder;
+  copy(source: string, target: string, options?: ContainerCopyOptions): dax.CommandBuilder;
   wait(name: string[]): Promise<void>;
 }
 
@@ -640,8 +640,8 @@ export interface ImageOperation {
   find(name: string): Promise<ImageInfo | undefined>;
   inspect(name: string[]): Promise<Array<ImageInspect>>;
   tag(source: string, target: string): Promise<void>;
-  pull(name: string, options?: ImagePullOptions): CommandBuilder;
-  push(name: string, options?: ImagePushOptions): CommandBuilder;
+  pull(name: string, options?: ImagePullOptions): dax.CommandBuilder;
+  push(name: string, options?: ImagePushOptions): dax.CommandBuilder;
   remove(name: string[], options?: ImageRemoveOptions): Promise<void>;
   prune(): Promise<void>;
 }
@@ -668,7 +668,7 @@ export interface NetworkOperation {
 }
 
 export interface BuilderOperation {
-  build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder;
+  build(name: string, target: string, options?: BuilderBuildOptions): dax.CommandBuilder;
   save(name: string): Deno.Command;
   load(): Deno.Command;
 }
