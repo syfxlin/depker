@@ -1,5 +1,5 @@
 import { fs, path } from "./deps.ts";
-import { createDax, Dax } from "./services/dax/index.ts";
+import { Dax, createDax } from "./services/dax/index.ts";
 import { DockerNode } from "./services/run/index.ts";
 import { ProxyModule } from "./modules/proxy/proxy.module.ts";
 import { ServiceModule } from "./modules/service/service.module.ts";
@@ -150,7 +150,7 @@ export class Depker {
   }
 
   public module<M extends DepkerModule = DepkerModule>(name: string): M {
-    const module = this._modules.find((i) => i.name === name);
+    const module = this._modules.find(i => i.name === name);
     if (!module) {
       throw new Error(`Not found module ${name}`);
     }
@@ -167,13 +167,13 @@ export class Depker {
   }
 
   public inject(name: string, builder: (depker: Depker) => any): DepkerApp {
-    // @ts-ignore
+    // @ts-expect-error
     this[name] = builder(this);
     return this as unknown as DepkerApp;
   }
 
   public dependency(name: string, builder: (depker: Depker) => DepkerModule): DepkerApp {
-    if (!this._modules.find((i) => i.name === name)) {
+    if (!this._modules.find(i => i.name === name)) {
       this.use(builder(this));
     }
     return this as unknown as DepkerApp;

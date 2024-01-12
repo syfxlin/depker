@@ -12,9 +12,9 @@ import {
 } from "../../services/run/types.ts";
 import { command } from "../../deps.ts";
 import { Depker, DepkerModule } from "../../depker.ts";
+import { ProxyModule } from "../proxy/proxy.module.ts";
 import { PackContext } from "./pack.context.ts";
 import { ServiceConfig } from "./service.type.ts";
-import { ProxyModule } from "../proxy/proxy.module.ts";
 
 declare global {
   interface DepkerApp {
@@ -165,7 +165,7 @@ export class ServiceModule implements DepkerModule {
     if (configs.length) {
       for (const config of configs) {
         if (typeof config === "string") {
-          const service = this.services.find((s) => s.name === config);
+          const service = this.services.find(s => s.name === config);
           if (service) {
             await PackContext.create(this.depker, service).execute();
           }
@@ -182,7 +182,7 @@ export class ServiceModule implements DepkerModule {
 
   public async list(names: string[] = [], select?: AllSelect): Promise<Record<string, Array<ContainerInspect>>> {
     const infos = await this.depker.ops.container.list();
-    const insps = await this.depker.ops.container.inspect(infos.map((i) => i.Id));
+    const insps = await this.depker.ops.container.inspect(infos.map(i => i.Id));
     const services: Record<string, Array<ContainerInspect>> = {};
     for (const insp of insps) {
       const exec = /^([a-zA-Z0-9][a-zA-Z0-9_.-]*)-i(\d+)$/.exec(insp.Name);
@@ -206,7 +206,7 @@ export class ServiceModule implements DepkerModule {
   public async start(names: string[], select?: AllSelect, options?: ContainerStartOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
-      ids.push(...infos.map((i) => i.Id));
+      ids.push(...infos.map(i => i.Id));
     }
     if (ids.length) {
       await this.depker.ops.container.start(ids, options);
@@ -216,7 +216,7 @@ export class ServiceModule implements DepkerModule {
   public async stop(names: string[], select?: AllSelect, options?: ContainerStopOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
-      ids.push(...infos.map((i) => i.Id));
+      ids.push(...infos.map(i => i.Id));
     }
     if (ids.length) {
       await this.depker.ops.container.stop(ids, options);
@@ -226,7 +226,7 @@ export class ServiceModule implements DepkerModule {
   public async kill(names: string[], select?: AllSelect, options?: ContainerKillOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
-      ids.push(...infos.map((i) => i.Id));
+      ids.push(...infos.map(i => i.Id));
     }
     if (ids.length) {
       await this.depker.ops.container.kill(ids, options);
@@ -236,7 +236,7 @@ export class ServiceModule implements DepkerModule {
   public async remove(names: string[], select?: AllSelect, options?: ContainerRemoveOptions): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
-      ids.push(...infos.map((i) => i.Id));
+      ids.push(...infos.map(i => i.Id));
     }
     if (ids.length) {
       await this.depker.ops.container.remove(ids, options);
@@ -260,14 +260,13 @@ export class ServiceModule implements DepkerModule {
     const sources = source.split(":");
     const targets = target.split(":");
     if (sources.length > 1) {
-      const inspect = await this.list([sources[0]], select ?? "active").then((a) => a[sources[0]]?.[0]);
+      const inspect = await this.list([sources[0]], select ?? "active").then(a => a[sources[0]]?.[0]);
       sources[0] = inspect.Id;
     }
     if (targets.length > 1) {
-      const inspect = await this.list([targets[0]], select ?? "active").then((a) => a[targets[0]]?.[0]);
+      const inspect = await this.list([targets[0]], select ?? "active").then(a => a[targets[0]]?.[0]);
       targets[0] = inspect.Id;
     }
-    // prettier-ignore
     await this.depker.ops.container
       .copy(sources.join(":"), targets.join(":"), options)
       .stdin("inherit")
@@ -312,7 +311,7 @@ export class ServiceModule implements DepkerModule {
   public async wait(names: string[], select?: AllSelect): Promise<void> {
     const ids: string[] = [];
     for (const infos of Object.values(await this.list(names, select))) {
-      ids.push(...infos.map((i) => i.Id));
+      ids.push(...infos.map(i => i.Id));
     }
     if (ids.length) {
       await this.depker.ops.container.wait(ids);
@@ -320,11 +319,10 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async logs(name: string, select?: ActiveSelect, options?: ContainerLogsOptions) {
-    const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
+    const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
     }
-    // prettier-ignore
     await this.depker.ops.container
       .logs(inspect.Id, options)
       .stdin("inherit")
@@ -334,11 +332,10 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async top(name: string, select?: ActiveSelect, options?: ContainerTopOptions) {
-    const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
+    const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
     }
-    // prettier-ignore
     await this.depker.ops.container
       .top(inspect.Id, options)
       .stdin("inherit")
@@ -348,11 +345,10 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async stats(name: string, select?: ActiveSelect, options?: ContainerStatsOptions) {
-    const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
+    const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
     }
-    // prettier-ignore
     await this.depker.ops.container
       .stats(inspect.Id, options)
       .stdin("inherit")
@@ -362,11 +358,10 @@ export class ServiceModule implements DepkerModule {
   }
 
   public async exec(name: string, commands: string[], select?: ActiveSelect, options?: ContainerExecOptions) {
-    const inspect = await this.list([name], select ?? "active").then((a) => a[name]?.[0]);
+    const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
       throw new Error(`No suck container: ${name}`);
     }
-    // prettier-ignore
     await this.depker.ops.container
       .exec(inspect.Id, commands, options)
       .stdin("inherit")
@@ -398,7 +393,7 @@ export class ServiceModule implements DepkerModule {
       .option("--json", "Pretty-print using json")
       .option("--yaml", "Pretty-print using yaml")
       .action(async (options, ...names) => {
-        const infos = Object.entries(await this.list(names, options.select)).map((e) => ({ Name: e[0], Items: e[1] }));
+        const infos = Object.entries(await this.list(names, options.select)).map(e => ({ Name: e[0], Items: e[1] }));
         if (options.format) {
           this.depker.log.render(options.format, infos);
         } else if (options.json) {
@@ -409,14 +404,13 @@ export class ServiceModule implements DepkerModule {
           const header = ["Name", "Activated", "Status", "Image", "CreatedAt", "Containers"];
           const body = infos.map((info) => {
             const item = this.select(info.Items, "active")[0] ?? this.select(info.Items, "latest")[0];
-            // prettier-ignore
             return [
               `${info.Name}`,
               `${item.Name}`,
               `${item.State.Status}${item.State?.Health?.Status ? ` (${item.State?.Health?.Status})` : ``}`,
               `${item.Config.Image}`,
               `${this.depker.log.date(item.Created)}`,
-              `${info.Items.map((i) => `${i.Name} [${i.State.Status}${i.State?.Health?.Status ? ` (${i.State?.Health?.Status})` : ``}]`).join("\n")}`,
+              `${info.Items.map(i => `${i.Name} [${i.State.Status}${i.State?.Health?.Status ? ` (${i.State?.Health?.Status})` : ``}]`).join("\n")}`,
             ];
           });
           this.depker.log.table(header, body);
@@ -434,7 +428,7 @@ export class ServiceModule implements DepkerModule {
       .option("--json", "Pretty-print using json")
       .option("--yaml", "Pretty-print using yaml")
       .action(async (options, ...names) => {
-        const infos = Object.entries(await this.list(names, options.select)).map((e) => ({ Name: e[0], Items: e[1] }));
+        const infos = Object.entries(await this.list(names, options.select)).map(e => ({ Name: e[0], Items: e[1] }));
         if (options.format) {
           this.depker.log.render(options.format, infos);
         } else if (options.json) {

@@ -20,15 +20,15 @@ export { toPathString } from "https://deno.land/std@0.211.0/fs/_to_path_string.t
 export { getFileInfoType } from "https://deno.land/std@0.211.0/fs/_get_file_info_type.ts";
 
 declare module "https://deno.land/x/dax@0.36.0/mod.ts" {
-  // @ts-ignore
+  // @ts-expect-error
   import { CommandBuilder as CB, RequestBuilder as RB } from "https://deno.land/x/dax@0.36.0/mod.ts";
 
-  // @ts-ignore
+  // @ts-expect-error
   interface CommandBuilder extends CB {
     jsonl<T = any>(): Promise<T>;
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   interface RequestBuilder extends RB {
     jsonl<T = any>(): Promise<T>;
   }

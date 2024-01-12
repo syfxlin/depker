@@ -1,5 +1,4 @@
 import { Depker } from "../../depker.ts";
-import { ServiceModule } from "./service.module.ts";
 import {
   collections,
   dotenv,
@@ -12,8 +11,9 @@ import {
   toPathString,
   yaml,
 } from "../../deps.ts";
-import { Pack, ServiceConfig } from "./service.type.ts";
 import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/run/types.ts";
+import { ServiceModule } from "./service.module.ts";
+import { Pack, ServiceConfig } from "./service.type.ts";
 
 interface PackOptions<Config extends ServiceConfig = ServiceConfig> {
   depker: Depker;
@@ -29,7 +29,7 @@ interface CopyOptions {
 
 export function pack<C extends ServiceConfig = ServiceConfig>(pack: Pack<C>) {
   return (config: C) => {
-    // @ts-ignore
+    // @ts-expect-error
     config.$$pack = pack;
     return config;
   };
@@ -141,7 +141,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
   public async render(value: string, context?: Record<string, any>) {
     // template
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    // eslint-disable-next-line ts/no-this-alias
     const self = this;
     const loader = new nunjucks.FileSystemLoader(path.resolve(this.target));
     const template = new nunjucks.Environment(loader, { autoescape: false, noCache: true });
@@ -156,23 +156,23 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     template.addGlobal("source", this.source);
     template.addGlobal("target", this.target);
     // filters
-    template.addFilter("command", function (this: any, value: string | string[]) {
+    template.addFilter("command", (value: string | string[]) => {
       return typeof value === "string" ? value : JSON.stringify(value);
+    });
+    template.addFilter("exists", (file: string) => {
+      return self.exists(file);
+    });
+    template.addFilter("read", (file: string) => {
+      return self.read(file);
+    });
+    template.addFilter("write", (value: string, file: string) => {
+      return self.write(file, value);
+    });
+    template.addFilter("overwrite", (value: string, file: string) => {
+      return self.overwrite(file, value);
     });
     template.addFilter("render", function (this: any, value: string) {
       return value ? this.env.renderString(value, this.ctx) : "";
-    });
-    template.addFilter("exists", function (this: any, file: string) {
-      return self.exists(file);
-    });
-    template.addFilter("read", function (this: any, file: string) {
-      return self.read(file);
-    });
-    template.addFilter("write", function (this: any, value: string, file: string) {
-      return self.write(file, value);
-    });
-    template.addFilter("overwrite", function (this: any, value: string, file: string) {
-      return self.overwrite(file, value);
     });
     template.addFilter("render_write", function (this: any, value: string, file: string) {
       if (self.exists(file)) {
@@ -211,19 +211,19 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       if (config.build_args) {
         for (const [key, val] of Object.entries(config.build_args)) {
           options.Args = options.Args ?? {};
-          options.Args[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Args[key] = this._placeholder(val, name => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
           options.Envs = options.Envs ?? {};
-          options.Envs[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Envs[key] = this._placeholder(val, name => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.labels) {
         for (const [key, val] of Object.entries(config.labels)) {
           options.Labels = options.Labels ?? {};
-          options.Labels[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Labels[key] = this._placeholder(val, name => dotenvs[name] ?? secrets[name]);
         }
       }
     }
@@ -248,7 +248,6 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       throw new Error(`Building image ${image} failed.`);
     }
 
-    // prettier-ignore
     try {
       // log started
       this.depker.log.step(`Transferring image ${image} started.`);
@@ -256,7 +255,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       // transfer image
       const size = { value: 0 };
       const interval = setInterval(() => this.depker.log.raw(`Transferring: ${this.depker.log.byte(size.value)}`), 2000);
-      await this.depker.ops.transfer(image, (v) => (size.value = v ?? size.value));
+      await this.depker.ops.transfer(image, v => (size.value = v ?? size.value));
       clearInterval(interval);
 
       // log successfully
@@ -337,9 +336,8 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     };
 
     // web
-    // prettier-ignore
     if (config.rule || config.domain?.length) {
-      const rule = (config.rule || [config.domain]?.flat()?.map((d) => `Host(\`${d}\`)`).join(" || "));
+      const rule = (config.rule || [config.domain]?.flat()?.map(d => `Host(\`${d}\`)`).join(" || "));
       const port = config.port ?? 80;
       const scheme = config.scheme ?? "http";
       const middlewares: string[] = [];
@@ -378,7 +376,6 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     }
 
     // ports
-    // prettier-ignore
     for (const port of config.ports ?? []) {
       const proto = port.proto;
       const hport = port.hport;
@@ -398,20 +395,20 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
           options.Envs = options.Envs ?? {};
-          options.Envs[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Envs[key] = this._placeholder(val, name => dotenvs[name] ?? secrets[name]);
         }
       }
       if (config.labels) {
         for (const [key, val] of Object.entries(config.labels)) {
           options.Labels = options.Labels ?? {};
-          options.Labels[key] = this._placeholder(val, (name) => dotenvs[name] ?? secrets[name]);
+          options.Labels[key] = this._placeholder(val, name => dotenvs[name] ?? secrets[name]);
         }
       }
     }
 
     // volumes
     for (const volume of config.volumes ?? []) {
-      const hpath = this._placeholder(volume.hpath, (key) => this.depker.cfg.path(key));
+      const hpath = this._placeholder(volume.hpath, key => this.depker.cfg.path(key));
       const cpath = volume.cpath;
       const readonly = volume.readonly ? "ro" : "rw";
       options.Volumes = options.Volumes ?? [];
@@ -427,7 +424,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       // wait healthcheck, max timeout 1h
       this.depker.log.info(`Waiting container ${name} to finished.`);
       for (let i = 1; i <= 1200; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         const infos = await this.depker.ops.container.inspect([name]);
         if (infos) {
           const status = infos[0].State.Status.toLowerCase();
@@ -508,7 +505,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
   }
 
   private async _validCopy(source: string, target: string, options?: CopyOptions) {
-    let info: Deno.FileInfo | undefined = undefined;
+    let info: Deno.FileInfo | undefined;
     try {
       info = await Deno.lstat(target);
     } catch (err) {

@@ -2,18 +2,18 @@ import { dax } from "../../deps.ts";
 
 dax.CommandBuilder.prototype.jsonl = async function <T = any>(this: dax.CommandBuilder): Promise<T> {
   const lines = await this.lines();
-  return lines.map((i) => JSON.parse(i)) as T;
+  return lines.map(i => JSON.parse(i)) as T;
 };
 
 dax.RequestBuilder.prototype.jsonl = async function <T = any>(this: dax.RequestBuilder): Promise<T> {
   const texts = await this.text();
   const lines = texts.split(/\r?\n/g);
-  return lines.map((i) => JSON.parse(i)) as T;
+  return lines.map(i => JSON.parse(i)) as T;
 };
 
-interface Template<TE = {}>
+interface Template<TE = object>
   extends Omit<
-    // @ts-ignore
+    // @ts-expect-error
     dax.$BuiltInProperties<TE>,
     | "log"
     | "logLight"
@@ -39,10 +39,10 @@ interface Template<TE = {}>
   (strings: TemplateStringsArray, ...exprs: any[]): dax.CommandBuilder;
 }
 
-export type Dax<TExtras = {}> = Template<TExtras> & TExtras;
+export type Dax<TExtras = object> = Template<TExtras> & TExtras;
 
-export function createDax<TExtras = {}>(): Dax<TExtras> {
+export function createDax<TExtras = object>(): Dax<TExtras> {
   const command = new dax.CommandBuilder().stdin("null").stdout("piped").stderr("inherit").env(Deno.env.toObject());
-  // @ts-ignore
+  // @ts-expect-error
   return dax.build$({ commandBuilder: command });
 }

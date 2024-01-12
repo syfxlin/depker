@@ -92,7 +92,6 @@ export const images = {
 };
 
 export const containers = {
-  // prettier-ignore
   info: (data: Record<string, any>): ContainerInfo => ({
     Id: data.ID,
     Name: data.Names,
@@ -104,7 +103,7 @@ export const containers = {
     Ports: data.Ports,
     Mounts: data.Mounts,
     Labels: data.Labels,
-    Networks: data.Networks
+    Networks: data.Networks,
   }),
   inspect: (data: Record<string, any>): ContainerInspect => ({
     Id: data.Id,

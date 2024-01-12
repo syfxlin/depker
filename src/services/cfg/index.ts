@@ -1,6 +1,6 @@
 import { Depker } from "../../depker.ts";
-import { Configs, Secrets } from "./types.ts";
 import { command, dotenv, path, yaml } from "../../deps.ts";
+import { Configs, Secrets } from "./types.ts";
 
 export * from "./types.ts";
 
@@ -211,7 +211,7 @@ export class CfgModule {
         if (value === null) {
           delete this.instance[name];
         } else {
-          // @ts-ignore
+          // @ts-expect-error
           this.instance[name] = value;
         }
       } else {

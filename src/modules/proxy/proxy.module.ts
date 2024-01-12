@@ -77,10 +77,7 @@ export class ProxyModule implements DepkerModule {
           } else if (options.yaml) {
             this.depker.log.yaml(ports);
           } else {
-            this.depker.log.table(
-              ["Port"],
-              ports.map((p) => [String(p)]),
-            );
+            this.depker.log.table(["Port"], ports.map(p => [String(p)]));
           }
         } catch (e) {
           this.depker.log.error(`Listing ports failed.`, e);
@@ -126,10 +123,10 @@ export class ProxyModule implements DepkerModule {
     if (!operate || !diffs?.length) {
       return config.ports;
     }
-    if (operate === "insert" && !diffs.find((p) => !config.ports.includes(p))) {
+    if (operate === "insert" && !diffs.find(p => !config.ports.includes(p))) {
       return config.ports;
     }
-    if (operate === "remove" && !diffs.find((p) => config.ports.includes(p))) {
+    if (operate === "remove" && !diffs.find(p => config.ports.includes(p))) {
       return config.ports;
     }
     if (operate === "insert") {
@@ -146,7 +143,6 @@ export class ProxyModule implements DepkerModule {
       }
       config.ports = [...ports];
     }
-    // prettier-ignore
     this.depker.log.debug(`The current port status does not match the requirements and is in the process of reloading proxy. current=${config.ports}, required=${diffs}`);
     await this.reload(config);
     return config.ports;
@@ -192,15 +188,22 @@ export class ProxyModule implements DepkerModule {
       Restart: "always",
       Envs: config.envs,
       Labels: config.labels,
-      Commands: [...options],
-      Networks: [await this.depker.ops.network.default()],
-      Volumes: [`/var/depker/proxy:/etc/traefik`, `/var/run/docker.sock:/var/run/docker.sock`],
+      Commands: [
+        ...options,
+      ],
+      Networks: [
+        await this.depker.ops.network.default(),
+      ],
+      Volumes: [
+        `/var/depker/proxy:/etc/traefik`,
+        `/var/run/docker.sock:/var/run/docker.sock`,
+      ],
       Ports: [
         `80:80/tcp`,
         `443:443/tcp`,
         `443:443/udp`,
-        ...config.ports.map((i) => `${i}:${i}/tcp`),
-        ...config.ports.map((i) => `${i}:${i}/udp`),
+        ...config.ports.map(i => `${i}:${i}/tcp`),
+        ...config.ports.map(i => `${i}:${i}/udp`),
       ],
     });
 

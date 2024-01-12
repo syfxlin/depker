@@ -38,6 +38,6 @@ async function find(): Promise<string> {
 }
 
 async function exec(path: string): Promise<void> {
-  const depker = await import(path).then((mod) => mod?.depker ?? mod?.default ?? mod);
+  const depker = await import(path).then(mod => mod?.default ?? mod);
   await depker.execute();
 }

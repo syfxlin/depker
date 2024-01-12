@@ -4,30 +4,30 @@ import { dax } from "../../deps.ts";
 
 export type DockerNodeOptions =
   | {
-      type: "local";
-    }
+    type: "local";
+  }
   | {
-      type: "context";
-      name?: string;
-    }
+    type: "context";
+    name?: string;
+  }
   | {
-      type: "ssh";
-      host?: string;
-    }
+    type: "ssh";
+    host?: string;
+  }
   | {
-      type: "http";
-      host?: string;
-      port?: number | string;
-    }
+    type: "http";
+    host?: string;
+    port?: number | string;
+  }
   | {
-      type: "https";
-      host?: string;
-      port?: number | string;
-      ca?: string;
-      cert?: string;
-      key?: string;
-      verify?: boolean;
-    };
+    type: "https";
+    host?: string;
+    port?: number | string;
+    ca?: string;
+    cert?: string;
+    key?: string;
+    verify?: boolean;
+  };
 
 export interface ContainerConfig {
   Hostname?: string;
@@ -37,7 +37,7 @@ export interface ContainerConfig {
   AttachStdout?: boolean;
   AttachStderr?: boolean;
   ExposedPorts?: {
-    [portAndProtocol: string]: {};
+    [portAndProtocol: string]: object;
   };
   Tty?: boolean;
   OpenStdin?: boolean;
@@ -54,7 +54,7 @@ export interface ContainerConfig {
   ArgsEscaped?: boolean;
   Image?: string;
   Volumes?: {
-    [path: string]: {};
+    [path: string]: object;
   };
   WorkingDir?: string;
   Entrypoint?: string | string[];
@@ -232,14 +232,14 @@ export interface ContainerInspect {
     AttachStdin: boolean;
     AttachStdout: boolean;
     AttachStderr: boolean;
-    ExposedPorts: { [portAndProtocol: string]: {} };
+    ExposedPorts: { [portAndProtocol: string]: object };
     Tty: boolean;
     OpenStdin: boolean;
     StdinOnce: boolean;
     Env: string[];
     Cmd: string[];
     Image: string;
-    Volumes: { [volume: string]: {} };
+    Volumes: { [volume: string]: object };
     WorkingDir: string;
     Entrypoint?: string | string[];
     OnBuild?: any;

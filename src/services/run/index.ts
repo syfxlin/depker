@@ -1,3 +1,5 @@
+import { Depker } from "../../depker.ts";
+import { dax, hash } from "../../deps.ts";
 import {
   BuilderBuildOptions,
   BuilderOperation,
@@ -37,8 +39,6 @@ import {
   VolumeOperation,
   VolumeRemoveOptions,
 } from "./types.ts";
-import { Depker } from "../../depker.ts";
-import { dax, hash } from "../../deps.ts";
 import { containers, images, networks, volumes } from "./parser.ts";
 
 export * from "./types.ts";
@@ -128,7 +128,7 @@ class DockerContainerOperation implements ContainerOperation {
 
   public async list(): Promise<Array<ContainerInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --all --no-trunc --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => containers.info(info));
+    return infos.map(info => containers.info(info));
   }
 
   public async find(name: string): Promise<ContainerInfo | undefined> {
@@ -143,7 +143,7 @@ class DockerContainerOperation implements ContainerOperation {
 
   public async inspect(name: string[]): Promise<Array<ContainerInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.json<Array<any>>();
-    return infos.map((info) => containers.inspect(info));
+    return infos.map(info => containers.inspect(info));
   }
 
   public async start(name: string[], options?: ContainerStartOptions): Promise<void> {
@@ -554,7 +554,7 @@ class DockerBuilderOperation implements BuilderOperation {
       args.push(`--secret`);
       args.push(`id=depker-envs,src=${file1}`);
       const file2 = Deno.makeTempFileSync();
-      Deno.writeTextFileSync(file2, values.map((i) => `export ${i}`).join(""));
+      Deno.writeTextFileSync(file2, values.map(i => `export ${i}`).join(""));
       args.push(`--secret`);
       args.push(`id=depker-export-envs,src=${file2}`);
     } else {
@@ -610,7 +610,7 @@ class DockerNetworkOperation implements NetworkOperation {
 
   public async list(): Promise<Array<NetworkInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --no-trunc --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => networks.info(info));
+    return infos.map(info => networks.info(info));
   }
 
   public async find(name: string): Promise<NetworkInfo | undefined> {
@@ -625,7 +625,7 @@ class DockerNetworkOperation implements NetworkOperation {
 
   public async inspect(name: string[]): Promise<Array<NetworkInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.json<Array<any>>();
-    return infos.map((info) => networks.inspect(info));
+    return infos.map(info => networks.inspect(info));
   }
 
   public async create(name: string, options?: NetworkCreateOptions): Promise<void> {
@@ -717,7 +717,7 @@ class DockerVolumeOperation implements VolumeOperation {
 
   public async list(): Promise<Array<VolumeInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => volumes.info(info));
+    return infos.map(info => volumes.info(info));
   }
 
   public async find(name: string): Promise<VolumeInfo | undefined> {
@@ -732,7 +732,7 @@ class DockerVolumeOperation implements VolumeOperation {
 
   public async inspect(name: string[]): Promise<Array<VolumeInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.json<Array<any>>();
-    return infos.map((info) => volumes.inspect(info));
+    return infos.map(info => volumes.inspect(info));
   }
 
   public async create(name: string, options?: VolumeCreateOptions): Promise<void> {
@@ -760,7 +760,6 @@ class DockerVolumeOperation implements VolumeOperation {
     await this.depker.dax`${this.docker} rm ${args} ${name}`;
   }
 
-  // prettier-ignore
   public async prune(): Promise<void> {
     const volumes = await this.depker.dax`${this.docker} ls --quiet --filter dangling=true`.lines();
     if (!volumes.length) {
@@ -770,7 +769,7 @@ class DockerVolumeOperation implements VolumeOperation {
     if (!inspects.length) {
       return;
     }
-    const names = inspects.filter((i) => /^[0-9a-f]{64}$/.test(i.Name) && Math.abs(Date.now() - new Date(i.Created).getTime()) > 86_400_000).map((i) => i.Name);
+    const names = inspects.filter(i => /^[0-9a-f]{64}$/.test(i.Name) && Math.abs(Date.now() - new Date(i.Created).getTime()) > 86_400_000).map(i => i.Name);
     if (!names.length) {
       return;
     }
@@ -790,7 +789,7 @@ class DockerImageOperation implements ImageOperation {
 
   public async list(): Promise<Array<ImageInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --no-trunc --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => images.info(info));
+    return infos.map(info => images.info(info));
   }
 
   public async find(name: string): Promise<ImageInfo | undefined> {
@@ -805,7 +804,7 @@ class DockerImageOperation implements ImageOperation {
 
   public async inspect(name: string[]): Promise<Array<ImageInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.jsonl<Array<any>>();
-    return infos.map((info) => images.inspect(info));
+    return infos.map(info => images.inspect(info));
   }
 
   public pull(name: string, options?: ImagePullOptions): dax.CommandBuilder {

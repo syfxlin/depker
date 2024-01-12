@@ -5,15 +5,15 @@ import { LogLevel } from "./types.ts";
 export * from "./types.ts";
 
 export class LogModule {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(private readonly depker: Depker) {}
 
   public format(...messages: any[]) {
     const results: string[] = [];
     for (let message of messages) {
       if (message instanceof Error) {
-        // @ts-ignore
+        // @ts-expect-error
         results.push(message?.response?.body?.message ?? message.message);
+        // eslint-disable-next-line no-cond-assign
         while ((message = message.cause)) {
           results.push(`  [cause]: ${message?.response?.body?.message ?? message.message}`);
         }
@@ -31,10 +31,10 @@ export class LogModule {
     template.addFilter("json", (value: any) => JSON.stringify(value, undefined, 2), false);
     template.addFilter("yaml", (value: any) => yaml.stringify(value), false);
     if (data instanceof Object) {
-      // @ts-ignore
+      // @ts-expect-error
       return template.renderString(value, data, undefined, undefined).trim();
     } else {
-      // @ts-ignore
+      // @ts-expect-error
       return template.renderString(value, { it: data }, undefined, undefined).trim();
     }
   }
@@ -86,14 +86,14 @@ export class LogModule {
 
   public table(header: string[], body: string[][]) {
     const t = new table.Table()
-      .header(header.map((i) => ansi.colors.bold.cyan(i)))
+      .header(header.map(i => ansi.colors.bold.cyan(i)))
       .body(body)
       .border(true);
     this._output("raw", Date.now(), t.toString());
   }
 
   public render(value: string, data: any) {
-    if (data instanceof Array) {
+    if (Array.isArray(data)) {
       for (const context of data) {
         this._output("raw", Date.now(), this.parse(value, context));
       }
@@ -110,8 +110,7 @@ export class LogModule {
       console.log(message);
       return;
     }
-    // prettier-ignore
-    const data = Deno.env.get("DEPKER_OPTION_TIMESTAMP") ? `[${this.date(parseInt(time as any))}] ${message}` : message;
+    const data = Deno.env.get("DEPKER_OPTION_TIMESTAMP") ? `[${this.date(Number.parseInt(time as any))}] ${message}` : message;
     if (level === "step") {
       console.log(`${ansi.colors.bold.cyan("[STEP] ❯ ")}${data}`);
     } else if (level === "debug") {
