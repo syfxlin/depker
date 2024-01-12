@@ -1,5 +1,8 @@
 import { depker } from "./src/depker.ts";
 
+// dependencies
+export * as deps from "./src/deps.ts";
+
 // services
 export * from "./src/depker.ts";
 export * from "./src/services/run/index.ts";
