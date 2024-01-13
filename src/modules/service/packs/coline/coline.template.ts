@@ -63,6 +63,7 @@ COPY --from=builder /app/public /app/public
 EXPOSE 80
 ENV PORT=80
 ENV HOSTNAME=0.0.0.0
+ENV NODE_ENV production
 HEALTHCHECK CMD nc -vz -w1 127.0.0.1 80
 CMD ["node", "server.js"]
 `;
