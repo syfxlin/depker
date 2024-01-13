@@ -206,7 +206,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
     };
 
     if (config.build_args || config.secrets || config.labels) {
-      const dotenvs = await dotenv.load({ examplePath: undefined, defaultsPath: undefined });
+      const dotenvs = await dotenv.load({ examplePath: null, defaultsPath: null });
       const secrets = await this.depker.cfg.secret();
       if (config.build_args) {
         for (const [key, val] of Object.entries(config.build_args)) {
@@ -390,7 +390,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
 
     // secrets
     if (config.secrets || config.labels) {
-      const dotenvs = await dotenv.load({ examplePath: undefined, defaultsPath: undefined });
+      const dotenvs = await dotenv.load({ examplePath: null, defaultsPath: null });
       const secrets = await this.depker.cfg.secret();
       if (config.secrets) {
         for (const [key, val] of Object.entries(config.secrets)) {
