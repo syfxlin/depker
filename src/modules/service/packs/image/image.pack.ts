@@ -7,7 +7,7 @@ export interface ImageConfig extends ServiceConfig {
 
 export const image = pack<ImageConfig>({
   build: async (ctx) => {
-    const config = ctx.config;
-    await ctx.startAt(config.image, config);
+    ctx.config.$$image = ctx.config.image;
+    await ctx.start();
   },
 });

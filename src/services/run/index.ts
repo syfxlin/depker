@@ -1,3 +1,5 @@
+import { Depker } from "../../depker.ts";
+import { dax, hash } from "../../deps.ts";
 import {
   BuilderBuildOptions,
   BuilderOperation,
@@ -12,7 +14,6 @@ import {
   ContainerRemoveOptions,
   ContainerRestartOptions,
   ContainerRunOptions,
-  containers,
   ContainerStartOptions,
   ContainerStatsOptions,
   ContainerStopOptions,
@@ -25,7 +26,6 @@ import {
   ImagePullOptions,
   ImagePushOptions,
   ImageRemoveOptions,
-  images,
   NetworkConnectOptions,
   NetworkCreateOptions,
   NetworkDisconnectOptions,
@@ -33,16 +33,13 @@ import {
   NetworkInspect,
   NetworkOperation,
   NetworkRemoveOptions,
-  networks,
   VolumeCreateOptions,
   VolumeInfo,
   VolumeInspect,
   VolumeOperation,
   VolumeRemoveOptions,
-  volumes,
 } from "./types.ts";
-import { Depker } from "../../depker.ts";
-import { CommandBuilder } from "../../deps.ts";
+import { containers, images, networks, volumes } from "./parser.ts";
 
 export * from "./types.ts";
 
@@ -51,6 +48,7 @@ export function docker(options?: DockerNodeOptions) {
 }
 
 export class DockerNode implements DepkerMaster {
+  public readonly id: string;
   public readonly docker: string[];
   public readonly container: DockerContainerOperation;
   public readonly builder: DockerBuilderOperation;
@@ -113,6 +111,8 @@ export class DockerNode implements DepkerMaster {
     } else {
       this.docker = [`docker`];
     }
+
+    this.id = hash(this.docker);
   }
 }
 
@@ -128,7 +128,7 @@ class DockerContainerOperation implements ContainerOperation {
 
   public async list(): Promise<Array<ContainerInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --all --no-trunc --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => containers.info(info));
+    return infos.map(info => containers.info(info));
   }
 
   public async find(name: string): Promise<ContainerInfo | undefined> {
@@ -143,7 +143,7 @@ class DockerContainerOperation implements ContainerOperation {
 
   public async inspect(name: string[]): Promise<Array<ContainerInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.json<Array<any>>();
-    return infos.map((info) => containers.inspect(info));
+    return infos.map(info => containers.inspect(info));
   }
 
   public async start(name: string[], options?: ContainerStartOptions): Promise<void> {
@@ -218,19 +218,19 @@ class DockerContainerOperation implements ContainerOperation {
     await this.depker.dax`${this.docker} prune --force --filter until=24h`;
   }
 
-  public create(name: string, target: string, options?: ContainerCreateOptions): CommandBuilder {
+  public create(name: string, target: string, options?: ContainerCreateOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} create ${this.create_args(name, target, options)}`;
   }
 
-  public run(name: string, target: string, options?: ContainerRunOptions): CommandBuilder {
+  public run(name: string, target: string, options?: ContainerRunOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} run ${this.run_args(name, target, options)}`;
   }
 
-  public exec(name: string, commands: string[], options?: ContainerExecOptions): CommandBuilder {
+  public exec(name: string, commands: string[], options?: ContainerExecOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} exec ${this.exec_args(name, commands, options)}`;
   }
 
-  public logs(name: string, options?: ContainerLogsOptions): CommandBuilder {
+  public logs(name: string, options?: ContainerLogsOptions): dax.CommandBuilder {
     const args: string[] = [];
 
     if (options?.Details) {
@@ -258,11 +258,11 @@ class DockerContainerOperation implements ContainerOperation {
     return this.depker.dax`${this.docker} logs ${name} ${args}`;
   }
 
-  public top(name: string, options?: ContainerTopOptions): CommandBuilder {
+  public top(name: string, options?: ContainerTopOptions): dax.CommandBuilder {
     return this.depker.dax`${this.docker} top ${name} ${options?.Options ? [options.Options] : []}`;
   }
 
-  public stats(name: string, options?: ContainerStatsOptions): CommandBuilder {
+  public stats(name: string, options?: ContainerStatsOptions): dax.CommandBuilder {
     const args: string[] = [];
 
     if (options?.All) {
@@ -278,7 +278,7 @@ class DockerContainerOperation implements ContainerOperation {
     return this.depker.dax`${this.docker} stats ${args} ${name}`;
   }
 
-  public copy(source: string, target: string, options?: ContainerCopyOptions): CommandBuilder {
+  public copy(source: string, target: string, options?: ContainerCopyOptions): dax.CommandBuilder {
     const args: string[] = [];
 
     if (options?.Archive) {
@@ -320,17 +320,9 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(`--env`);
       args.push(`${name}=${value}`);
     }
-    for (const value of options?.EnvFiles ?? []) {
-      args.push(`--env-file`);
-      args.push(value);
-    }
     for (const [name, value] of Object.entries(options?.Labels ?? {})) {
       args.push(`--label`);
       args.push(`${name}=${value}`);
-    }
-    for (const value of options?.LabelFiles ?? []) {
-      args.push(`--label-file`);
-      args.push(value);
     }
     for (const value of options?.Ports ?? []) {
       args.push(`--publish`);
@@ -506,10 +498,6 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(`--env`);
       args.push(`${name}=${value}`);
     }
-    for (const value of options?.EnvFiles ?? []) {
-      args.push(`--env-file`);
-      args.push(value);
-    }
 
     args.push(name);
     args.push(...commands);
@@ -523,7 +511,7 @@ class DockerBuilderOperation implements BuilderOperation {
     private readonly node: DockerNode,
   ) {}
 
-  public build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder {
+  public build(name: string, target: string, options?: BuilderBuildOptions): dax.CommandBuilder {
     const args = [`--tag`, name];
 
     if (options?.File) {
@@ -538,6 +526,10 @@ class DockerBuilderOperation implements BuilderOperation {
     }
     if (options?.Remove) {
       args.push(`--rm`);
+    }
+    for (const name of options?.Networks ?? []) {
+      args.push(`--network`);
+      args.push(name);
     }
     for (const [name, value] of Object.entries(options?.Args ?? {})) {
       args.push(`--build-arg`);
@@ -555,9 +547,25 @@ class DockerBuilderOperation implements BuilderOperation {
       args.push(`--add-host`);
       args.push(`${name}:${value}`);
     }
-    for (const name of options?.Networks ?? []) {
-      args.push(`--network`);
-      args.push(name);
+    if (options?.Envs) {
+      const values = Object.entries(options.Envs).map(([k, v]) => `${k}=${v}\n`);
+      const file1 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file1, values.join(""));
+      args.push(`--secret`);
+      args.push(`id=depker-envs,src=${file1}`);
+      const file2 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file2, values.map(i => `export ${i}`).join(""));
+      args.push(`--secret`);
+      args.push(`id=depker-export-envs,src=${file2}`);
+    } else {
+      const file1 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file1, "\n");
+      args.push(`--secret`);
+      args.push(`id=depker-envs,src=${file1}`);
+      const file2 = Deno.makeTempFileSync();
+      Deno.writeTextFileSync(file2, "\n");
+      args.push(`--secret`);
+      args.push(`id=depker-export-envs,src=${file2}`);
     }
 
     // extensions
@@ -602,7 +610,7 @@ class DockerNetworkOperation implements NetworkOperation {
 
   public async list(): Promise<Array<NetworkInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --no-trunc --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => networks.info(info));
+    return infos.map(info => networks.info(info));
   }
 
   public async find(name: string): Promise<NetworkInfo | undefined> {
@@ -617,7 +625,7 @@ class DockerNetworkOperation implements NetworkOperation {
 
   public async inspect(name: string[]): Promise<Array<NetworkInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.json<Array<any>>();
-    return infos.map((info) => networks.inspect(info));
+    return infos.map(info => networks.inspect(info));
   }
 
   public async create(name: string, options?: NetworkCreateOptions): Promise<void> {
@@ -709,7 +717,7 @@ class DockerVolumeOperation implements VolumeOperation {
 
   public async list(): Promise<Array<VolumeInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => volumes.info(info));
+    return infos.map(info => volumes.info(info));
   }
 
   public async find(name: string): Promise<VolumeInfo | undefined> {
@@ -724,7 +732,7 @@ class DockerVolumeOperation implements VolumeOperation {
 
   public async inspect(name: string[]): Promise<Array<VolumeInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.json<Array<any>>();
-    return infos.map((info) => volumes.inspect(info));
+    return infos.map(info => volumes.inspect(info));
   }
 
   public async create(name: string, options?: VolumeCreateOptions): Promise<void> {
@@ -752,7 +760,6 @@ class DockerVolumeOperation implements VolumeOperation {
     await this.depker.dax`${this.docker} rm ${args} ${name}`;
   }
 
-  // prettier-ignore
   public async prune(): Promise<void> {
     const volumes = await this.depker.dax`${this.docker} ls --quiet --filter dangling=true`.lines();
     if (!volumes.length) {
@@ -762,7 +769,7 @@ class DockerVolumeOperation implements VolumeOperation {
     if (!inspects.length) {
       return;
     }
-    const names = inspects.filter((i) => /^[0-9a-f]{64}$/.test(i.Name) && Math.abs(Date.now() - new Date(i.Created).getTime()) > 86_400_000).map((i) => i.Name);
+    const names = inspects.filter(i => /^[0-9a-f]{64}$/.test(i.Name) && Math.abs(Date.now() - new Date(i.Created).getTime()) > 86_400_000).map(i => i.Name);
     if (!names.length) {
       return;
     }
@@ -782,7 +789,7 @@ class DockerImageOperation implements ImageOperation {
 
   public async list(): Promise<Array<ImageInfo>> {
     const infos = await this.depker.dax`${this.docker} ls --no-trunc --format '{{json .}}'`.jsonl<Array<any>>();
-    return infos.map((info) => images.info(info));
+    return infos.map(info => images.info(info));
   }
 
   public async find(name: string): Promise<ImageInfo | undefined> {
@@ -797,10 +804,10 @@ class DockerImageOperation implements ImageOperation {
 
   public async inspect(name: string[]): Promise<Array<ImageInspect>> {
     const infos = await this.depker.dax`${this.docker} inspect ${name}`.jsonl<Array<any>>();
-    return infos.map((info) => images.inspect(info));
+    return infos.map(info => images.inspect(info));
   }
 
-  public pull(name: string, options?: ImagePullOptions): CommandBuilder {
+  public pull(name: string, options?: ImagePullOptions): dax.CommandBuilder {
     const args: string[] = [];
     if (options?.AllTags) {
       args.push(`--all-tags`);
@@ -812,7 +819,7 @@ class DockerImageOperation implements ImageOperation {
     return this.depker.dax`${this.docker} pull ${args} ${name}`;
   }
 
-  public push(name: string, options?: ImagePushOptions): CommandBuilder {
+  public push(name: string, options?: ImagePushOptions): dax.CommandBuilder {
     const args: string[] = [];
     if (options?.AllTags) {
       args.push(`--all-tags`);

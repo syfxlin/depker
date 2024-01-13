@@ -2,7 +2,7 @@ import { dockerfile as dockerfile_nginx } from "../nginx/nginx.template.ts";
 
 export const dockerfile_common = `
 # from nodejs
-FROM gplane/pnpm:{{ config.nodejs.version | d("alpine") }} as builder
+FROM gplane/pnpm:{{ config.nodejs.version | d("alpine") }} AS builder
 
 # workdir
 WORKDIR /app

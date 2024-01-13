@@ -1,7 +1,7 @@
 import { Depker } from "../../depker.ts";
-import { Command } from "../../deps.ts";
+import { command } from "../../deps.ts";
 
-export class CliModule extends Command {
+export class CliModule extends command.Command {
   constructor(private readonly depker: Depker) {
     super();
     this.name(depker.name);

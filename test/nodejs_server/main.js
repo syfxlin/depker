@@ -1,4 +1,4 @@
-const { createServer } = require("http");
+const { createServer } = require("node:http");
 
 const app = createServer((req, res) => {
   res.end("<h1>depker</h1>");

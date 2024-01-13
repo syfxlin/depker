@@ -1,6 +1,6 @@
 import { Depker } from "../../depker.ts";
+import { command, dotenv, path, yaml } from "../../deps.ts";
 import { Configs, Secrets } from "./types.ts";
-import { Command, yaml } from "../../deps.ts";
 
 export * from "./types.ts";
 
@@ -16,7 +16,7 @@ export class CfgModule {
     this.instance = undefined;
 
     // commands
-    const config = new Command().description("Manage configs").alias("config").alias("cfg").default("view");
+    const config = new command.Command().description("Manage configs").alias("config").alias("cfg").default("view");
     config
       .command("view", "View configs")
       .alias("show")
@@ -29,10 +29,8 @@ export class CfgModule {
           this.depker.log.render(options.format, data);
         } else if (options.json) {
           this.depker.log.json(data);
-        } else if (options.yaml) {
-          this.depker.log.yaml(data);
         } else {
-          this.depker.log.json(data);
+          this.depker.log.yaml(data);
         }
       });
     config
@@ -41,8 +39,34 @@ export class CfgModule {
       .action(async (options) => {
         await this.manual(options.editor);
       });
+    config
+      .command("load <path:file>", "Load configs")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options, file) => {
+        const ext = path.extname(file);
+        const value = await Deno.readTextFile(file);
+        if (options.json || ext === ".json") {
+          await this.config(JSON.parse(value) as Configs);
+        } else {
+          await this.config(yaml.parse(value) as Configs);
+        }
+      });
+    config
+      .command("save <path:file>", "Save configs")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options, file) => {
+        const ext = path.extname(file);
+        const config = await this.config();
+        if (options.json || ext === ".json") {
+          await Deno.writeTextFile(file, JSON.stringify(config));
+        } else {
+          await Deno.writeTextFile(file, yaml.stringify(config));
+        }
+      });
 
-    const secret = new Command().description("Manage secrets").alias("secret").alias("sec").default("list");
+    const secret = new command.Command().description("Manage secrets").alias("secret").alias("sec").default("list");
     secret
       .command("list", "List secrets")
       .alias("ls")
@@ -107,6 +131,37 @@ export class CfgModule {
           this.depker.log.error(`Removing secrets failed.`, e);
         }
       });
+    secret
+      .command("load <path:file>", "Load secrets")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options, file) => {
+        const ext = path.extname(file);
+        const value = await Deno.readTextFile(file);
+        if (options.json || ext === ".json") {
+          await this.secret(JSON.parse(value) as Secrets);
+        } else if (options.yaml || ext === ".yaml" || ext === ".yml") {
+          await this.secret(yaml.parse(value) as Secrets);
+        } else {
+          await this.secret(dotenv.parse(file));
+        }
+      });
+    secret
+      .command("save <path:file>", "Save secrets")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options, file) => {
+        const ext = path.extname(file);
+        const config = await this.secret();
+        if (options.json || ext === ".json") {
+          await Deno.writeTextFile(file, JSON.stringify(config));
+        } else if (options.yaml || ext === ".yaml" || ext === ".yml") {
+          await Deno.writeTextFile(file, yaml.stringify(config));
+        } else {
+          const values = Object.fromEntries(Object.entries(config).map(([k, v]) => [k, String(v)]));
+          await Deno.writeTextFile(file, dotenv.stringify(values));
+        }
+      });
 
     this.depker.cli.command("configs", config);
     this.depker.cli.command("secrets", secret);
@@ -132,8 +187,12 @@ export class CfgModule {
   }
 
   public async config(): Promise<Configs>;
+  public async config(config: Configs): Promise<Configs>;
   public async config<T = Configs[string]>(name: string, value?: T | undefined | null): Promise<T>;
-  public async config<T = Configs[string]>(name?: string, value?: T | undefined | null): Promise<Configs | T> {
+  public async config<T = Configs[string]>(
+    name?: string | Configs,
+    value?: T | undefined | null,
+  ): Promise<Configs | T> {
     if (this.instance === undefined) {
       this.depker.log.debug(`Config loading started.`);
       try {
@@ -148,16 +207,20 @@ export class CfgModule {
     }
     if (name !== undefined && value !== undefined) {
       await this.depker.emit("depker:before-config", this.instance);
-      if (value === null) {
-        delete this.instance[name];
+      if (typeof name === "string") {
+        if (value === null) {
+          delete this.instance[name];
+        } else {
+          // @ts-expect-error
+          this.instance[name] = value;
+        }
       } else {
-        // @ts-ignore
-        this.instance[name] = value;
+        this.instance = name;
       }
       await this.write(CfgModule.PATH, yaml.stringify(this.instance));
       await this.depker.emit("depker:after-config", this.instance);
     }
-    if (name !== undefined) {
+    if (name !== undefined && typeof name === "string") {
       return (this.instance[name] ?? {}) as T;
     }
     return this.instance ?? {};

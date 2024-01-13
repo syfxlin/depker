@@ -1,33 +1,33 @@
-import { CommandBuilder } from "../../deps.ts";
+import { dax } from "../../deps.ts";
 
 // region common
 
 export type DockerNodeOptions =
   | {
-      type: "local";
-    }
+    type: "local";
+  }
   | {
-      type: "context";
-      name?: string;
-    }
+    type: "context";
+    name?: string;
+  }
   | {
-      type: "ssh";
-      host?: string;
-    }
+    type: "ssh";
+    host?: string;
+  }
   | {
-      type: "http";
-      host?: string;
-      port?: number | string;
-    }
+    type: "http";
+    host?: string;
+    port?: number | string;
+  }
   | {
-      type: "https";
-      host?: string;
-      port?: number | string;
-      ca?: string;
-      cert?: string;
-      key?: string;
-      verify?: boolean;
-    };
+    type: "https";
+    host?: string;
+    port?: number | string;
+    ca?: string;
+    cert?: string;
+    key?: string;
+    verify?: boolean;
+  };
 
 export interface ContainerConfig {
   Hostname?: string;
@@ -37,7 +37,7 @@ export interface ContainerConfig {
   AttachStdout?: boolean;
   AttachStderr?: boolean;
   ExposedPorts?: {
-    [portAndProtocol: string]: {};
+    [portAndProtocol: string]: object;
   };
   Tty?: boolean;
   OpenStdin?: boolean;
@@ -54,7 +54,7 @@ export interface ContainerConfig {
   ArgsEscaped?: boolean;
   Image?: string;
   Volumes?: {
-    [path: string]: {};
+    [path: string]: object;
   };
   WorkingDir?: string;
   Entrypoint?: string | string[];
@@ -232,14 +232,14 @@ export interface ContainerInspect {
     AttachStdin: boolean;
     AttachStdout: boolean;
     AttachStderr: boolean;
-    ExposedPorts: { [portAndProtocol: string]: {} };
+    ExposedPorts: { [portAndProtocol: string]: object };
     Tty: boolean;
     OpenStdin: boolean;
     StdinOnce: boolean;
     Env: string[];
     Cmd: string[];
     Image: string;
-    Volumes: { [volume: string]: {} };
+    Volumes: { [volume: string]: object };
     WorkingDir: string;
     Entrypoint?: string | string[];
     OnBuild?: any;
@@ -330,9 +330,7 @@ export interface ContainerCreateOptions {
   Init?: boolean;
   Remove?: boolean;
   Envs?: Record<string, string>;
-  EnvFiles?: string[];
   Labels?: Record<string, string>;
-  LabelFiles?: string[];
   Ports?: string[];
   Volumes?: string[];
   // healthcheck
@@ -384,7 +382,6 @@ export interface ContainerExecOptions {
   User?: string;
   Workdir?: string;
   Envs?: Record<string, string>;
-  EnvFiles?: string[];
 }
 
 export interface ContainerLogsOptions {
@@ -477,6 +474,7 @@ export interface BuilderBuildOptions {
   Remove?: boolean;
   // values
   Args?: Record<string, string>;
+  Envs?: Record<string, string>;
   Labels?: Record<string, string>;
   Secrets?: Record<string, string>;
   // networks
@@ -627,13 +625,13 @@ export interface ContainerOperation {
   remove(name: string[], options?: ContainerRemoveOptions): Promise<void>;
   rename(name: string, rename: string): Promise<void>;
   prune(): Promise<void>;
-  create(name: string, target: string, options?: ContainerCreateOptions): CommandBuilder;
-  run(name: string, target: string, options?: ContainerRunOptions): CommandBuilder;
-  exec(name: string, commands: string[], options?: ContainerExecOptions): CommandBuilder;
-  logs(name: string, options?: ContainerLogsOptions): CommandBuilder;
-  top(name: string, options?: ContainerTopOptions): CommandBuilder;
-  stats(name: string, options?: ContainerStatsOptions): CommandBuilder;
-  copy(source: string, target: string, options?: ContainerCopyOptions): CommandBuilder;
+  create(name: string, target: string, options?: ContainerCreateOptions): dax.CommandBuilder;
+  run(name: string, target: string, options?: ContainerRunOptions): dax.CommandBuilder;
+  exec(name: string, commands: string[], options?: ContainerExecOptions): dax.CommandBuilder;
+  logs(name: string, options?: ContainerLogsOptions): dax.CommandBuilder;
+  top(name: string, options?: ContainerTopOptions): dax.CommandBuilder;
+  stats(name: string, options?: ContainerStatsOptions): dax.CommandBuilder;
+  copy(source: string, target: string, options?: ContainerCopyOptions): dax.CommandBuilder;
   wait(name: string[]): Promise<void>;
 }
 
@@ -642,8 +640,8 @@ export interface ImageOperation {
   find(name: string): Promise<ImageInfo | undefined>;
   inspect(name: string[]): Promise<Array<ImageInspect>>;
   tag(source: string, target: string): Promise<void>;
-  pull(name: string, options?: ImagePullOptions): CommandBuilder;
-  push(name: string, options?: ImagePushOptions): CommandBuilder;
+  pull(name: string, options?: ImagePullOptions): dax.CommandBuilder;
+  push(name: string, options?: ImagePushOptions): dax.CommandBuilder;
   remove(name: string[], options?: ImageRemoveOptions): Promise<void>;
   prune(): Promise<void>;
 }
@@ -670,7 +668,7 @@ export interface NetworkOperation {
 }
 
 export interface BuilderOperation {
-  build(name: string, target: string, options?: BuilderBuildOptions): CommandBuilder;
+  build(name: string, target: string, options?: BuilderBuildOptions): dax.CommandBuilder;
   save(name: string): Deno.Command;
   load(): Deno.Command;
 }
@@ -680,142 +678,16 @@ export interface BuilderOperation {
 // region node
 
 export interface DepkerRunner {
+  id: string;
   builder: BuilderOperation;
 }
 
 export interface DepkerMaster extends DepkerRunner {
+  id: string;
   container: ContainerOperation;
   network: NetworkOperation;
   volume: VolumeOperation;
   image: ImageOperation;
 }
-
-// endregion
-
-// region parser
-
-export const networks = {
-  info: (data: Record<string, any>): NetworkInfo => ({
-    Id: data.ID,
-    Name: data.Name,
-    Scope: data.Scope,
-    Driver: data.Driver,
-    IPv6: data.IPv6 === "true",
-    Internal: data.Internal === "true",
-    Created: new Date(data.CreatedAt).toISOString(),
-  }),
-  inspect: (data: Record<string, any>): NetworkInspect => ({
-    Id: data.Id,
-    Name: data.Name,
-    Created: new Date(data.Created).toISOString(),
-    Scope: data.Scope,
-    Driver: data.Driver,
-    EnableIPv6: data.EnableIPv6,
-    IPAM: data.IPAM,
-    Internal: data.Internal,
-    Attachable: data.Attachable,
-    Ingress: data.Ingress,
-    ConfigFrom: data.ConfigFrom,
-    ConfigOnly: data.ConfigOnly,
-    Containers: data.Containers,
-    Options: data.Options,
-    Labels: data.Labels,
-  }),
-};
-
-export const volumes = {
-  info: (data: Record<string, any>): VolumeInfo => ({
-    Name: data.Name,
-    Scope: data.Scope,
-    Driver: data.Driver,
-    Size: data.Size,
-    Links: data.Links,
-    Mountpoint: data.Mountpoint,
-  }),
-  inspect: (data: Record<string, any>): VolumeInspect => ({
-    Name: data.Name,
-    Scope: data.Scope,
-    Driver: data.Driver,
-    Created: new Date(data.CreatedAt).toISOString(),
-    Mountpoint: data.Mountpoint,
-    Labels: data.Labels,
-    Options: data.Options,
-  }),
-};
-
-export const images = {
-  info: (data: Record<string, any>): ImageInfo => ({
-    Id: data.ID,
-    Repository: data.Repository,
-    Tag: data.Tag,
-    Digest: data.Digest,
-    Created: new Date(data.CreatedAt).toISOString(),
-    CreatedSince: data.CreatedSince,
-    Size: data.Size,
-    VirtualSize: data.VirtualSize,
-  }),
-  inspect: (data: Record<string, any>): ImageInspect => ({
-    Id: data.Id,
-    RepoTags: data.RepoTags,
-    RepoDigests: data.RepoDigests,
-    Parent: data.Parent,
-    Comment: data.Comment,
-    Created: new Date(data.Created).toISOString(),
-    Container: data.Container,
-    ContainerConfig: data.ContainerConfig,
-    DockerVersion: data.DockerVersion,
-    Author: data.Author,
-    Config: data.Config,
-    Architecture: data.Architecture,
-    Os: data.Os,
-    Size: data.Size,
-    VirtualSize: data.VirtualSize,
-    GraphDriver: data.GraphDriver,
-    RootFS: data.RootFS,
-    Metadata: data.Metadata,
-  }),
-};
-
-export const containers = {
-  // prettier-ignore
-  info: (data: Record<string, any>): ContainerInfo => ({
-    Id: data.ID,
-    Name: data.Names,
-    Image: data.Image,
-    State: data.State,
-    Status: data.Status,
-    Size: data.Size,
-    Created: new Date(data.CreatedAt).toISOString(),
-    Ports: data.Ports,
-    Mounts: data.Mounts,
-    Labels: data.Labels,
-    Networks: data.Networks,
-  }),
-  inspect: (data: Record<string, any>): ContainerInspect => ({
-    Id: data.Id,
-    Created: new Date(data.Created).toISOString(),
-    Path: data.Path,
-    Args: data.Args,
-    State: data.State,
-    Image: data.Image,
-    ResolvConfPath: data.ResolvConfPath,
-    HostnamePath: data.HostnamePath,
-    HostsPath: data.HostsPath,
-    LogPath: data.LogPath,
-    Name: data.Name.substring(1),
-    RestartCount: data.RestartCount,
-    Driver: data.Driver,
-    Platform: data.Platform,
-    MountLabel: data.MountLabel,
-    ProcessLabel: data.ProcessLabel,
-    AppArmorProfile: data.AppArmorProfile,
-    ExecIDs: data.ExecIDs,
-    HostConfig: data.HostConfig,
-    GraphDriver: data.GraphDriver,
-    Mounts: data.Mounts,
-    Config: data.Config,
-    NetworkSettings: data.NetworkSettings,
-  }),
-};
 
 // endregion
