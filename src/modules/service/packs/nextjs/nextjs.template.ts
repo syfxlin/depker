@@ -58,11 +58,11 @@ COPY . .
 {% if config.nextjs.build %}
   RUN {{ config.nextjs.build | command }}
 {% elif self.exists("pnpm-lock.yaml") %}
-  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id==depker-envs,dst=/app/.env pnpm run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=depker-envs,dst=/app/.env pnpm run build
 {% elif self.exists("yarn.lock") %}
-  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id==depker-envs,dst=/app/.env yarn run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=depker-envs,dst=/app/.env yarn run build
 {% elif self.exists("package.json") %}
-  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id==depker-envs,dst=/app/.env npm run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=depker-envs,dst=/app/.env npm run build
 {% endif %}
 
 # inject after build

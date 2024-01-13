@@ -39,7 +39,7 @@ COPY . .
 {% if config.coline.build %}
   RUN {{ config.coline.build | command }}
 {% else %}
-  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id==depker-envs,dst=/app/.env pnpm run build
+  RUN --mount=type=cache,target=/app/.next/cache --mount=type=secret,id=depker-envs,dst=/app/.env pnpm run build
 {% endif %}
 
 # inject after build
