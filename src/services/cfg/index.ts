@@ -143,7 +143,7 @@ export class CfgModule {
         } else if (options.yaml || ext === ".yaml" || ext === ".yml") {
           await this.secret(yaml.parse(value) as Secrets);
         } else {
-          await this.secret(dotenv.parse(file));
+          await this.secret(dotenv.parse(value));
         }
       });
     secret
