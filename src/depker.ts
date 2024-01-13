@@ -48,7 +48,7 @@ export class Depker {
   private constructor() {
     // info
     this.name = "depker";
-    this.version = "5.2.2";
+    this.version = "5.2.3";
     this.description = "docker-based cloud deployment tool.";
     // service
     this.dax = createDax();
