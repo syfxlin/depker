@@ -115,11 +115,8 @@ export class ProxyModule implements DepkerModule {
   // region public functions
 
   public async ports(operate?: "insert" | "remove", diffs?: number[]): Promise<number[]> {
-    const config = await this.depker.cfg.config<ProxyConfig>(ProxyModule.NAME);
-    config.config = config.config ?? [];
+    const config = await this.depker.cfg.config<Required<ProxyConfig>>(ProxyModule.NAME);
     config.ports = config.ports ?? [];
-    config.envs = config.envs ?? {};
-    config.labels = config.labels ?? {};
     if (!operate || !diffs?.length) {
       return config.ports;
     }
@@ -153,17 +150,9 @@ export class ProxyModule implements DepkerModule {
     this.depker.log.debug(`Proxy reloading started.`);
 
     if (config) {
-      config.config = config.config ?? [];
-      config.ports = config.ports ?? [];
-      config.envs = config.envs ?? {};
-      config.labels = config.labels ?? {};
       await this.depker.cfg.config(ProxyModule.NAME, config);
     } else {
       config = await this.depker.cfg.config<ProxyConfig>(ProxyModule.NAME);
-      config.config = config.config ?? [];
-      config.ports = config.ports ?? [];
-      config.envs = config.envs ?? {};
-      config.labels = config.labels ?? {};
     }
 
     try {
@@ -176,10 +165,10 @@ export class ProxyModule implements DepkerModule {
     for (const value of defaults) {
       options.add(`--${value}`);
     }
-    for (const value of config.config) {
+    for (const value of config.config ?? []) {
       options.add(`--${value}`);
     }
-    for (const value of config.ports) {
+    for (const value of config.ports ?? []) {
       options.add(`--entrypoints.tcp${value}.address=:${value}/tcp`);
       options.add(`--entrypoints.udp${value}.address=:${value}/udp`);
     }
@@ -202,8 +191,8 @@ export class ProxyModule implements DepkerModule {
         `80:80/tcp`,
         `443:443/tcp`,
         `443:443/udp`,
-        ...config.ports.map(i => `${i}:${i}/tcp`),
-        ...config.ports.map(i => `${i}:${i}/udp`),
+        ...(config.ports ?? []).map(i => `${i}:${i}/tcp`),
+        ...(config.ports ?? []).map(i => `${i}:${i}/udp`),
       ],
     });
 

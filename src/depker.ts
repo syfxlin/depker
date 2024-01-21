@@ -2,6 +2,7 @@ import { fs, path } from "./deps.ts";
 import { Dax, createDax } from "./services/dax/index.ts";
 import { DockerNode } from "./services/run/index.ts";
 import { ProxyModule } from "./modules/proxy/proxy.module.ts";
+import { MinioModule } from "./modules/minio/minio.module.ts";
 import { ServiceModule } from "./modules/service/service.module.ts";
 import { CliModule } from "./services/cli/index.ts";
 import { CfgModule } from "./services/cfg/index.ts";
@@ -63,6 +64,7 @@ export class Depker {
     // module
     this._modules = [];
     this._modules.push(new ProxyModule(this));
+    this._modules.push(new MinioModule(this));
     this._modules.push(new ServiceModule(this));
   }
 
