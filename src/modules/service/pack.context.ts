@@ -361,8 +361,8 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
         middlewares.push(`${name}-https`);
       } else {
         // http
-        labels[`traefik.http.routers.${name}-http.rule`] = rule;
-        labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
+        labels[`traefik.http.routers.${name}.rule`] = rule;
+        labels[`traefik.http.routers.${name}.entrypoints`] = "http";
       }
 
       // middleware
