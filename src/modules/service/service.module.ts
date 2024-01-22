@@ -12,7 +12,6 @@ import {
 } from "../../services/run/types.ts";
 import { command } from "../../deps.ts";
 import { Depker, DepkerModule } from "../../depker.ts";
-import { ProxyModule } from "../proxy/proxy.module.ts";
 import { PackContext } from "./pack.context.ts";
 import { ServiceConfig } from "./service.type.ts";
 
@@ -63,11 +62,6 @@ export class ServiceModule implements DepkerModule {
     this.depker = depker;
     this.services = [];
     this.depker.inject(ServiceModule.NAME, () => this.register.bind(this));
-    this.depker.dependency(ProxyModule.NAME, () => new ProxyModule(depker));
-  }
-
-  public get name() {
-    return ServiceModule.NAME;
   }
 
   public async init() {
@@ -321,7 +315,7 @@ export class ServiceModule implements DepkerModule {
   public async logs(name: string, select?: ActiveSelect, options?: ContainerLogsOptions) {
     const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
-      throw new Error(`No suck container: ${name}`);
+      throw new Error(`No suck container: ${name}.`);
     }
     await this.depker.ops.container
       .logs(inspect.Id, options)
@@ -334,7 +328,7 @@ export class ServiceModule implements DepkerModule {
   public async top(name: string, select?: ActiveSelect, options?: ContainerTopOptions) {
     const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
-      throw new Error(`No suck container: ${name}`);
+      throw new Error(`No suck container: ${name}.`);
     }
     await this.depker.ops.container
       .top(inspect.Id, options)
@@ -347,7 +341,7 @@ export class ServiceModule implements DepkerModule {
   public async stats(name: string, select?: ActiveSelect, options?: ContainerStatsOptions) {
     const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
-      throw new Error(`No suck container: ${name}`);
+      throw new Error(`No suck container: ${name}.`);
     }
     await this.depker.ops.container
       .stats(inspect.Id, options)
@@ -360,7 +354,7 @@ export class ServiceModule implements DepkerModule {
   public async exec(name: string, commands: string[], select?: ActiveSelect, options?: ContainerExecOptions) {
     const inspect = await this.list([name], select ?? "active").then(a => a[name]?.[0]);
     if (!inspect) {
-      throw new Error(`No suck container: ${name}`);
+      throw new Error(`No suck container: ${name}.`);
     }
     await this.depker.ops.container
       .exec(inspect.Id, commands, options)

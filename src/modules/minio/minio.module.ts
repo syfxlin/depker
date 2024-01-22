@@ -9,10 +9,6 @@ export class MinioModule implements DepkerModule {
 
   constructor(private readonly depker: Depker) {}
 
-  public get name() {
-    return MinioModule.NAME;
-  }
-
   public async init(): Promise<void> {
     const mc = new command.Command().description("Minio client");
     const minio = new command.Command().description("Manage minio");

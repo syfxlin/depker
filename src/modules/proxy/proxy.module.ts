@@ -9,10 +9,6 @@ export class ProxyModule implements DepkerModule {
 
   constructor(private readonly depker: Depker) {}
 
-  public get name() {
-    return ProxyModule.NAME;
-  }
-
   public async init(): Promise<void> {
     const proxy = new command.Command().description("Manage proxy");
     const ports = new command.Command().description("Manage ports").alias("port").alias("po");
