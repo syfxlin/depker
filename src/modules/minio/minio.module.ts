@@ -23,8 +23,7 @@ export class MinioModule implements DepkerModule {
           .spawn();
       });
     minio
-      .command("reload", "Reload or create a new minio service")
-      .alias("create")
+      .command("reload", "Reload a new minio service")
       .action(async () => {
         this.depker.log.step(`Reloading minio service started.`);
         try {
@@ -43,9 +42,102 @@ export class MinioModule implements DepkerModule {
           .stderr("inherit")
           .spawn();
       });
+    minio
+      .command("list", "List minio buckets")
+      .alias("ls")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options) => {
+        try {
+          const buckets = await this.list();
+          if (options.json) {
+            this.depker.log.json(buckets);
+          } else if (options.yaml) {
+            this.depker.log.yaml(buckets);
+          } else {
+            this.depker.log.table(["Bucket"], buckets.map(b => [b]));
+          }
+        } catch (e) {
+          this.depker.log.error(`Listing buckets failed.`, e);
+        }
+      });
+    minio
+      .command("insert <bucket...:string>", "Insert minio buckets")
+      .alias("add")
+      .action(async (_options, ...buckets) => {
+        this.depker.log.step(`Inserting buckets started.`);
+        try {
+          for (let i = 0; i < buckets.length; i++) {
+            const data = await this.create(buckets[i]);
+            if (i !== 0) {
+              this.depker.log.raw(`---`);
+            }
+            this.depker.log.yaml(data);
+          }
+          this.depker.log.done(`Inserting buckets successfully.`);
+        } catch (e) {
+          this.depker.log.error(`Inserting buckets failed.`, e);
+        }
+      });
+    minio
+      .command("remove <bucket...:string>", "Remove minio buckets")
+      .alias("del")
+      .action(async (_options, ...buckets) => {
+        this.depker.log.step(`Removing buckets started.`);
+        try {
+          for (const bucket of buckets) {
+            await this.remove(bucket);
+          }
+          this.depker.log.done(`Removing buckets successfully.`);
+        } catch (e) {
+          this.depker.log.error(`Removing buckets failed.`, e);
+        }
+      });
 
     this.depker.cli.command("mc", mc);
     this.depker.cli.command("minio", minio);
+  }
+
+  public async list() {
+    const lines = await this.depker.ops.container.exec(MinioModule.NAME, [`mc`, `ls`, `minio`]).lines();
+    return lines.map(i => i.replace(/^.+\s+(\w+)\/$/, "$1"));
+  }
+
+  public async create(name: string) {
+    const user = `${name}`;
+    const pass = crypto.randomUUID();
+    const policy = JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Action: [
+            "s3:*",
+          ],
+          Resource: [
+            `arn:aws:s3:::${name}/*`,
+          ],
+        },
+      ],
+    });
+    const commands = [
+      `mc mb --ignore-existing minio/${name}`,
+      `echo '${policy}' > /tmp/minio-policy-${user}.json`,
+      `mc admin user add minio ${user} ${pass}`,
+      `mc admin policy create minio ${user} /tmp/minio-policy-${user}.json`,
+      `mc admin policy attach minio ${user} --user ${user}`,
+    ];
+    await this.depker.ops.container.exec(MinioModule.NAME, [`sh`, `-c`, commands.join(" && ")]);
+    return { bucket: name, username: name, password: pass };
+  }
+
+  public async remove(name: string) {
+    const commands = [
+      `(mc admin policy detach minio ${name} --user ${name} 2>/dev/null || true)`,
+      `(mc admin policy rm minio ${name} 2>/dev/null || true)`,
+      `(mc rb --force minio/${name} 2>/dev/null || true)`,
+    ];
+    await this.depker.ops.container.exec(MinioModule.NAME, [`sh`, `-c`, commands.join(" && ")]);
   }
 
   public mc(commands: string[], options?: ContainerExecOptions): dax.CommandBuilder {
@@ -108,11 +200,11 @@ export class MinioModule implements DepkerModule {
       labels[`traefik.http.services.minio-console.loadbalancer.server.scheme`] = "http";
       labels[`traefik.http.services.minio-console.loadbalancer.server.port`] = "9000";
       if (config.tls) {
-        labels[`traefik.http.routers.minio-console.rule`] = `Host(\`${config.domain}\`)`;
+        labels[`traefik.http.routers.minio-console.rule`] = `Host(\`${config.console}\`)`;
         labels[`traefik.http.routers.minio-console.entrypoints`] = "https";
         labels[`traefik.http.routers.minio-console.tls.certresolver`] = "depker";
       } else {
-        labels[`traefik.http.routers.minio-console.rule`] = `Host(\`${config.domain}\`)`;
+        labels[`traefik.http.routers.minio-console.rule`] = `Host(\`${config.console}\`)`;
         labels[`traefik.http.routers.minio-console.entrypoints`] = "http";
       }
     }

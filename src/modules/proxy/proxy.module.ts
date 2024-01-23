@@ -14,8 +14,7 @@ export class ProxyModule implements DepkerModule {
     const ports = new command.Command().description("Manage ports").alias("port").alias("po");
 
     proxy
-      .command("reload", "Reload or create a new proxy service")
-      .alias("create")
+      .command("reload", "Reload a new proxy service")
       .action(async () => {
         this.depker.log.step(`Reloading proxy service started.`);
         try {
@@ -49,8 +48,7 @@ export class ProxyModule implements DepkerModule {
       });
 
     ports
-      .command("reload", "Reload or create a new proxy service")
-      .alias("create")
+      .command("reload", "Reload a new proxy service")
       .action(async () => {
         this.depker.log.step(`Reloading proxy service started.`);
         try {
