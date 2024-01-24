@@ -1,4 +1,4 @@
-export interface MinioConfig {
+export interface MongoConfig {
   readonly username: string;
   readonly password: string;
   port?: number;
@@ -8,7 +8,7 @@ export interface MinioConfig {
   volumes?: string[];
 }
 
-export interface SavedMinioConfig extends MinioConfig {
+export interface SavedMongoConfig extends MongoConfig {
   username: string;
   password: string;
 }

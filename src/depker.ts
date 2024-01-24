@@ -10,6 +10,7 @@ import { OpsModule } from "./services/ops/index.ts";
 import { EvsModule } from "./services/evs/index.ts";
 import { LogModule } from "./services/log/index.ts";
 import { DepkerMaster, DepkerRunner } from "./services/run/types.ts";
+import { MongoModule } from "./modules/mongo/mongo.module.ts";
 
 export type DepkerRegister<T> = (depker: DepkerApp) => T;
 
@@ -64,6 +65,7 @@ export class Depker {
     this._modules = {
       proxy: new ProxyModule(this),
       minio: new MinioModule(this),
+      mongo: new MongoModule(this),
       service: new ServiceModule(this),
     };
   }

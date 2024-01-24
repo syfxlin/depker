@@ -168,6 +168,7 @@ export class ProxyModule implements DepkerModule {
     }
     await this.depker.ops.container.run(ProxyModule.NAME, ProxyModule.IMAGE, {
       Detach: true,
+      Pull: "always",
       Restart: "always",
       Envs: config.envs,
       Labels: config.labels,

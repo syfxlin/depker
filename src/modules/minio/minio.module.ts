@@ -1,7 +1,7 @@
 import { Depker, DepkerModule } from "../../depker.ts";
-import { command, dax } from "../../deps.ts";
+import { command, cryptoRandomString, dax } from "../../deps.ts";
 import { ContainerExecOptions } from "../../services/run/index.ts";
-import { MinioConfig } from "./minio.type.ts";
+import { MinioConfig, SavedMinioConfig } from "./minio.type.ts";
 
 export class MinioModule implements DepkerModule {
   public static readonly NAME = "minio";
@@ -105,7 +105,7 @@ export class MinioModule implements DepkerModule {
 
   public async create(name: string) {
     const user = `${name}`;
-    const pass = crypto.randomUUID();
+    const pass = cryptoRandomString({ length: 16, type: "alphanumeric" });
     const policy = JSON.stringify({
       Version: "2012-10-17",
       Statement: [
@@ -144,23 +144,15 @@ export class MinioModule implements DepkerModule {
     return this.depker.ops.container.exec(MinioModule.NAME, [`mc`, ...commands], options);
   }
 
-  public async reload(config?: MinioConfig) {
+  public async reload(config?: Omit<MinioConfig, "username" | "password">) {
     await this.depker.emit("minio:before-reload", this);
     this.depker.log.debug(`Minio reloading started.`);
 
-    if (config) {
-      if (!config.username || !config.password) {
-        config.username = config.username ?? "minio";
-        config.password = config.password ?? crypto.randomUUID();
-      }
-      await this.depker.cfg.config(MinioModule.NAME, config);
-    } else {
-      config = await this.depker.cfg.config<MinioConfig>(MinioModule.NAME);
-      if (!config.username || !config.password) {
-        config.username = config.username ?? "minio";
-        config.password = config.password ?? crypto.randomUUID();
-        await this.depker.cfg.config(MinioModule.NAME, config);
-      }
+    const saved: SavedMinioConfig = { ...await this.depker.cfg.config<SavedMinioConfig>(MinioModule.NAME), ...config };
+    if (config || !saved.username || !saved.password) {
+      saved.username = saved.username ?? "root";
+      saved.password = saved.password ?? cryptoRandomString({ length: 16, type: "alphanumeric" });
+      await this.depker.cfg.config(MinioModule.NAME, saved);
     }
 
     try {
@@ -169,56 +161,29 @@ export class MinioModule implements DepkerModule {
       // ignore
     }
 
-    const envs = { ...config.envs };
-    const labels = { ...config.labels };
-    const network = await this.depker.ops.network.default();
-
-    envs.MINIO_VOLUMES = "/mnt/data";
-    envs.MINIO_ROOT_USER = config.username;
-    envs.MINIO_ROOT_PASSWORD = config.password;
-    if (config.domain || config.console) {
-      labels["traefik.enable"] = "true";
-      labels["traefik.docker.network"] = network;
-    }
-    if (config.domain) {
-      labels[`traefik.http.routers.minio.service`] = "minio";
-      labels[`traefik.http.services.minio.loadbalancer.server.scheme`] = "http";
-      labels[`traefik.http.services.minio.loadbalancer.server.port`] = "9000";
-      if (config.tls) {
-        envs.MINIO_SERVER_URL = `https://${config.domain}`;
-        labels[`traefik.http.routers.minio.rule`] = `Host(\`${config.domain}\`)`;
-        labels[`traefik.http.routers.minio.entrypoints`] = "https";
-        labels[`traefik.http.routers.minio.tls.certresolver`] = "depker";
-      } else {
-        envs.MINIO_SERVER_URL = `http://${config.domain}`;
-        labels[`traefik.http.routers.minio.rule`] = `Host(\`${config.domain}\`)`;
-        labels[`traefik.http.routers.minio.entrypoints`] = "http";
-      }
-    }
-    if (config.console) {
-      labels[`traefik.http.routers.minio-console.service`] = "minio-console";
-      labels[`traefik.http.services.minio-console.loadbalancer.server.scheme`] = "http";
-      labels[`traefik.http.services.minio-console.loadbalancer.server.port`] = "9000";
-      if (config.tls) {
-        labels[`traefik.http.routers.minio-console.rule`] = `Host(\`${config.console}\`)`;
-        labels[`traefik.http.routers.minio-console.entrypoints`] = "https";
-        labels[`traefik.http.routers.minio-console.tls.certresolver`] = "depker";
-      } else {
-        labels[`traefik.http.routers.minio-console.rule`] = `Host(\`${config.console}\`)`;
-        labels[`traefik.http.routers.minio-console.entrypoints`] = "http";
-      }
-    }
-
     await this.depker.ops.container.run(MinioModule.NAME, MinioModule.IMAGE, {
       Detach: true,
+      Pull: "always",
       Restart: "always",
-      Envs: envs,
-      Labels: labels,
-      Volumes: [`/var/depker/minio:/mnt/data`],
-      Networks: [network],
+      Labels: saved.labels,
+      Networks: [await this.depker.ops.network.default()],
       Commands: [`minio`, `server`, `--console-address`, `:9001`],
+      Envs: {
+        ...saved.envs,
+        MINIO_VOLUMES: "/mnt/data",
+        MINIO_ROOT_USER: saved.username,
+        MINIO_ROOT_PASSWORD: saved.password,
+      },
+      Ports: [
+        ...(saved.port ? [`${saved.port}:9000`] : []),
+        ...(saved.ports ?? []),
+      ],
+      Volumes: [
+        `/var/depker/minio:/mnt/data`,
+        ...(saved.volumes ?? []),
+      ],
     });
-    await this.depker.ops.container.exec(MinioModule.NAME, [`mc`, `alias`, `set`, `minio`, `http://localhost:9000`, config.username, config.password], {
+    await this.depker.ops.container.exec(MinioModule.NAME, [`mc`, `alias`, `set`, `minio`, `http://localhost:9000`, saved.username, saved.password], {
       Detach: true,
     });
 
