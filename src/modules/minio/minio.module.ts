@@ -1,6 +1,5 @@
 import { Depker, DepkerModule } from "../../depker.ts";
 import { command, cryptoRandomString, dax } from "../../deps.ts";
-import { ContainerExecOptions } from "../../services/run/index.ts";
 import { MinioConfig, SavedMinioConfig } from "./minio.type.ts";
 
 export class MinioModule implements DepkerModule {
@@ -16,7 +15,7 @@ export class MinioModule implements DepkerModule {
     mc.arguments("[...args]")
       .stopEarly()
       .action(async (_options, ...args) => {
-        await this.mc(args, { Tty: true, Interactive: true })
+        await this.exec(...args)
           .stdin("inherit")
           .stdout("inherit")
           .stderr("inherit")
@@ -36,7 +35,7 @@ export class MinioModule implements DepkerModule {
     minio.command("client [...args]", "Use the Minio Client to operate the storage service")
       .stopEarly()
       .action(async (_options, ...args) => {
-        await this.mc(args, { Tty: true, Interactive: true })
+        await this.exec(...args)
           .stdin("inherit")
           .stdout("inherit")
           .stderr("inherit")
@@ -62,10 +61,9 @@ export class MinioModule implements DepkerModule {
         }
       });
     minio
-      .command("insert <bucket...:string>", "Insert minio buckets")
-      .alias("add")
+      .command("add <bucket...:string>", "Add minio buckets")
       .action(async (_options, ...buckets) => {
-        this.depker.log.step(`Inserting buckets started.`);
+        this.depker.log.step(`Adding buckets started.`);
         try {
           for (let i = 0; i < buckets.length; i++) {
             const data = await this.create(buckets[i]);
@@ -74,14 +72,13 @@ export class MinioModule implements DepkerModule {
             }
             this.depker.log.yaml(data);
           }
-          this.depker.log.done(`Inserting buckets successfully.`);
+          this.depker.log.done(`Adding buckets successfully.`);
         } catch (e) {
-          this.depker.log.error(`Inserting buckets failed.`, e);
+          this.depker.log.error(`Adding buckets failed.`, e);
         }
       });
     minio
-      .command("remove <bucket...:string>", "Remove minio buckets")
-      .alias("del")
+      .command("del <bucket...:string>", "Remove minio buckets")
       .action(async (_options, ...buckets) => {
         this.depker.log.step(`Removing buckets started.`);
         try {
@@ -140,8 +137,8 @@ export class MinioModule implements DepkerModule {
     await this.depker.ops.container.exec(MinioModule.NAME, [`sh`, `-c`, commands.join(" && ")]);
   }
 
-  public mc(commands: string[], options?: ContainerExecOptions): dax.CommandBuilder {
-    return this.depker.ops.container.exec(MinioModule.NAME, [`mc`, ...commands], options);
+  public exec(...commands: string[]): dax.CommandBuilder {
+    return this.depker.ops.container.exec(MinioModule.NAME, [`mc`, ...commands], { Interactive: true });
   }
 
   public async reload(config?: Omit<MinioConfig, "username" | "password">) {
@@ -171,6 +168,7 @@ export class MinioModule implements DepkerModule {
       Envs: {
         ...saved.envs,
         MINIO_VOLUMES: "/mnt/data",
+        MINIO_ALIAS: "minio",
         MINIO_ROOT_USER: saved.username,
         MINIO_ROOT_PASSWORD: saved.password,
       },
