@@ -412,7 +412,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       const cpath = volume.cpath;
       const readonly = volume.readonly ? "ro" : "rw";
       options.Volumes = options.Volumes ?? [];
-      options.Volumes.push(`${hpath}:${cpath}:${readonly ? "ro" : "rw"}`);
+      options.Volumes.push(`${hpath}:${cpath}:${readonly}`);
     }
 
     try {
