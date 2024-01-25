@@ -9,18 +9,8 @@ export class MinioModule implements DepkerModule {
   constructor(private readonly depker: Depker) {}
 
   public async init(): Promise<void> {
-    const mc = new command.Command().description("Minio client");
     const minio = new command.Command().description("Manage minio");
 
-    mc.arguments("[...args]")
-      .stopEarly()
-      .action(async (_options, ...args) => {
-        await this.exec(...args)
-          .stdin("inherit")
-          .stdout("inherit")
-          .stderr("inherit")
-          .spawn();
-      });
     minio
       .command("reload", "Reload a new minio service")
       .action(async () => {
@@ -32,10 +22,12 @@ export class MinioModule implements DepkerModule {
           this.depker.log.error(`Reloading minio service failed.`, e);
         }
       });
-    minio.command("client [...args]", "Use the Minio Client to operate the storage service")
-      .stopEarly()
+    minio
+      .command("client [...args]", "Use the Minio Client to operate the minio service")
+      .alias("mc")
+      .useRawArgs()
       .action(async (_options, ...args) => {
-        await this.exec(...args)
+        await this.exec(true, ...args)
           .stdin("inherit")
           .stdout("inherit")
           .stderr("inherit")
@@ -91,7 +83,6 @@ export class MinioModule implements DepkerModule {
         }
       });
 
-    this.depker.cli.command("mc", mc);
     this.depker.cli.command("minio", minio);
   }
 
@@ -137,8 +128,17 @@ export class MinioModule implements DepkerModule {
     await this.depker.ops.container.exec(MinioModule.NAME, [`sh`, `-c`, commands.join(" && ")]);
   }
 
-  public exec(...commands: string[]): dax.CommandBuilder {
-    return this.depker.ops.container.exec(MinioModule.NAME, [`mc`, ...commands], { Interactive: true });
+  public exec(...commands: string[]): dax.CommandBuilder;
+  public exec(tty: boolean, ...commands: string[]): dax.CommandBuilder;
+  public exec(tty: string | boolean, ...commands: string[]): dax.CommandBuilder {
+    if (typeof tty !== "boolean") {
+      commands.unshift(tty);
+    }
+    return this.depker.ops.container.exec(
+      MinioModule.NAME,
+      [`mc`, ...commands],
+      { Interactive: true, Tty: typeof tty === "boolean" ? tty : false },
+    );
   }
 
   public async reload(config?: Omit<MinioConfig, "username" | "password">) {

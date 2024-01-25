@@ -24,6 +24,36 @@ export class MongoModule implements DepkerModule {
         }
       });
     mongo
+      .command("shell [...args]", "Use the Mongo Shell to operate the mongo service")
+      .alias("sh")
+      .useRawArgs()
+      .action(async (_options, ...args) => {
+        await this.exec(true, ...args)
+          .stdin("inherit")
+          .stdout("inherit")
+          .stderr("inherit")
+          .spawn();
+      });
+    mongo
+      .command("list", "List minio buckets")
+      .alias("ls")
+      .option("--json", "Pretty-print using json")
+      .option("--yaml", "Pretty-print using yaml")
+      .action(async (options) => {
+        try {
+          const buckets = await this.list();
+          if (options.json) {
+            this.depker.log.json(buckets);
+          } else if (options.yaml) {
+            this.depker.log.yaml(buckets);
+          } else {
+            this.depker.log.table(["Bucket"], buckets.map(b => [b]));
+          }
+        } catch (e) {
+          this.depker.log.error(`Listing buckets failed.`, e);
+        }
+      });
+    mongo
       .command("add <database...:string>", "Add mongo databases")
       .action(async (_options, ...databases) => {
         this.depker.log.step(`Adding databases started.`);
@@ -57,30 +87,45 @@ export class MongoModule implements DepkerModule {
     this.depker.cli.command("mongo", mongo);
   }
 
+  public async list() {
+    const lines = await this.exec("--eval", "show dbs").lines();
+    return lines.map(i => i.replace(/^(\w+)\s+.+$/, "$1"));
+  }
+
   public async create(name: string) {
     const user = `${name}`;
     const pass = cryptoRandomString({ length: 16, type: "alphanumeric" });
-    await this.exec(
+    const scripts = [
       `use admin;`,
       `db.createUser({ user: "${user}", pwd: "${pass}", roles: [{ role: 'readWrite', db: "${name}" }] });`,
-    );
+    ];
+    await this.exec().stdinText(scripts.join("\n"));
     return { database: name, username: user, password: pass };
   }
 
   public async remove(name: string) {
-    await this.exec(
+    const scripts = [
       `use admin;`,
       `db.dropUser("${name}")`,
-    );
+    ];
+    await this.exec().stdinText(scripts.join("\n"));
   }
 
-  public exec(...scripts: string[]): dax.CommandBuilder {
-    const exec = this.depker.ops.container.exec(
+  public exec(...commands: string[]): dax.CommandBuilder;
+  public exec(tty: boolean, ...commands: string[]): dax.CommandBuilder;
+  public exec(tty: string | boolean, ...commands: string[]): dax.CommandBuilder {
+    if (typeof tty !== "boolean") {
+      commands.unshift(tty);
+    }
+    return this.depker.ops.container.exec(
       MongoModule.NAME,
-      [`sh`, `-c`, `mongosh mongodb://127.0.0.1 -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD`],
-      { Interactive: true },
+      [
+        `sh`,
+        `-c`,
+        `mongosh mongodb://127.0.0.1 -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet ${commands.map(i => dax.default.escapeArg(i)).join(" ")}`,
+      ],
+      { Interactive: true, Tty: typeof tty === "boolean" ? tty : false },
     );
-    return exec.stdinText(scripts.join("\n"));
   }
 
   public async reload(config?: Omit<MongoConfig, "username" | "password">) {
