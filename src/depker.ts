@@ -2,6 +2,7 @@ import { fs, path } from "./deps.ts";
 import { Dax, createDax } from "./services/dax/index.ts";
 import { DockerNode } from "./services/run/index.ts";
 import { ProxyModule } from "./modules/proxy/proxy.module.ts";
+import { MinioModule } from "./modules/minio/minio.module.ts";
 import { ServiceModule } from "./modules/service/service.module.ts";
 import { CliModule } from "./services/cli/index.ts";
 import { CfgModule } from "./services/cfg/index.ts";
@@ -9,11 +10,11 @@ import { OpsModule } from "./services/ops/index.ts";
 import { EvsModule } from "./services/evs/index.ts";
 import { LogModule } from "./services/log/index.ts";
 import { DepkerMaster, DepkerRunner } from "./services/run/types.ts";
+import { MongoModule } from "./modules/mongo/mongo.module.ts";
 
-export type DepkerCallback<T> = T | ((depker: DepkerApp) => T);
+export type DepkerRegister<T> = (depker: DepkerApp) => T;
 
 export interface DepkerModule {
-  name: string;
   init?: () => Promise<void> | void;
   destroy?: () => Promise<void> | void;
 }
@@ -36,7 +37,7 @@ export class Depker {
   // runner
   private _master: DepkerMaster;
   private _runner: DepkerRunner;
-  private _modules: Array<DepkerModule>;
+  private _modules: Record<string, DepkerModule>;
   // service
   public readonly dax: Dax;
   public readonly cli: CliModule;
@@ -61,9 +62,12 @@ export class Depker {
     this._master = new DockerNode(this);
     this._runner = this._master;
     // module
-    this._modules = [];
-    this._modules.push(new ProxyModule(this));
-    this._modules.push(new ServiceModule(this));
+    this._modules = {
+      proxy: new ProxyModule(this),
+      minio: new MinioModule(this),
+      mongo: new MongoModule(this),
+      service: new ServiceModule(this),
+    };
   }
 
   public static create(): DepkerApp {
@@ -128,8 +132,8 @@ export class Depker {
   }
 
   public master(): DepkerMaster;
-  public master(node: DepkerCallback<DepkerMaster>): DepkerApp;
-  public master(node?: DepkerCallback<DepkerMaster>): DepkerMaster | DepkerApp {
+  public master(node: DepkerRegister<DepkerMaster>): DepkerApp;
+  public master(node?: DepkerRegister<DepkerMaster>): DepkerMaster | DepkerApp {
     if (node) {
       this._master = typeof node === "function" ? node(this as unknown as DepkerApp) : node;
       return this as unknown as DepkerApp;
@@ -139,8 +143,8 @@ export class Depker {
   }
 
   public runner(): DepkerRunner;
-  public runner(node: DepkerCallback<DepkerRunner>): DepkerApp;
-  public runner(node?: DepkerCallback<DepkerRunner>): DepkerRunner | DepkerApp {
+  public runner(node: DepkerRegister<DepkerRunner>): DepkerApp;
+  public runner(node?: DepkerRegister<DepkerRunner>): DepkerRunner | DepkerApp {
     if (node) {
       this._runner = typeof node === "function" ? node(this as unknown as DepkerApp) : node;
       return this as unknown as DepkerApp;
@@ -149,32 +153,25 @@ export class Depker {
     }
   }
 
-  public module<M extends DepkerModule = DepkerModule>(name: string): M {
-    const module = this._modules.find(i => i.name === name);
-    if (!module) {
-      throw new Error(`Not found module ${name}`);
-    }
-    return module as M;
-  }
-
-  public use(module: DepkerCallback<DepkerModule>): DepkerApp {
-    if (typeof module === "function") {
-      this._modules.push(module(this as unknown as DepkerApp));
-    } else {
-      this._modules.push(module);
-    }
-    return this as unknown as DepkerApp;
-  }
-
-  public inject(name: string, builder: (depker: Depker) => any): DepkerApp {
+  public inject(name: string, register: DepkerRegister<any>): DepkerApp {
     // @ts-expect-error
-    this[name] = builder(this);
+    this[name] = register(this);
     return this as unknown as DepkerApp;
   }
 
-  public dependency(name: string, builder: (depker: Depker) => DepkerModule): DepkerApp {
-    if (!this._modules.find(i => i.name === name)) {
-      this.use(builder(this));
+  public module<M extends DepkerModule = DepkerModule>(name: string): M {
+    if (!this._modules[name]) {
+      throw new Error(`Not found module ${name}.`);
+    }
+    return this._modules[name] as M;
+  }
+
+  public register(module: DepkerRegister<DepkerModule>): DepkerApp {
+    if (!module.name) {
+      throw new Error(`Unnamed module are not allowed to be loaded.`);
+    }
+    if (!this._modules[module.name]) {
+      this._modules[module.name] = module(this as unknown as DepkerApp);
     }
     return this as unknown as DepkerApp;
   }
@@ -226,7 +223,7 @@ export class Depker {
 
   private async _init_module(): Promise<void> {
     await this.emit("depker:modules:before-init", this._modules);
-    for (const module of this._modules) {
+    for (const module of Object.values(this._modules)) {
       await this.emit("depker:module:before-init", module);
       await module?.init?.();
       await this.emit("depker:module:after-init", module);
@@ -236,7 +233,7 @@ export class Depker {
 
   private async _destroy_module(): Promise<void> {
     await this.emit("depker:modules:before-destroy", this._modules);
-    for (const module of this._modules) {
+    for (const module of Object.values(this._modules)) {
       await this.emit("depker:module:before-destroy", module);
       await module?.destroy?.();
       await this.emit("depker:module:after-destroy", module);
