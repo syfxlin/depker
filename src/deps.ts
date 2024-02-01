@@ -18,6 +18,7 @@ export { fs, dax, path, yaml, hash, date, ansi, table, event, dotenv, prompt, co
 export { isSubdir } from "https://deno.land/std@0.212.0/fs/_is_subdir.ts";
 export { toPathString } from "https://deno.land/std@0.212.0/fs/_to_path_string.ts";
 export { getFileInfoType } from "https://deno.land/std@0.212.0/fs/_get_file_info_type.ts";
+export { cryptoRandomString } from "https://deno.land/x/crypto_random_string@1.1.0/mod.ts";
 
 declare module "https://deno.land/x/dax@0.36.0/mod.ts" {
   // @ts-expect-error

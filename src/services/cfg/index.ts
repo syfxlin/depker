@@ -1,5 +1,5 @@
 import { Depker } from "../../depker.ts";
-import { command, dotenv, path, yaml } from "../../deps.ts";
+import { collections, command, dotenv, path, yaml } from "../../deps.ts";
 import { Configs, Secrets } from "./types.ts";
 
 export * from "./types.ts";
@@ -189,10 +189,7 @@ export class CfgModule {
   public async config(): Promise<Configs>;
   public async config(config: Configs): Promise<Configs>;
   public async config<T = Configs[string]>(name: string, value?: T | undefined | null): Promise<T>;
-  public async config<T = Configs[string]>(
-    name?: string | Configs,
-    value?: T | undefined | null,
-  ): Promise<Configs | T> {
+  public async config<T = Configs[string]>(name?: string | Configs, value?: T | undefined | null): Promise<Configs | T> {
     if (this.instance === undefined) {
       this.depker.log.debug(`Config loading started.`);
       try {
@@ -221,9 +218,10 @@ export class CfgModule {
       await this.depker.emit("depker:after-config", this.instance);
     }
     if (name !== undefined && typeof name === "string") {
-      return (this.instance[name] ?? {}) as T;
+      return collections.deepMerge({}, this.instance[name] ?? {}) as T;
+    } else {
+      return collections.deepMerge({}, this.instance ?? {});
     }
-    return this.instance ?? {};
   }
 
   public async manual(editor?: "vi" | "vim" | "nano" | string) {
@@ -270,6 +268,7 @@ export class CfgModule {
       await this.depker.ops.container.run(CfgModule.NAME, CfgModule.IMAGE, {
         Init: true,
         Detach: true,
+        Pull: "always",
         Restart: "always",
         Volumes: [`/var/depker:/var/depker`],
         Commands: [`sleep`, `infinity`],

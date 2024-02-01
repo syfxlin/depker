@@ -44,7 +44,9 @@ import { containers, images, networks, volumes } from "./parser.ts";
 export * from "./types.ts";
 
 export function docker(options?: DockerNodeOptions) {
-  return (depker: Depker) => new DockerNode(depker, options);
+  return function docker(depker: Depker) {
+    return new DockerNode(depker, options);
+  };
 }
 
 export class DockerNode implements DepkerMaster {
