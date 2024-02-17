@@ -140,8 +140,16 @@ func depker(deno string, path string, args ...string) {
 	}
 	_, err2 := file.WriteString(strings.Join(
 		[]string{
-			"const depker = await import('" + path + "').then(mod => mod?.default ?? mod);",
-			"if (typeof depker.execute === 'function') {",
+			"const depker = await import('" + path + "');",
+			"if (typeof depker?.default?.execute === 'function') {",
+			"  await depker.default.execute();",
+			"} else if (typeof depker?.depker?.execute === 'function') {",
+			"  await depker.depker.execute();",
+			"} else if (typeof depker?.app?.execute === 'function') {",
+			"  await depker.app.execute();",
+			"} else if (typeof globalThis?.depker?.execute === 'function') {",
+			"  await globalThis.depker.execute();",
+			"} else if (typeof depker?.execute === 'function') {",
 			"  await depker.execute();",
 			"} else {",
 			"  throw new ReferenceError('Missing depker instance! Ensure your config file does export the Site instance as default.');",

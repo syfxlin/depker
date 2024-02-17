@@ -28,6 +28,10 @@ export function depker(): Depker {
   return DepkerInner.create();
 }
 
+export function $depker(): Depker {
+  return DepkerInner.create();
+}
+
 export class DepkerInner {
   // info
   public readonly name: string;
