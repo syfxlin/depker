@@ -9,15 +9,14 @@ import {
   ContainerStatsOptions,
   ContainerStopOptions,
   ContainerTopOptions,
-} from "../../services/run/types.ts";
+} from "../../services/ops.service.ts";
 import { command } from "../../deps.ts";
-import { Depker, DepkerModule } from "../../depker.ts";
 import { PackContext } from "./pack.context.ts";
 import { ServiceConfig } from "./service.type.ts";
 
 declare global {
-  interface DepkerApp {
-    service(config: ServiceConfig): DepkerApp;
+  interface Depker {
+    service(config: ServiceConfig): Depker;
   }
 }
 
@@ -53,7 +52,13 @@ class AllSelectType extends command.EnumType<AllSelect> {
   }
 }
 
-export class ServiceModule implements DepkerModule {
+export function service() {
+  return function service(depker: Depker) {
+    return new ServicePlugin(depker);
+  };
+}
+
+export class ServicePlugin implements DepkerPlugin {
   public static readonly NAME = "service";
   private readonly depker: Depker;
   private readonly services: Array<ServiceConfig>;
@@ -61,7 +66,7 @@ export class ServiceModule implements DepkerModule {
   constructor(depker: Depker) {
     this.depker = depker;
     this.services = [];
-    this.depker.inject(ServiceModule.NAME, () => this.register.bind(this));
+    this.depker.inject(ServicePlugin.NAME, () => this.register.bind(this));
   }
 
   public async init() {

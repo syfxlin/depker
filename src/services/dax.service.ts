@@ -1,4 +1,4 @@
-import { dax } from "../../deps.ts";
+import { dax } from "../deps.ts";
 
 dax.CommandBuilder.prototype.jsonl = async function <T = any>(this: dax.CommandBuilder): Promise<T> {
   const lines = await this.lines();

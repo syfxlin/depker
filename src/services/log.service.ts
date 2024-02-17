@@ -1,11 +1,8 @@
-import { Depker } from "../../depker.ts";
-import { ansi, date, nunjucks, table, yaml } from "../../deps.ts";
-import { LogLevel } from "./types.ts";
+import { ansi, date, nunjucks, table, yaml } from "../deps.ts";
+import { DepkerInner } from "../depker.ts";
 
-export * from "./types.ts";
-
-export class LogModule {
-  constructor(private readonly depker: Depker) {}
+export class LogService {
+  constructor(private readonly depker: DepkerInner) {}
 
   public format(...messages: any[]) {
     const results: string[] = [];
@@ -102,7 +99,7 @@ export class LogModule {
     }
   }
 
-  private _output(level: LogLevel, time: number, message: string) {
+  private _output(level: "raw" | "step" | "debug" | "done" | "info" | "error", time: number, message: string) {
     if (level === "debug" && Deno.env.get("DEPKER_OPTION_DEBUG") !== "true") {
       return;
     }

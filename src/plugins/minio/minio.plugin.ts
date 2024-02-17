@@ -1,8 +1,13 @@
-import { Depker, DepkerModule } from "../../depker.ts";
 import { command, cryptoRandomString, dax } from "../../deps.ts";
 import { MinioConfig, SavedMinioConfig } from "./minio.type.ts";
 
-export class MinioModule implements DepkerModule {
+export function minio() {
+  return function minio(depker: Depker) {
+    return new MinioPlugin(depker);
+  };
+}
+
+export class MinioPlugin implements DepkerPlugin {
   public static readonly NAME = "minio";
   public static readonly IMAGE = "minio/minio:latest";
 
@@ -87,7 +92,7 @@ export class MinioModule implements DepkerModule {
   }
 
   public async list() {
-    const lines = await this.depker.ops.container.exec(MinioModule.NAME, [`mc`, `ls`, `minio`]).lines();
+    const lines = await this.depker.ops.container.exec(MinioPlugin.NAME, [`mc`, `ls`, `minio`]).lines();
     return lines.map(i => i.replace(/^.+\s+(\w+)\/$/, "$1"));
   }
 
@@ -115,7 +120,7 @@ export class MinioModule implements DepkerModule {
       `mc admin policy create minio ${user} /tmp/minio-policy-${user}.json`,
       `mc admin policy attach minio ${user} --user ${user}`,
     ];
-    await this.depker.ops.container.exec(MinioModule.NAME, [`sh`, `-c`, commands.join(" && ")]);
+    await this.depker.ops.container.exec(MinioPlugin.NAME, [`sh`, `-c`, commands.join(" && ")]);
     return { bucket: name, username: name, password: pass };
   }
 
@@ -125,7 +130,7 @@ export class MinioModule implements DepkerModule {
       `(mc admin policy rm minio ${name} 2>/dev/null || true)`,
       `(mc rb --force minio/${name} 2>/dev/null || true)`,
     ];
-    await this.depker.ops.container.exec(MinioModule.NAME, [`sh`, `-c`, commands.join(" && ")]);
+    await this.depker.ops.container.exec(MinioPlugin.NAME, [`sh`, `-c`, commands.join(" && ")]);
   }
 
   public exec(...commands: string[]): dax.CommandBuilder;
@@ -135,7 +140,7 @@ export class MinioModule implements DepkerModule {
       commands.unshift(tty);
     }
     return this.depker.ops.container.exec(
-      MinioModule.NAME,
+      MinioPlugin.NAME,
       [`mc`, ...commands],
       { Interactive: true, Tty: typeof tty === "boolean" ? tty : false },
     );
@@ -145,20 +150,20 @@ export class MinioModule implements DepkerModule {
     await this.depker.emit("minio:before-reload", this);
     this.depker.log.debug(`Minio reloading started.`);
 
-    const saved: SavedMinioConfig = { ...await this.depker.cfg.config<SavedMinioConfig>(MinioModule.NAME), ...config };
+    const saved: SavedMinioConfig = { ...await this.depker.cfg.config<SavedMinioConfig>(MinioPlugin.NAME), ...config };
     if (config || !saved.username || !saved.password) {
       saved.username = saved.username ?? "root";
       saved.password = saved.password ?? cryptoRandomString({ length: 16, type: "alphanumeric" });
-      await this.depker.cfg.config(MinioModule.NAME, saved);
+      await this.depker.cfg.config(MinioPlugin.NAME, saved);
     }
 
     try {
-      await this.depker.ops.container.remove([MinioModule.NAME], { Force: true });
+      await this.depker.ops.container.remove([MinioPlugin.NAME], { Force: true });
     } catch (e) {
       // ignore
     }
 
-    await this.depker.ops.container.run(MinioModule.NAME, MinioModule.IMAGE, {
+    await this.depker.ops.container.run(MinioPlugin.NAME, MinioPlugin.IMAGE, {
       Detach: true,
       Pull: "always",
       Restart: "always",
@@ -181,7 +186,7 @@ export class MinioModule implements DepkerModule {
         ...(saved.volumes ?? []),
       ],
     });
-    await this.depker.ops.container.exec(MinioModule.NAME, [`mc`, `alias`, `set`, `minio`, `http://localhost:9000`, saved.username, saved.password], {
+    await this.depker.ops.container.exec(MinioPlugin.NAME, [`mc`, `alias`, `set`, `minio`, `http://localhost:9000`, saved.username, saved.password], {
       Detach: true,
     });
 

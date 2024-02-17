@@ -1,9 +1,14 @@
-import { Depker, DepkerModule } from "../../depker.ts";
 import { command } from "../../deps.ts";
 import { defaults } from "./proxy.config.ts";
 import { ProxyConfig } from "./proxy.type.ts";
 
-export class ProxyModule implements DepkerModule {
+export function proxy() {
+  return function proxy(depker: Depker) {
+    return new ProxyPlugin(depker);
+  };
+}
+
+export class ProxyPlugin implements DepkerPlugin {
   public static readonly NAME = "proxy";
   public static readonly IMAGE = "traefik:latest";
 
@@ -109,7 +114,7 @@ export class ProxyModule implements DepkerModule {
   // region public functions
 
   public async ports(operate?: "insert" | "remove", diffs?: number[]): Promise<number[]> {
-    const config = await this.depker.cfg.config<Required<ProxyConfig>>(ProxyModule.NAME);
+    const config = await this.depker.cfg.config<Required<ProxyConfig>>(ProxyPlugin.NAME);
     config.ports = config.ports ?? [];
     if (!operate || !diffs?.length) {
       return config.ports;
@@ -144,13 +149,13 @@ export class ProxyModule implements DepkerModule {
     this.depker.log.debug(`Proxy reloading started.`);
 
     if (config) {
-      await this.depker.cfg.config(ProxyModule.NAME, config);
+      await this.depker.cfg.config(ProxyPlugin.NAME, config);
     } else {
-      config = await this.depker.cfg.config<ProxyConfig>(ProxyModule.NAME);
+      config = await this.depker.cfg.config<ProxyConfig>(ProxyPlugin.NAME);
     }
 
     try {
-      await this.depker.ops.container.remove([ProxyModule.NAME], { Force: true });
+      await this.depker.ops.container.remove([ProxyPlugin.NAME], { Force: true });
     } catch (e) {
       // ignore
     }
@@ -166,7 +171,7 @@ export class ProxyModule implements DepkerModule {
       options.add(`--entrypoints.tcp${value}.address=:${value}/tcp`);
       options.add(`--entrypoints.udp${value}.address=:${value}/udp`);
     }
-    await this.depker.ops.container.run(ProxyModule.NAME, ProxyModule.IMAGE, {
+    await this.depker.ops.container.run(ProxyPlugin.NAME, ProxyPlugin.IMAGE, {
       Detach: true,
       Pull: "always",
       Restart: "always",

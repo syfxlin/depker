@@ -1,9 +1,14 @@
 import { cryptoRandomString } from "https://deno.land/x/crypto_random_string@1.1.0/cryptoRandomString.ts";
-import { Depker, DepkerModule } from "../../depker.ts";
 import { command, dax } from "../../deps.ts";
 import { MongoConfig, SavedMongoConfig } from "./mongo.type.ts";
 
-export class MongoModule implements DepkerModule {
+export function mongo() {
+  return function mongo(depker: Depker) {
+    return new MongoPlugin(depker);
+  };
+}
+
+export class MongoPlugin implements DepkerPlugin {
   public static readonly NAME = "mongo";
   public static readonly IMAGE = "mongo:latest";
 
@@ -118,7 +123,7 @@ export class MongoModule implements DepkerModule {
       commands.unshift(tty);
     }
     return this.depker.ops.container.exec(
-      MongoModule.NAME,
+      MongoPlugin.NAME,
       [
         `sh`,
         `-c`,
@@ -132,20 +137,20 @@ export class MongoModule implements DepkerModule {
     await this.depker.emit("mongo:before-reload", this);
     this.depker.log.debug(`Mongo reloading started.`);
 
-    const saved: SavedMongoConfig = { ...await this.depker.cfg.config<SavedMongoConfig>(MongoModule.NAME), ...config };
+    const saved: SavedMongoConfig = { ...await this.depker.cfg.config<SavedMongoConfig>(MongoPlugin.NAME), ...config };
     if (config || !saved.username || !saved.password) {
       saved.username = saved.username ?? "root";
       saved.password = saved.password ?? cryptoRandomString({ length: 16, type: "alphanumeric" });
-      await this.depker.cfg.config(MongoModule.NAME, saved);
+      await this.depker.cfg.config(MongoPlugin.NAME, saved);
     }
 
     try {
-      await this.depker.ops.container.remove([MongoModule.NAME], { Force: true });
+      await this.depker.ops.container.remove([MongoPlugin.NAME], { Force: true });
     } catch (e) {
       // ignore
     }
 
-    await this.depker.ops.container.run(MongoModule.NAME, MongoModule.IMAGE, {
+    await this.depker.ops.container.run(MongoPlugin.NAME, MongoPlugin.IMAGE, {
       Detach: true,
       Pull: "always",
       Restart: "always",

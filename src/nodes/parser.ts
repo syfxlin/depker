@@ -7,7 +7,7 @@ import {
   NetworkInspect,
   VolumeInfo,
   VolumeInspect,
-} from "./types.ts";
+} from "../services/ops.service.ts";
 
 export const networks = {
   info: (data: Record<string, any>): NetworkInfo => ({

@@ -5,22 +5,27 @@ export * as deps from "./src/deps.ts";
 
 // services
 export * from "./src/depker.ts";
-export * from "./src/services/run/index.ts";
+export * from "./src/services/cfg.service.ts";
+export * from "./src/services/cli.service.ts";
+export * from "./src/services/dax.service.ts";
+export * from "./src/services/evs.service.ts";
+export * from "./src/services/log.service.ts";
+export * from "./src/services/ops.service.ts";
 
-// modules
-export * from "./src/modules/proxy/proxy.module.ts";
-export * from "./src/modules/proxy/proxy.type.ts";
-export * from "./src/modules/service/service.module.ts";
-export * from "./src/modules/service/service.type.ts";
+// plugins
+export * from "./src/plugins/proxy/proxy.plugin.ts";
+export * from "./src/plugins/proxy/proxy.type.ts";
+export * from "./src/plugins/service/service.plugin.ts";
+export * from "./src/plugins/service/service.type.ts";
 
 // packs
-export * from "./src/modules/service/pack.context.ts";
-export * from "./src/modules/service/packs/dockerfile/dockerfile.pack.ts";
-export * from "./src/modules/service/packs/image/image.pack.ts";
-export * from "./src/modules/service/packs/nginx/nginx.pack.ts";
-export * from "./src/modules/service/packs/nodejs/nodejs.pack.ts";
-export * from "./src/modules/service/packs/nextjs/nextjs.pack.ts";
-export * from "./src/modules/service/packs/coline/coline.pack.ts";
+export * from "./src/plugins/service/pack.context.ts";
+export * from "./src/plugins/service/packs/dockerfile/dockerfile.pack.ts";
+export * from "./src/plugins/service/packs/image/image.pack.ts";
+export * from "./src/plugins/service/packs/nginx/nginx.pack.ts";
+export * from "./src/plugins/service/packs/nodejs/nodejs.pack.ts";
+export * from "./src/plugins/service/packs/nextjs/nextjs.pack.ts";
+export * from "./src/plugins/service/packs/coline/coline.pack.ts";
 
 // default
 export default depker();

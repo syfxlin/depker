@@ -1,4 +1,3 @@
-import { Depker } from "../../depker.ts";
 import {
   collections,
   dotenv,
@@ -11,8 +10,8 @@ import {
   toPathString,
   yaml,
 } from "../../deps.ts";
-import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/run/types.ts";
-import { ServiceModule } from "./service.module.ts";
+import { BuilderBuildOptions, ContainerCreateOptions } from "../../services/ops.service.ts";
+import { ServicePlugin } from "./service.plugin.ts";
 import { Pack, ServiceConfig } from "./service.type.ts";
 
 interface PackOptions<Config extends ServiceConfig = ServiceConfig> {
@@ -449,7 +448,7 @@ export class PackContext<Config extends ServiceConfig = ServiceConfig> {
       throw new Error(`Start container ${name} failure.`, { cause: e });
     } finally {
       // cleanup
-      await this.depker.module<ServiceModule>(ServiceModule.NAME)?.prune("pre");
+      await this.depker.plugin<ServicePlugin>(ServicePlugin.NAME)?.prune("pre");
     }
   }
 

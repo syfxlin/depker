@@ -1,17 +1,20 @@
-import { Depker } from "../../depker.ts";
-import { collections, command, dotenv, path, yaml } from "../../deps.ts";
-import { Configs, Secrets } from "./types.ts";
+import { collections, command, dotenv, path, yaml } from "../deps.ts";
+import { DepkerInner } from "../depker.ts";
 
-export * from "./types.ts";
+export type Value = string | number | boolean | null | Value[] | { [key: string]: Value };
 
-export class CfgModule {
+export type Configs = Partial<{ [name: string]: Record<string, Value> }>;
+
+export type Secrets = Partial<{ [name: string]: string | number | boolean | null }>;
+
+export class CfgService {
   public static readonly NAME: string = "config";
   public static readonly PATH: string = "config.yaml";
   public static readonly IMAGE: string = "alpine:latest";
-  private readonly depker: Depker;
+  private depker: DepkerInner;
   private instance: Configs | undefined;
 
-  constructor(depker: Depker) {
+  constructor(depker: DepkerInner) {
     this.depker = depker;
     this.instance = undefined;
 
@@ -193,7 +196,7 @@ export class CfgModule {
     if (this.instance === undefined) {
       this.depker.log.debug(`Config loading started.`);
       try {
-        this.instance = yaml.parse(await this.read(CfgModule.PATH)) as Configs;
+        this.instance = yaml.parse(await this.read(CfgService.PATH)) as Configs;
         this.depker.log.debug(`Config loading successfully.`);
       } catch (e) {
         this.depker.log.debug(`Config loading failed.`, e);
@@ -214,7 +217,7 @@ export class CfgModule {
       } else {
         this.instance = name;
       }
-      await this.write(CfgModule.PATH, yaml.stringify(this.instance));
+      await this.write(CfgService.PATH, yaml.stringify(this.instance));
       await this.depker.emit("depker:after-config", this.instance);
     }
     if (name !== undefined && typeof name === "string") {
@@ -226,7 +229,7 @@ export class CfgModule {
 
   public async manual(editor?: "vi" | "vim" | "nano" | string) {
     await this.depker.emit("depker:before-config", await this.config());
-    await this.edit(CfgModule.PATH, editor);
+    await this.edit(CfgService.PATH, editor);
     this.instance = undefined;
     await this.depker.emit("depker:after-config", await this.config());
   }
@@ -239,7 +242,7 @@ export class CfgModule {
     } else {
       commands.push(`mkdir -p $(dirname ${path}) && vi ${path}`);
     }
-    const exec = this.depker.ops.container.exec(CfgModule.NAME, commands, {
+    const exec = this.depker.ops.container.exec(CfgService.NAME, commands, {
       Tty: true,
       Interactive: true,
       Workdir: `/var/depker`,
@@ -263,9 +266,9 @@ export class CfgModule {
   }
 
   private async execute(command: string, inputs?: string): Promise<string> {
-    const find = await this.depker.ops.container.find(CfgModule.NAME);
+    const find = await this.depker.ops.container.find(CfgService.NAME);
     if (!find) {
-      await this.depker.ops.container.run(CfgModule.NAME, CfgModule.IMAGE, {
+      await this.depker.ops.container.run(CfgService.NAME, CfgService.IMAGE, {
         Init: true,
         Detach: true,
         Pull: "always",
@@ -274,7 +277,7 @@ export class CfgModule {
         Commands: [`sleep`, `infinity`],
       });
     }
-    const exec = this.depker.ops.container.exec(CfgModule.NAME, [`sh`, `-c`, command], {
+    const exec = this.depker.ops.container.exec(CfgService.NAME, [`sh`, `-c`, command], {
       Interactive: true,
       Workdir: `/var/depker`,
     });

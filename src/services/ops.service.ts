@@ -1,33 +1,70 @@
-import { dax } from "../../deps.ts";
+import { dax, hash } from "../deps.ts";
+import { DepkerInner } from "../depker.ts";
 
-// region common
+export class OpsService implements DepkerMaster {
+  constructor(private readonly depker: DepkerInner) {}
 
-export type DockerNodeOptions =
-  | {
-    type: "local";
+  public get id() {
+    const master = this.depker.master();
+    const runner = this.depker.runner();
+    return hash([master.id, runner.id]);
   }
-  | {
-    type: "context";
-    name?: string;
+
+  public get container(): ContainerOperation {
+    return this.depker.master().container;
   }
-  | {
-    type: "ssh";
-    host?: string;
+
+  public get builder(): BuilderOperation {
+    return this.depker.runner().builder;
   }
-  | {
-    type: "http";
-    host?: string;
-    port?: number | string;
+
+  public get network(): NetworkOperation {
+    return this.depker.master().network;
   }
-  | {
-    type: "https";
-    host?: string;
-    port?: number | string;
-    ca?: string;
-    cert?: string;
-    key?: string;
-    verify?: boolean;
-  };
+
+  public get volume(): VolumeOperation {
+    return this.depker.master().volume;
+  }
+
+  public get image(): ImageOperation {
+    return this.depker.master().image;
+  }
+
+  public async transfer(name: string, progress: (size: number | null) => void): Promise<void> {
+    const master = this.depker.master();
+    const runner = this.depker.runner();
+    if (master.id !== runner.id) {
+      const size = { value: 0 };
+      const save = runner.builder.save(name).spawn();
+      const load = master.builder.load().spawn();
+      const transform = new TransformStream<Uint8Array>({
+        transform: (chunk, controller) => {
+          size.value += chunk.length;
+          progress(size.value);
+          controller.enqueue(chunk);
+        },
+      });
+      await save.stdout.pipeThrough(transform).pipeTo(load.stdin);
+      await Promise.all([save.status, load.status]);
+    }
+    progress(null);
+  }
+}
+
+// region operation types
+
+export interface DepkerMaster extends DepkerRunner {
+  id: string;
+  container: ContainerOperation;
+  network: NetworkOperation;
+  volume: VolumeOperation;
+  image: ImageOperation;
+}
+
+export interface DepkerRunner {
+  id: string;
+  builder: BuilderOperation;
+}
 
 export interface ContainerConfig {
   Hostname?: string;
@@ -68,10 +105,6 @@ export interface ContainerConfig {
   StopTimeout?: number;
   Shell?: string;
 }
-
-// endregion
-
-// region containers
 
 export interface ContainerInfo {
   Id: string;
@@ -409,10 +442,6 @@ export interface ContainerCopyOptions {
   FollowLink?: boolean;
 }
 
-// endregion
-
-// region images
-
 export interface ImageInfo {
   Id: string;
   Repository: string;
@@ -488,10 +517,6 @@ export interface ImageRemoveOptions {
   Force?: boolean;
 }
 
-// endregion
-
-// region volumes
-
 export interface VolumeInfo {
   Name: string;
   Scope: string;
@@ -524,10 +549,6 @@ export interface VolumeCreateOptions {
 export interface VolumeRemoveOptions {
   Force?: string;
 }
-
-// endregion
-
-// region network
 
 export interface NetworkInfo {
   Id: string;
@@ -610,10 +631,6 @@ export interface NetworkDisconnectOptions {
   Force?: boolean;
 }
 
-// endregion
-
-// region operation
-
 export interface ContainerOperation {
   list(): Promise<Array<ContainerInfo>>;
   find(name: string): Promise<ContainerInfo | undefined>;
@@ -671,23 +688,6 @@ export interface BuilderOperation {
   build(name: string, target: string, options?: BuilderBuildOptions): dax.CommandBuilder;
   save(name: string): Deno.Command;
   load(): Deno.Command;
-}
-
-// endregion
-
-// region node
-
-export interface DepkerRunner {
-  id: string;
-  builder: BuilderOperation;
-}
-
-export interface DepkerMaster extends DepkerRunner {
-  id: string;
-  container: ContainerOperation;
-  network: NetworkOperation;
-  volume: VolumeOperation;
-  image: ImageOperation;
 }
 
 // endregion
