@@ -1,5 +1,5 @@
 import * as fs from "https://deno.land/std@0.212.0/fs/mod.ts";
-import * as dax from "https://deno.land/x/dax@0.36.0/mod.ts";
+import * as dax from "https://deno.land/x/dax@0.39.2/mod.ts";
 import * as path from "https://deno.land/std@0.212.0/path/mod.ts";
 import * as yaml from "https://deno.land/std@0.212.0/yaml/mod.ts";
 import * as date from "https://deno.land/x/ptera@v1.0.2/mod.ts";
@@ -22,7 +22,7 @@ export { cryptoRandomString } from "https://deno.land/x/crypto_random_string@1.1
 
 declare module "https://deno.land/x/dax@0.36.0/mod.ts" {
   // @ts-expect-error
-  import { CommandBuilder as CB, RequestBuilder as RB } from "https://deno.land/x/dax@0.36.0/mod.ts";
+  import { CommandBuilder as CB, RequestBuilder as RB } from "https://deno.land/x/dax@0.39.2/mod.ts";
 
   // @ts-expect-error
   interface CommandBuilder extends CB {
