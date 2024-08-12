@@ -52,7 +52,7 @@ export class DepkerInner {
   private constructor() {
     // info
     this.name = "depker";
-    this.version = "5.2.4";
+    this.version = "5.3.0";
     this.description = "docker-based cloud deployment tool.";
     // service
     this.dax = createDax();
