@@ -1,6 +1,6 @@
 import depker, { image } from "../../mod.ts";
 
-depker.service(
+depker.use(
   image({
     name: "image",
     image: "nginx:alpine",

@@ -1,38 +1,37 @@
-import { fs, path } from "./deps.ts";
-import { Dax, createDax } from "./services/dax.service.ts";
-import { DockerNode } from "./nodes/docker.ts";
-import { proxy } from "./plugins/proxy/proxy.plugin.ts";
-import { minio } from "./plugins/minio/minio.plugin.ts";
-import { mongo } from "./plugins/mongo/mongo.plugin.ts";
-import { service } from "./plugins/service/service.plugin.ts";
-import { CliService } from "./services/cli.service.ts";
-import { CfgService } from "./services/cfg.service.ts";
-import { EvsService } from "./services/evs.service.ts";
-import { LogService } from "./services/log.service.ts";
-import { DepkerMaster, DepkerRunner, OpsService } from "./services/ops.service.ts";
+import fs from "./deps/std/fs.ts";
+import path from "./deps/std/path.ts";
+import { DepkerMaster, DepkerRunner } from "./providers/types.ts";
+import { ExecModule, createExec } from "./modules/exec.module.ts";
+import { DockerNode } from "./providers/docker.ts";
+import { CliModule } from "./modules/cli.module.ts";
+import { LogModule } from "./modules/log.module.ts";
+import { NodeModule } from "./modules/node.module.ts";
+import { ConfigModule } from "./modules/config.module.ts";
+import { EventsModule } from "./modules/events.module.ts";
+import { app } from "./core/app/index.ts";
+import { mongo } from "./core/mongo/index.ts";
+import { mysql } from "./core/mysql/index.ts";
+import { postgres } from "./core/postgres/index.ts";
+import { redis } from "./core/redis/index.ts";
 
-declare global {
-  type UseDepker<T> = (depker: Depker) => T;
+export interface DepkerHook<T = any> {
+  (depker: Depker): T;
+}
 
-  interface Depker extends DepkerInner {
-    // NOOP
-  }
-
-  interface DepkerPlugin {
-    init?: () => Promise<void> | void;
-    destroy?: () => Promise<void> | void;
-  }
+export interface DepkerPlugin {
+  init?: () => Promise<void> | void;
+  destroy?: () => Promise<void> | void;
 }
 
 export function depker(): Depker {
-  return DepkerInner.create();
+  return Depker.create();
 }
 
 export function $depker(): Depker {
-  return DepkerInner.create();
+  return Depker.create();
 }
 
-export class DepkerInner {
+export class Depker {
   // info
   public readonly name: string;
   public readonly version: string;
@@ -42,41 +41,44 @@ export class DepkerInner {
   private _runner: DepkerRunner;
   private _plugins: Record<string, DepkerPlugin>;
   // service
-  public readonly dax: Dax;
-  public readonly cli: CliService;
-  public readonly cfg: CfgService;
-  public readonly ops: OpsService;
-  public readonly evs: EvsService;
-  public readonly log: LogService;
+  public readonly cli: CliModule;
+  public readonly log: LogModule;
+  public readonly exec: ExecModule;
+  public readonly node: NodeModule;
+  public readonly config: ConfigModule;
+  public readonly events: EventsModule;
 
   private constructor() {
     // info
     this.name = "depker";
     this.version = "5.3.0";
-    this.description = "docker-based cloud deployment tool.";
+    this.description = "Docker-based cloud deployment tool.";
     // service
-    this.dax = createDax();
-    this.cli = new CliService(this);
-    this.cfg = new CfgService(this);
-    this.ops = new OpsService(this);
-    this.evs = new EvsService(this);
-    this.log = new LogService(this);
+    this.cli = new CliModule(this);
+    this.log = new LogModule(this);
+    this.exec = createExec();
+    this.node = new NodeModule(this);
+    this.events = new EventsModule(this);
+    this.config = new ConfigModule(this);
     // register
-    this._master = new DockerNode(this as unknown as Depker);
+    this._master = new DockerNode(this);
     this._runner = this._master;
     this._plugins = {};
     // plugins
-    this.register(proxy());
-    this.register(minio());
+    this.register(app());
+    this.register(redis());
     this.register(mongo());
-    this.register(service());
+    this.register(mysql());
+    this.register(postgres());
+    // this.register(minio());
+    // this.register(mongo());
   }
 
   public static create(): Depker {
     // @ts-expect-error
     if (!globalThis.depker) {
       // @ts-expect-error
-      globalThis.depker = new DepkerInner() as Depker;
+      globalThis.depker = new Depker() as Depker;
     }
     // @ts-expect-error
     return globalThis.depker;
@@ -117,54 +119,48 @@ export class DepkerInner {
   }
 
   public on(name: string, listener: (...args: any[]) => void): Depker {
-    this.evs.on(name, listener);
-    return this as unknown as Depker;
+    this.events.on(name, listener);
+    return this;
   }
 
   public once(name: string, listener: (...args: any[]) => void): Depker {
-    this.evs.once(name, listener);
-    return this as unknown as Depker;
+    this.events.once(name, listener);
+    return this;
   }
 
   public async off(name: string, listener: (...args: any[]) => void): Promise<Depker> {
-    await this.evs.off(name, listener);
-    return this as unknown as Depker;
+    await this.events.off(name, listener);
+    return this;
   }
 
   public async emit(name: string, ...args: any[]): Promise<Depker> {
-    await this.evs.emit(name, ...args);
-    return this as unknown as Depker;
+    await this.events.emit(name, ...args);
+    return this;
   }
 
   public master(): DepkerMaster;
-  public master(node: UseDepker<DepkerMaster>): Depker;
-  public master(node?: UseDepker<DepkerMaster>): DepkerMaster | Depker {
+  public master(node: DepkerHook<DepkerMaster>): Depker;
+  public master(node?: DepkerHook<DepkerMaster>): DepkerMaster | Depker {
     if (node) {
-      this._master = typeof node === "function" ? node(this as unknown as Depker) : node;
-      return this as unknown as Depker;
+      this._master = typeof node === "function" ? node(this) : node;
+      return this;
     } else {
       return this._master;
     }
   }
 
   public runner(): DepkerRunner;
-  public runner(node: UseDepker<DepkerRunner>): Depker;
-  public runner(node?: UseDepker<DepkerRunner>): DepkerRunner | Depker {
+  public runner(node: DepkerHook<DepkerRunner>): Depker;
+  public runner(node?: DepkerHook<DepkerRunner>): DepkerRunner | Depker {
     if (node) {
-      this._runner = typeof node === "function" ? node(this as unknown as Depker) : node;
-      return this as unknown as Depker;
+      this._runner = typeof node === "function" ? node(this) : node;
+      return this;
     } else {
       return this._runner;
     }
   }
 
-  public inject(name: string, register: UseDepker<any>): Depker {
-    // @ts-expect-error
-    this[name] = register(this);
-    return this as unknown as Depker;
-  }
-
-  public plugin<P extends DepkerPlugin = DepkerPlugin>(name: string): P {
+  public get<P extends DepkerPlugin = DepkerPlugin>(name: string): P {
     if (!this._plugins) {
       this._plugins = {};
     }
@@ -174,7 +170,12 @@ export class DepkerInner {
     return this._plugins[name] as P;
   }
 
-  public register(plugin: UseDepker<DepkerPlugin>): Depker {
+  public use(hook: DepkerHook): Depker {
+    hook(this);
+    return this;
+  }
+
+  public register(plugin: DepkerHook<DepkerPlugin>): Depker {
     if (!plugin.name) {
       throw new Error(`Unnamed plugin are not allowed to be loaded.`);
     }
@@ -182,9 +183,9 @@ export class DepkerInner {
       this._plugins = {};
     }
     if (!this._plugins[plugin.name]) {
-      this._plugins[plugin.name] = plugin(this as unknown as Depker);
+      this._plugins[plugin.name] = plugin(this);
     }
-    return this as unknown as Depker;
+    return this;
   }
 
   public async execute(): Promise<void> {

@@ -2,7 +2,7 @@ import { depker, dockerfile } from "../../mod.ts";
 
 const app = depker();
 
-app.service(
+app.use(
   dockerfile({
     name: "dockerfile",
     dockerfile: "FROM nginx:alpine",

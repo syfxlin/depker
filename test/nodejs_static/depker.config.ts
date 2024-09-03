@@ -2,7 +2,7 @@ import { depker, nodejs } from "../../mod.ts";
 
 const app = depker();
 
-app.service(
+app.use(
   nodejs.static({
     name: "nodejs_static",
   }),

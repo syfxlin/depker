@@ -1,31 +1,30 @@
 import { depker } from "./src/depker.ts";
 
-// dependencies
-export * as deps from "./src/deps.ts";
-
-// services
+// modules
 export * from "./src/depker.ts";
-export * from "./src/services/cfg.service.ts";
-export * from "./src/services/cli.service.ts";
-export * from "./src/services/dax.service.ts";
-export * from "./src/services/evs.service.ts";
-export * from "./src/services/log.service.ts";
-export * from "./src/services/ops.service.ts";
+export * from "./src/modules/cli.module.ts";
+export * from "./src/modules/log.module.ts";
+export * from "./src/modules/exec.module.ts";
+export * from "./src/modules/node.module.ts";
+export * from "./src/modules/events.module.ts";
+export * from "./src/modules/config.module.ts";
+
+// providers
+export * from "./src/providers/docker.ts";
+export * from "./src/providers/types.ts";
 
 // plugins
-export * from "./src/plugins/proxy/proxy.plugin.ts";
-export * from "./src/plugins/proxy/proxy.type.ts";
-export * from "./src/plugins/service/service.plugin.ts";
-export * from "./src/plugins/service/service.type.ts";
+export * from "./src/core/app/ctx.ts";
+export * from "./src/core/app/index.ts";
 
 // packs
-export * from "./src/plugins/service/pack.context.ts";
-export * from "./src/plugins/service/packs/dockerfile/dockerfile.pack.ts";
-export * from "./src/plugins/service/packs/image/image.pack.ts";
-export * from "./src/plugins/service/packs/nginx/nginx.pack.ts";
-export * from "./src/plugins/service/packs/nodejs/nodejs.pack.ts";
-export * from "./src/plugins/service/packs/nextjs/nextjs.pack.ts";
-export * from "./src/plugins/service/packs/coline/coline.pack.ts";
+export * from "./src/core/app/packs/nginx/index.ts";
+export * from "./src/core/app/packs/image/index.ts";
+export * from "./src/core/app/packs/nodejs/index.ts";
+export * from "./src/core/app/packs/nextjs/index.ts";
+export * from "./src/core/app/packs/selflare/index.ts";
+export * from "./src/core/app/packs/nixpacks/index.ts";
+export * from "./src/core/app/packs/dockerfile/index.ts";
 
 // default
 export default depker();

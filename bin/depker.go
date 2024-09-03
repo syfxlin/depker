@@ -18,8 +18,8 @@ func main() {
 		create(deno, path, os.Args[2:]...)
 		return
 	}
-	if len(os.Args) > 1 && os.Args[1] == "reload" {
-		reload(deno, path, os.Args[2:]...)
+	if len(os.Args) > 1 && os.Args[1] == "update" {
+		update(deno, path, os.Args[2:]...)
 		return
 	}
 
@@ -129,7 +129,7 @@ func create(deno string, path string, args ...string) {
 	}
 }
 
-func reload(deno string, path string, args ...string) {
+func update(deno string, path string, args ...string) {
 	execute(deno, append([]string{"cache", "-r", path}, args...)...)
 }
 
