@@ -331,20 +331,24 @@ export class PostgresPlugin implements DepkerPlugin {
       await this.depker.config.service(PostgresPlugin.NAME, () => config);
     }
 
-    await this.depker.node.container.run(PostgresPlugin.NAME, `postgres:${config.version || "16-alpine"}`, {
-      Detach: true,
-      Pull: "always",
-      Restart: "always",
-      Labels: config.labels,
-      Ports: config.publish ? ["5432:5432"] : [],
-      Networks: [await this.depker.node.network.default()],
-      Volumes: [`${this.depker.config.path("/postgres")}:/var/lib/postgresql/data`],
-      Envs: {
-        ...config.envs,
-        POSTGRES_USER: config.username,
-        POSTGRES_PASSWORD: config.password,
+    await this.depker.node.container.run(
+      PostgresPlugin.NAME,
+      config.version?.includes(":") ? config.version : `postgres:${config.version || "16-alpine"}`,
+      {
+        Detach: true,
+        Pull: "always",
+        Restart: "always",
+        Labels: config.labels,
+        Ports: config.publish ? ["5432:5432"] : [],
+        Networks: [await this.depker.node.network.default()],
+        Volumes: [`${this.depker.config.path("/postgres")}:/var/lib/postgresql/data`],
+        Envs: {
+          ...config.envs,
+          POSTGRES_USER: config.username,
+          POSTGRES_PASSWORD: config.password,
+        },
       },
-    });
+    );
 
     this._installed = true;
     await this.depker.emit("depker:postgres:after-install");

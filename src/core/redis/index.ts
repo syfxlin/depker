@@ -334,24 +334,28 @@ export class RedisPlugin implements DepkerPlugin {
       await this.depker.config.service(RedisPlugin.NAME, () => config);
     }
 
-    await this.depker.node.container.run(RedisPlugin.NAME, `redis:${config.version || "7-alpine"}`, {
-      Detach: true,
-      Pull: "always",
-      Restart: "always",
-      Labels: config.labels,
-      Ports: config.publish ? ["6379:6379"] : [],
-      Networks: [await this.depker.node.network.default()],
-      Commands: ["sh", "-c", `([ ! -f "/etc/redis/redis.conf" ] && touch /etc/redis/redis.conf) || redis-server /etc/redis/redis.conf --requirepass $REDIS_DEFAULT_PASSWORD`],
-      Envs: {
-        ...config.envs,
-        REDIS_DEFAULT_USERNAME: config.username,
-        REDIS_DEFAULT_PASSWORD: config.password,
+    await this.depker.node.container.run(
+      RedisPlugin.NAME,
+      config.version?.includes(":") ? config.version : `redis:${config.version || "7-alpine"}`,
+      {
+        Detach: true,
+        Pull: "always",
+        Restart: "always",
+        Labels: config.labels,
+        Ports: config.publish ? ["6379:6379"] : [],
+        Networks: [await this.depker.node.network.default()],
+        Commands: ["sh", "-c", `([ ! -f "/etc/redis/redis.conf" ] && touch /etc/redis/redis.conf) || redis-server /etc/redis/redis.conf --requirepass $REDIS_DEFAULT_PASSWORD`],
+        Envs: {
+          ...config.envs,
+          REDIS_DEFAULT_USERNAME: config.username,
+          REDIS_DEFAULT_PASSWORD: config.password,
+        },
+        Volumes: [
+          `${this.depker.config.path("/redis/data")}:/data`,
+          `${this.depker.config.path("/redis/config")}:/etc/redis`,
+        ],
       },
-      Volumes: [
-        `${this.depker.config.path("/redis/data")}:/data`,
-        `${this.depker.config.path("/redis/config")}:/etc/redis`,
-      ],
-    });
+    );
 
     this._installed = true;
     await this.depker.emit("depker:redis:after-install");

@@ -345,22 +345,26 @@ export class MysqlPlugin implements DepkerPlugin {
       await this.depker.config.service(MysqlPlugin.NAME, () => config);
     }
 
-    await this.depker.node.container.run(MysqlPlugin.NAME, `mysql:${config.version || "lts"}`, {
-      Detach: true,
-      Pull: "always",
-      Restart: "always",
-      Labels: config.labels,
-      Ports: config.publish ? ["3306:3306"] : [],
-      Networks: [await this.depker.node.network.default()],
-      Envs: {
-        ...config.envs,
-        MYSQL_ROOT_PASSWORD: config.password,
+    await this.depker.node.container.run(
+      MysqlPlugin.NAME,
+      config.version?.includes(":") ? config.version : `mysql:${config.version || "lts"}`,
+      {
+        Detach: true,
+        Pull: "always",
+        Restart: "always",
+        Labels: config.labels,
+        Ports: config.publish ? ["3306:3306"] : [],
+        Networks: [await this.depker.node.network.default()],
+        Envs: {
+          ...config.envs,
+          MYSQL_ROOT_PASSWORD: config.password,
+        },
+        Volumes: [
+          `${this.depker.config.path("/mysql/data")}:/var/lib/mysql`,
+          `${this.depker.config.path("/mysql/config")}:/etc/mysql/conf.d`,
+        ],
       },
-      Volumes: [
-        `${this.depker.config.path("/mysql/data")}:/var/lib/mysql`,
-        `${this.depker.config.path("/mysql/config")}:/etc/mysql/conf.d`,
-      ],
-    });
+    );
 
     this._installed = true;
     await this.depker.emit("depker:mysql:after-install");

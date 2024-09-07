@@ -358,24 +358,28 @@ export class MongoPlugin implements DepkerPlugin {
       await this.depker.config.service(MongoPlugin.NAME, () => config);
     }
 
-    await this.depker.node.container.run(MongoPlugin.NAME, `mongo:${config.version || "7"}`, {
-      Detach: true,
-      Pull: "always",
-      Restart: "always",
-      Labels: config.labels,
-      Ports: config.publish ? ["27017:27017"] : [],
-      Networks: [await this.depker.node.network.default()],
-      Commands: ["sh", "-c", `([ ! -f "/etc/mongo/mongod.conf" ] && touch /etc/mongo/mongod.conf) || mongod --config /etc/mongo/mongod.conf`],
-      Envs: {
-        ...config.envs,
-        MONGO_INITDB_ROOT_USERNAME: config.username,
-        MONGO_INITDB_ROOT_PASSWORD: config.password,
+    await this.depker.node.container.run(
+      MongoPlugin.NAME,
+      config.version?.includes(":") ? config.version : `mongo:${config.version || "7"}`,
+      {
+        Detach: true,
+        Pull: "always",
+        Restart: "always",
+        Labels: config.labels,
+        Ports: config.publish ? ["27017:27017"] : [],
+        Networks: [await this.depker.node.network.default()],
+        Commands: ["sh", "-c", `([ ! -f "/etc/mongo/mongod.conf" ] && touch /etc/mongo/mongod.conf) || mongod --config /etc/mongo/mongod.conf`],
+        Envs: {
+          ...config.envs,
+          MONGO_INITDB_ROOT_USERNAME: config.username,
+          MONGO_INITDB_ROOT_PASSWORD: config.password,
+        },
+        Volumes: [
+          `${this.depker.config.path("/mongo/data")}:/data/db`,
+          `${this.depker.config.path("/mongo/config")}:/etc/mongo`,
+        ],
       },
-      Volumes: [
-        `${this.depker.config.path("/mongo/data")}:/data/db`,
-        `${this.depker.config.path("/mongo/config")}:/etc/mongo`,
-      ],
-    });
+    );
 
     this._installed = true;
     await this.depker.emit("depker:mongo:after-install");
