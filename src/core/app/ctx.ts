@@ -341,36 +341,36 @@ export class PackContext<Config extends AppConfig = AppConfig> {
       const middlewares: string[] = [];
 
       // service
-      labels[`traefik.http.routers.${name}.service`] = `${name}`;
-      labels[`traefik.http.services.${name}.loadbalancer.server.scheme`] = scheme;
-      labels[`traefik.http.services.${name}.loadbalancer.server.port`] = String(port);
+      labels[`traefik.http.routers.${config.name}-${this.id}.service`] = `${config.name}-${this.id}`;
+      labels[`traefik.http.services.${config.name}-${this.id}.loadbalancer.server.scheme`] = scheme;
+      labels[`traefik.http.services.${config.name}-${this.id}.loadbalancer.server.port`] = String(port);
 
       // route
       if (config.tls) {
         // https
-        labels[`traefik.http.routers.${name}.rule`] = rule;
-        labels[`traefik.http.routers.${name}.entrypoints`] = "https";
-        labels[`traefik.http.routers.${name}.tls.certresolver`] = "depker";
+        labels[`traefik.http.routers.${config.name}-${this.id}.rule`] = rule;
+        labels[`traefik.http.routers.${config.name}-${this.id}.entrypoints`] = "https";
+        labels[`traefik.http.routers.${config.name}-${this.id}.tls.certresolver`] = "depker";
         // http
-        labels[`traefik.http.routers.${name}-http.rule`] = rule;
-        labels[`traefik.http.routers.${name}-http.entrypoints`] = "http";
-        labels[`traefik.http.routers.${name}-http.middlewares`] = `${name}-https`;
-        labels[`traefik.http.middlewares.${name}-https.redirectscheme.scheme`] = "https";
-        middlewares.push(`${name}-https`);
+        labels[`traefik.http.routers.${config.name}-${this.id}-http.rule`] = rule;
+        labels[`traefik.http.routers.${config.name}-${this.id}-http.entrypoints`] = "http";
+        labels[`traefik.http.routers.${config.name}-${this.id}-http.middlewares`] = `${config.name}-${this.id}-https`;
+        labels[`traefik.http.middlewares.${config.name}-${this.id}-https.redirectscheme.scheme`] = "https";
+        middlewares.push(`${config.name}-${this.id}-https`);
       } else {
         // http
-        labels[`traefik.http.routers.${name}.rule`] = rule;
-        labels[`traefik.http.routers.${name}.entrypoints`] = "http";
+        labels[`traefik.http.routers.${config.name}-${this.id}.rule`] = rule;
+        labels[`traefik.http.routers.${config.name}-${this.id}.entrypoints`] = "http";
       }
 
       // middleware
       for (const middleware of config.middlewares ?? []) {
         for (const [k, v] of Object.entries(middleware.options ?? {})) {
-          labels[`traefik.http.middlewares.${name}-${middleware.name}.${middleware.type}.${k}`] = v;
-          middlewares.push(`${name}-${middleware.name}`);
+          labels[`traefik.http.middlewares.${config.name}-${this.id}-${middleware.name}.${middleware.type}.${k}`] = v;
+          middlewares.push(`${config.name}-${this.id}-${middleware.name}`);
         }
       }
-      labels[`traefik.http.routers.${name}.middlewares`] = [...new Set(middlewares)].join(",");
+      labels[`traefik.http.routers.${config.name}-${this.id}.middlewares`] = [...new Set(middlewares)].join(",");
     }
 
     // ports
@@ -379,11 +379,11 @@ export class PackContext<Config extends AppConfig = AppConfig> {
       const hport = port.hport;
       const cport = port.cport;
       if (proto === "tcp") {
-        labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
+        labels[`traefik.${proto}.routers.${config.name}-${this.id}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
       }
-      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.entrypoints`] = `${proto}${hport}`;
-      labels[`traefik.${proto}.routers.${name}-${proto}-${cport}.service`] = `${name}-${proto}-${cport}`;
-      labels[`traefik.${proto}.services.${name}-${proto}-${cport}.loadbalancer.server.port`] = String(cport);
+      labels[`traefik.${proto}.routers.${config.name}-${this.id}-${proto}-${cport}.entrypoints`] = `${proto}${hport}`;
+      labels[`traefik.${proto}.routers.${config.name}-${this.id}-${proto}-${cport}.service`] = `${config.name}-${this.id}-${proto}-${cport}`;
+      labels[`traefik.${proto}.services.${config.name}-${this.id}-${proto}-${cport}.loadbalancer.server.port`] = String(cport);
     }
 
     // volumes
