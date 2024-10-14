@@ -27,5 +27,13 @@ export class CliModule extends Command {
         }
       },
     });
+    this.command("create", "Create a depker.config.ts in the current project.")
+      .action(async () => {
+        throw new Error("Run this command with the depker executable.");
+      });
+    this.command("update", "Upgrade the Deno.js and reload the depker scripts cache")
+      .action(async () => {
+        throw new Error("Run this command with the depker executable.");
+      });
   }
 }

@@ -1,4 +1,4 @@
-import { depker } from "./src/depker.ts";
+import { Depker } from "./src/depker.ts";
 
 // modules
 export * from "./src/depker.ts";
@@ -26,5 +26,6 @@ export * from "./src/core/app/packs/selflare/index.ts";
 export * from "./src/core/app/packs/nixpacks/index.ts";
 export * from "./src/core/app/packs/dockerfile/index.ts";
 
-// default
-export default depker();
+// depker
+export const depker = Depker.create();
+export default depker;

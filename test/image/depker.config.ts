@@ -1,4 +1,4 @@
-import depker, { image } from "../../mod.ts";
+import { depker, image } from "../../mod.ts";
 
 depker.use(
   image({

@@ -31,10 +31,8 @@ export class LogModule {
     template.addFilter("json", (value: any) => JSON.stringify(value, undefined, 2), false);
     template.addFilter("yaml", (value: any) => YAML.stringify(value), false);
     if (data instanceof Object) {
-      // @ts-expect-error
       return template.renderString(value, data, undefined, undefined).trim();
     } else {
-      // @ts-expect-error
       return template.renderString(value, { it: data }, undefined, undefined).trim();
     }
   }

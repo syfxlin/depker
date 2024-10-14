@@ -385,7 +385,7 @@ export class ConfigModule {
       try {
         this.instance = yaml.parse(await this.read("config.yaml")) as Config;
         this.depker.log.debug(`Configuration has been restarted successfully.`);
-      } catch (e) {
+      } catch (e: any) {
         this.depker.log.debug(`Configuration has been restarted failed.`, e);
       }
     }

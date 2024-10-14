@@ -1,8 +1,6 @@
 import { depker, nginx } from "../../mod.ts";
 
-const app = depker();
-
-app.use(
+depker.use(
   nginx({
     name: "nginx",
     secrets: {
@@ -10,5 +8,3 @@ app.use(
     },
   }),
 );
-
-export default app;

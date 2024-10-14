@@ -23,14 +23,6 @@ export interface DepkerPlugin {
   destroy?: () => Promise<void> | void;
 }
 
-export function depker(): Depker {
-  return Depker.create();
-}
-
-export function $depker(): Depker {
-  return Depker.create();
-}
-
 export class Depker {
   // info
   public readonly name: string;
@@ -70,8 +62,6 @@ export class Depker {
     this.register(mongo());
     this.register(mysql());
     this.register(postgres());
-    // this.register(minio());
-    // this.register(mongo());
   }
 
   public static create(): Depker {

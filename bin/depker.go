@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"net/url"
 	"os"
@@ -111,11 +113,13 @@ func create(deno string, path string, args ...string) {
 	}
 	_, err2 := file.WriteString(strings.Join(
 		[]string{
-			"import { depker } from \"https://raw.githubusercontent.com/syfxlin/depker/master/mod.ts\";",
+			"import { depker, nginx } from \"https://raw.githubusercontent.com/syfxlin/depker/master/mod.ts\";",
 			"",
-			"const app = depker();",
-			"",
-			"export default app;",
+			"depker.use(",
+			"  nginx({",
+			"    name: \"nginx\",",
+			"  }),",
+			");",
 			"",
 		},
 		"\n",
@@ -130,11 +134,14 @@ func create(deno string, path string, args ...string) {
 }
 
 func update(deno string, path string, args ...string) {
+	execute(deno, "upgrade", "stable")
 	execute(deno, append([]string{"cache", "-r", path}, args...)...)
 }
 
 func depker(deno string, path string, args ...string) {
-	file, err1 := os.CreateTemp("", "depker-cli-")
+	hash := md5.Sum([]byte(path))
+	name := filepath.Join(os.TempDir(), "depker-cli-"+hex.EncodeToString(hash[:]))
+	file, err1 := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -164,7 +171,7 @@ func depker(deno string, path string, args ...string) {
 	if err3 != nil {
 		panic(err3)
 	}
-	execute(deno, append([]string{"run", "-A", file.Name()}, args...)...)
+	execute(deno, append([]string{"run", "--no-lock", "--allow-all", file.Name()}, args...)...)
 }
 
 func execute(name string, args ...string) {

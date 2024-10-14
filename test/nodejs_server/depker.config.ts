@@ -1,11 +1,7 @@
 import { depker, nodejs } from "../../mod.ts";
 
-const app = depker();
-
-app.use(
+depker.use(
   nodejs.server({
     name: "nodejs_server",
   }),
 );
-
-export default app;

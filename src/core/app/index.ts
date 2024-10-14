@@ -31,7 +31,7 @@ class ActiveSelectType extends EnumType<ActiveSelect> {
     super(["active", "latest", "<container>"]);
   }
 
-  public parse(type: ArgumentValue): "active" | "latest" | string {
+  public override parse(type: ArgumentValue): "active" | "latest" | string {
     return type.value;
   }
 }
@@ -41,7 +41,7 @@ class AllSelectType extends EnumType<AllSelect> {
     super(["active", "latest", "inactive", "all", "<container>"]);
   }
 
-  public parse(type: ArgumentValue): "active" | "latest" | "inactive" | "all" | string {
+  public override parse(type: ArgumentValue): "active" | "latest" | "inactive" | "all" | string {
     return type.value;
   }
 }
