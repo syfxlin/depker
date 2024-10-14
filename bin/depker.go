@@ -141,7 +141,7 @@ func update(deno string, path string, args ...string) {
 func depker(deno string, path string, args ...string) {
 	hash := md5.Sum([]byte(path))
 	name := filepath.Join(os.TempDir(), "depker-cli-"+hex.EncodeToString(hash[:]))
-	file, err1 := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	file, err1 := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_EXCL, 0600)
 	if err1 != nil {
 		panic(err1)
 	}
