@@ -467,26 +467,27 @@ export class ConfigModule {
 
     const ports = await this.port();
     const configs = await this.service<ProxyServiceConfig>("proxy");
-    const options = new Set<string>();
-    options.add(`--api`);
-    options.add(`--ping`);
-    options.add(`--serverstransport.insecureskipverify=true`);
-    options.add(`--serverstransport.maxidleconnsperhost=250`);
-    options.add(`--entrypoints.http.address=:80`);
-    options.add(`--entrypoints.https.address=:443`);
-    options.add(`--providers.file.watch=true`);
-    options.add(`--providers.file.filename=/etc/traefik/config.yaml`);
-    options.add(`--providers.docker.exposedbydefault=false`);
-    options.add(`--providers.docker.endpoint=unix:///var/run/docker.sock`);
-    options.add(`--certificatesresolvers.depker.acme.email=admin@example.com`);
-    options.add(`--certificatesresolvers.depker.acme.httpchallenge.entrypoint=http`);
-    options.add(`--certificatesresolvers.depker.acme.storage=/etc/traefik/acme.json`);
+    const options = new Map<string, string>();
+    options.set(`--api`, ``);
+    options.set(`--ping`, ``);
+    options.set(`--serverstransport.insecureskipverify`, `true`);
+    options.set(`--serverstransport.maxidleconnsperhost`, `250`);
+    options.set(`--entrypoints.http.address`, `:80`);
+    options.set(`--entrypoints.https.address`, `:443`);
+    options.set(`--providers.file.watch`, `true`);
+    options.set(`--providers.file.filename`, `/etc/traefik/config.yaml`);
+    options.set(`--providers.docker.exposedbydefault`, `false`);
+    options.set(`--providers.docker.endpoint`, `unix:///var/run/docker.sock`);
+    options.set(`--certificatesresolvers.depker.acme.email`, `admin@example.com`);
+    options.set(`--certificatesresolvers.depker.acme.httpchallenge.entrypoint`, `http`);
+    options.set(`--certificatesresolvers.depker.acme.storage`, `/etc/traefik/acme.json`);
     for (const value of configs.args ?? []) {
-      options.add(`--${value}`);
+      const split = value.split("=");
+      options.set(`--${split.shift()}`, split.join("="));
     }
     for (const value of ports) {
-      options.add(`--entrypoints.tcp${value}.address=:${value}/tcp`);
-      options.add(`--entrypoints.udp${value}.address=:${value}/udp`);
+      options.set(`--entrypoints.tcp${value}.address`, `:${value}/tcp`);
+      options.set(`--entrypoints.udp${value}.address`, `:${value}/udp`);
     }
 
     try {
@@ -502,12 +503,8 @@ export class ConfigModule {
       Restart: "always",
       Envs: configs.envs,
       Labels: configs.labels,
-      Commands: [
-        ...options,
-      ],
-      Networks: [
-        await this.depker.node.network.default(),
-      ],
+      Commands: [...options.entries()].map(([k, v]) => v ? `${k}=${v}` : k),
+      Networks: [await this.depker.node.network.default()],
       Volumes: [
         `/var/depker/proxy:/etc/traefik`,
         `/var/run/docker.sock:/var/run/docker.sock`,
