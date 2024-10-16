@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"net/url"
 	"os"
@@ -18,8 +20,8 @@ func main() {
 		create(deno, path, os.Args[2:]...)
 		return
 	}
-	if len(os.Args) > 1 && os.Args[1] == "reload" {
-		reload(deno, path, os.Args[2:]...)
+	if len(os.Args) > 1 && os.Args[1] == "update" {
+		update(deno, path, os.Args[2:]...)
 		return
 	}
 
@@ -111,11 +113,13 @@ func create(deno string, path string, args ...string) {
 	}
 	_, err2 := file.WriteString(strings.Join(
 		[]string{
-			"import { depker } from \"https://raw.githubusercontent.com/syfxlin/depker/master/mod.ts\";",
+			"import { depker, nginx } from \"https://raw.githubusercontent.com/syfxlin/depker/master/mod.ts\";",
 			"",
-			"const app = depker();",
-			"",
-			"export default app;",
+			"depker.use(",
+			"  nginx({",
+			"    name: \"nginx\",",
+			"  }),",
+			");",
 			"",
 		},
 		"\n",
@@ -129,19 +133,30 @@ func create(deno string, path string, args ...string) {
 	}
 }
 
-func reload(deno string, path string, args ...string) {
+func update(deno string, path string, args ...string) {
+	execute(deno, "upgrade", "stable")
 	execute(deno, append([]string{"cache", "-r", path}, args...)...)
 }
 
 func depker(deno string, path string, args ...string) {
-	file, err1 := os.CreateTemp("", "depker-cli-")
+	hash := md5.Sum([]byte(path))
+	name := filepath.Join(os.TempDir(), "depker-cli-"+hex.EncodeToString(hash[:]))
+	file, err1 := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err1 != nil {
 		panic(err1)
 	}
 	_, err2 := file.WriteString(strings.Join(
 		[]string{
-			"const depker = await import('" + path + "').then(mod => mod?.default ?? mod);",
-			"if (typeof depker.execute === 'function') {",
+			"const depker = await import('" + path + "');",
+			"if (typeof depker?.default?.execute === 'function') {",
+			"  await depker.default.execute();",
+			"} else if (typeof depker?.depker?.execute === 'function') {",
+			"  await depker.depker.execute();",
+			"} else if (typeof depker?.app?.execute === 'function') {",
+			"  await depker.app.execute();",
+			"} else if (typeof globalThis?.depker?.execute === 'function') {",
+			"  await globalThis.depker.execute();",
+			"} else if (typeof depker?.execute === 'function') {",
 			"  await depker.execute();",
 			"} else {",
 			"  throw new ReferenceError('Missing depker instance! Ensure your config file does export the Site instance as default.');",
@@ -156,7 +171,7 @@ func depker(deno string, path string, args ...string) {
 	if err3 != nil {
 		panic(err3)
 	}
-	execute(deno, append([]string{"run", "-A", file.Name()}, args...)...)
+	execute(deno, append([]string{"run", "--no-lock", "--allow-all", file.Name()}, args...)...)
 }
 
 func execute(name string, args ...string) {

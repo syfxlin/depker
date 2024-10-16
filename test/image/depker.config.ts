@@ -1,13 +1,9 @@
 import { depker, image } from "../../mod.ts";
 
-const app = depker();
-
-app.service(
+depker.use(
   image({
     name: "image",
     image: "nginx:alpine",
     domain: "nginx.test",
   }),
 );
-
-export default app;

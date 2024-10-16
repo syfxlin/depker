@@ -1,11 +1,10 @@
 import { depker, nginx } from "../../mod.ts";
 
-const app = depker();
-
-app.service(
+depker.use(
   nginx({
     name: "nginx",
+    secrets: {
+      TEST_ENV: "test-env",
+    },
   }),
 );
-
-export default app;

@@ -1,24 +1,10 @@
 {
   "name": "@syfxlin/depker",
-  "version": "0.0.0-semantic-release",
-  "description": "docker-based cloud deployment tool.",
-  "keywords": [
-    "depker",
-    "docker"
-  ],
-  "author": "Otstar Lin <i@ixk.me> (https://ixk.me)",
-  "license": "Apache-2.0",
-  "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
-  },
+  "version": "0.0.0-semantic-release",
+  "private": true,
   "devDependencies": {
-    "@syfxlin/eslint-config": "^1.0.1",
-    "@types/node": "^20.10.6",
-    "eslint": "8.56.0",
-    "typescript": "^5.3.3",
-    "typescript-deno-plugin": "^1.31.0"
+    "@syfxlin/eslint-config": "^1.0.8",
+    "eslint": "^9.9.0"
   }
 }
