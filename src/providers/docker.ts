@@ -405,6 +405,10 @@ class DockerContainerOperation implements ContainerOperation {
       args.push(`--network`);
       args.push(options.Network);
     }
+    if (options?.NetworkAlias) {
+      args.push(`--network-alias`);
+      args.push(options.NetworkAlias);
+    }
     for (const value of options?.Dns ?? []) {
       args.push(`--dns`);
       args.push(value);
@@ -415,6 +419,10 @@ class DockerContainerOperation implements ContainerOperation {
     }
     for (const value of options?.Networks ?? []) {
       args.push(`--network`);
+      args.push(value);
+    }
+    for (const value of options?.NetworkAliases ?? []) {
+      args.push(`--network-alias`);
       args.push(value);
     }
 

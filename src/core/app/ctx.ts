@@ -201,6 +201,7 @@ export class PackContext<Config extends AppConfig = AppConfig> {
       Pull: config.pull,
       Cache: config.cache,
       Hosts: config.hosts,
+      Flags: config.build_options,
     };
 
     if (config.build_args || config.secrets || config.labels) {
@@ -318,7 +319,9 @@ export class PackContext<Config extends AppConfig = AppConfig> {
       Host: config.host,
       Hosts: config.hosts,
       Network: network,
+      NetworkAlias: config.name,
       Networks: config.networks,
+      NetworkAliases: config.network_aliases,
       // resources
       Cpu: config.cpu,
       Memory: config.memory,
@@ -331,6 +334,8 @@ export class PackContext<Config extends AppConfig = AppConfig> {
       User: config.user,
       Workdir: config.workdir,
       Groups: config.groups,
+      // options
+      Flags: config.start_options,
     };
 
     // host

@@ -101,6 +101,7 @@ export interface AppConfig {
   host?: string;
   hosts?: string[];
   networks?: string[];
+  network_aliases?: string[];
 
   // resources
   cpu?: string;
@@ -116,6 +117,10 @@ export interface AppConfig {
   user?: string;
   workdir?: string;
   groups?: string[];
+
+  // options
+  build_options?: string[];
+  start_options?: string[];
 
   // extension
   [key: number | string | symbol]: any;

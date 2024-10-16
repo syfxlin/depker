@@ -330,6 +330,8 @@ export interface ContainerCreateOptions {
   Hosts?: string[];
   Network?: string;
   Networks?: string[];
+  NetworkAlias?: string;
+  NetworkAliases?: string[];
   // resources
   Cpu?: string;
   Memory?: string;
