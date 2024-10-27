@@ -221,7 +221,7 @@ export class MongoPlugin implements DepkerPlugin {
 
     const database = name;
     const username = name;
-    const password = generator.generate();
+    const password = generator.generate(20, true, true, false);
 
     await this.exec(`
       use ${database};
@@ -354,7 +354,7 @@ export class MongoPlugin implements DepkerPlugin {
     const config = await this.depker.config.service<MongoServiceConfig>(MongoPlugin.NAME);
     if (!config.username || !config.password) {
       config.username = "root";
-      config.password = generator.generate();
+      config.password = generator.generate(20, true, true, false);
       await this.depker.config.service(MongoPlugin.NAME, () => config);
     }
 

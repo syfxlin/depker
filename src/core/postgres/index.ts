@@ -170,7 +170,7 @@ export class PostgresPlugin implements DepkerPlugin {
           value.PGSQL_NAME = database;
           value.PGSQL_USER = username;
           value.PGSQL_PASS = password;
-          value.PGSQL_URL = `postgresql://${value.PGSQL_USER}:${value.PGSQL_PASS}@${value.PGSQL_HOST}:${value.PGSQL_PORT}/${value.PGSQL_NAME}`;
+          value.PGSQL_URL = `postgres://${value.PGSQL_USER}:${value.PGSQL_PASS}@${value.PGSQL_HOST}:${value.PGSQL_PORT}/${value.PGSQL_NAME}?sslmode=disable`;
           return value;
         });
       }
@@ -216,7 +216,7 @@ export class PostgresPlugin implements DepkerPlugin {
 
     const database = name;
     const username = name;
-    const password = generator.generate();
+    const password = generator.generate(20, true, true, false);
 
     await this.exec([
       `DROP USER IF EXISTS ${username}`,
@@ -260,7 +260,7 @@ export class PostgresPlugin implements DepkerPlugin {
       value.PGSQL_NAME = name;
       value.PGSQL_USER = config.username;
       value.PGSQL_PASS = config.password;
-      value.PGSQL_URL = `postgresql://${value.PGSQL_USER}:${value.PGSQL_PASS}@${value.PGSQL_HOST}:${value.PGSQL_PORT}/${value.PGSQL_NAME}`;
+      value.PGSQL_URL = `postgres://${value.PGSQL_USER}:${value.PGSQL_PASS}@${value.PGSQL_HOST}:${value.PGSQL_PORT}/${value.PGSQL_NAME}?sslmode=disable`;
       return value;
     } else if (config.databases?.[name]) {
       const value: Record<string, any> = {};
@@ -269,7 +269,7 @@ export class PostgresPlugin implements DepkerPlugin {
       value.PGSQL_NAME = name;
       value.PGSQL_USER = config.databases[name].username;
       value.PGSQL_PASS = config.databases[name].password;
-      value.PGSQL_URL = `postgresql://${value.PGSQL_USER}:${value.PGSQL_PASS}@${value.PGSQL_HOST}:${value.PGSQL_PORT}/${value.PGSQL_NAME}`;
+      value.PGSQL_URL = `postgres://${value.PGSQL_USER}:${value.PGSQL_PASS}@${value.PGSQL_HOST}:${value.PGSQL_PORT}/${value.PGSQL_NAME}?sslmode=disable`;
       return value;
     } else {
       throw new Error(`PostgreSQL database is not configured with name: ${name}`);
@@ -327,7 +327,7 @@ export class PostgresPlugin implements DepkerPlugin {
     const config = await this.depker.config.service<PostgresServiceConfig>(PostgresPlugin.NAME);
     if (!config.username || !config.password) {
       config.username = "postgres";
-      config.password = generator.generate();
+      config.password = generator.generate(20, true, true, false);
       await this.depker.config.service(PostgresPlugin.NAME, () => config);
     }
 
