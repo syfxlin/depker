@@ -221,7 +221,7 @@ export class PostgresPlugin implements DepkerPlugin {
     await this.exec([
       `DROP USER IF EXISTS ${username}`,
       `DROP DATABASE IF EXISTS ${database}`,
-      `CREATE USER ${username} WITH PASSWORD '${username}'`,
+      `CREATE USER ${username} WITH ENCRYPTED PASSWORD '${password}'`,
       `CREATE DATABASE ${database}`,
       `GRANT ALL PRIVILEGES ON DATABASE ${database} TO ${username}`,
     ]);

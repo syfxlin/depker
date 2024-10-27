@@ -225,7 +225,7 @@ export class MysqlPlugin implements DepkerPlugin {
     await this.exec([
       `DROP USER IF EXISTS ${username}`,
       `DROP DATABASE IF EXISTS ${database}`,
-      `CREATE USER '${username}'@'%' IDENTIFIED BY '${username}'`,
+      `CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'`,
       `CREATE DATABASE ${database}`,
       `GRANT ALL PRIVILEGES ON ${database}.* TO '${username}'@'%'`,
       `FLUSH PRIVILEGES`,
