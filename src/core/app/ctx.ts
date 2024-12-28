@@ -380,9 +380,9 @@ export class PackContext<Config extends AppConfig = AppConfig> {
 
     // ports
     for (const port of config.ports ?? []) {
-      const proto = port.proto;
       const hport = port.hport;
       const cport = port.cport;
+      const proto = port.proto === "udp" ? "udp" : "tcp";
       if (proto === "tcp") {
         labels[`traefik.${proto}.routers.${config.name}-${this.id}-${proto}-${cport}.rule`] = "HostSNI(`*`)";
       }
