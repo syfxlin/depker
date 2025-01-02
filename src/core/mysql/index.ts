@@ -220,12 +220,12 @@ export class MysqlPlugin implements DepkerPlugin {
 
     const database = name;
     const username = name;
-    const password = generator.generate();
+    const password = generator.generate(20, true, true, false);
 
     await this.exec([
       `DROP USER IF EXISTS ${username}`,
       `DROP DATABASE IF EXISTS ${database}`,
-      `CREATE USER '${username}'@'%' IDENTIFIED BY '${username}'`,
+      `CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'`,
       `CREATE DATABASE ${database}`,
       `GRANT ALL PRIVILEGES ON ${database}.* TO '${username}'@'%'`,
       `FLUSH PRIVILEGES`,
@@ -341,7 +341,7 @@ export class MysqlPlugin implements DepkerPlugin {
     const config = await this.depker.config.service<MysqlServiceConfig>(MysqlPlugin.NAME);
     if (!config.username || !config.password) {
       config.username = "root";
-      config.password = generator.generate();
+      config.password = generator.generate(20, true, true, false);
       await this.depker.config.service(MysqlPlugin.NAME, () => config);
     }
 

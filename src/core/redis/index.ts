@@ -219,7 +219,7 @@ export class RedisPlugin implements DepkerPlugin {
     }
 
     const username = name;
-    const password = generator.generate();
+    const password = generator.generate(20, true, true, false);
     await this.exec(`ACL SETUSER ${username} on allkeys allchannels allcommands >'${password}'`);
 
     config.databases = config.databases ?? {};
@@ -330,7 +330,7 @@ export class RedisPlugin implements DepkerPlugin {
     const config = await this.depker.config.service<RedisServiceConfig>(RedisPlugin.NAME);
     if (!config.username || !config.password) {
       config.username = "default";
-      config.password = generator.generate();
+      config.password = generator.generate(20, true, true, false);
       await this.depker.config.service(RedisPlugin.NAME, () => config);
     }
 

@@ -1,3 +1,3 @@
-import ignore from "https://esm.sh/ignore@5.3.2";
+import ignore from "https://esm.sh/ignore@6.0.2";
 
 export default ignore;

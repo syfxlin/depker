@@ -1,8 +1,8 @@
-export * from "https://jsr.io/@david/dax/0.41.0/mod.ts";
+export * from "https://jsr.io/@david/dax/0.42.0/mod.ts";
 
-declare module "https://jsr.io/@david/dax/0.41.0/mod.ts" {
+declare module "https://jsr.io/@david/dax/0.42.0/mod.ts" {
   // @ts-expect-error
-  import { CommandBuilder as CB, RequestBuilder as RB } from "https://jsr.io/@david/dax/0.41.0/mod.ts";
+  import { CommandBuilder as CB, RequestBuilder as RB } from "https://jsr.io/@david/dax/0.42.0/mod.ts";
 
   // @ts-expect-error
   interface CommandBuilder extends CB {
