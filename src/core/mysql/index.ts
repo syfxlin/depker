@@ -152,8 +152,8 @@ export class MysqlPlugin implements DepkerPlugin {
     const result = await this.depker.node.container.exec(MysqlPlugin.NAME, [
       "mysql",
       "--host=127.0.0.1",
-      `--user=${config.username}`,
-      `--password=${config.password}`,
+      `--user='${config.username}'`,
+      `--password='${config.password}'`,
     ], {
       Interactive: true,
     }).stdinText(typeof script === "string" ? script : script.join(";"));
@@ -294,8 +294,8 @@ export class MysqlPlugin implements DepkerPlugin {
       await this.depker.node.container.exec(MysqlPlugin.NAME, [
         "mysql",
         "--host=127.0.0.1",
-        `--user=${config.username}`,
-        `--password=${config.password}`,
+        `--user='${config.username}'`,
+        `--password='${config.password}'`,
       ], {
         Tty: true,
         Interactive: true,
@@ -363,6 +363,19 @@ export class MysqlPlugin implements DepkerPlugin {
           `${this.depker.config.path("/mysql/data")}:/var/lib/mysql`,
           `${this.depker.config.path("/mysql/config")}:/etc/mysql/conf.d`,
         ],
+        Healthcheck: {
+          Period: "30s",
+          Retries: "5",
+          Timeout: "10s",
+          Interval: "30s",
+          Test: [
+            "mysqladmin",
+            "ping",
+            "--host=127.0.0.1",
+            `--user='${config.username}'`,
+            `--password='${config.password}'`,
+          ],
+        },
       },
     );
 

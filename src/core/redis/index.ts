@@ -344,7 +344,6 @@ export class RedisPlugin implements DepkerPlugin {
         Labels: config.labels,
         Ports: config.publish ? ["6379:6379"] : [],
         Networks: [await this.depker.node.network.default()],
-        Commands: ["sh", "-c", `([ ! -f "/etc/redis/redis.conf" ] && touch /etc/redis/redis.conf) || redis-server /etc/redis/redis.conf --requirepass $REDIS_DEFAULT_PASSWORD`],
         Envs: {
           ...config.envs,
           REDIS_DEFAULT_USERNAME: config.username,
@@ -354,6 +353,27 @@ export class RedisPlugin implements DepkerPlugin {
           `${this.depker.config.path("/redis/data")}:/data`,
           `${this.depker.config.path("/redis/config")}:/etc/redis`,
         ],
+        EntryPoints: [
+          "sh",
+        ],
+        Commands: [
+          "-c",
+          `([ ! -f "/etc/redis/redis.conf" ] && touch /etc/redis/redis.conf) || redis-server /etc/redis/redis.conf --requirepass $REDIS_DEFAULT_PASSWORD`,
+        ],
+        Healthcheck: {
+          Period: "30s",
+          Retries: "5",
+          Timeout: "10s",
+          Interval: "30s",
+          Test: [
+            "redis-cli",
+            "--user",
+            config.username,
+            "--pass",
+            config.password,
+            "ping",
+          ],
+        },
       },
     );
 

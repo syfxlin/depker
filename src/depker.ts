@@ -13,6 +13,7 @@ import { mongo } from "./core/mongo/index.ts";
 import { mysql } from "./core/mysql/index.ts";
 import { postgres } from "./core/postgres/index.ts";
 import { redis } from "./core/redis/index.ts";
+import { minio } from "./core/minio/index.ts";
 
 export interface DepkerHook<T = any> {
   (depker: Depker): T;
@@ -58,6 +59,7 @@ export class Depker {
     this._plugins = {};
     // plugins
     this.register(app());
+    this.register(minio());
     this.register(redis());
     this.register(mongo());
     this.register(mysql());

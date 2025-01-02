@@ -153,8 +153,8 @@ export class MongoPlugin implements DepkerPlugin {
       "mongosh",
       "--quiet",
       "--host=127.0.0.1",
-      `--username=${config.username}`,
-      `--password=${config.password}`,
+      `--username='${config.username}'`,
+      `--password='${config.password}'`,
     ], {
       Interactive: true,
     }).stdinText(typeof script === "string" ? script : script.join(";"));
@@ -306,8 +306,8 @@ export class MongoPlugin implements DepkerPlugin {
         "mongosh",
         "--quiet",
         "--host=127.0.0.1",
-        `--username=${config.username}`,
-        `--password=${config.password}`,
+        `--username='${config.username}'`,
+        `--password='${config.password}'`,
       ], {
         Tty: true,
         Interactive: true,
@@ -368,7 +368,6 @@ export class MongoPlugin implements DepkerPlugin {
         Labels: config.labels,
         Ports: config.publish ? ["27017:27017"] : [],
         Networks: [await this.depker.node.network.default()],
-        Commands: ["sh", "-c", `([ ! -f "/etc/mongo/mongod.conf" ] && touch /etc/mongo/mongod.conf) || mongod --config /etc/mongo/mongod.conf`],
         Envs: {
           ...config.envs,
           MONGO_INITDB_ROOT_USERNAME: config.username,
@@ -378,6 +377,25 @@ export class MongoPlugin implements DepkerPlugin {
           `${this.depker.config.path("/mongo/data")}:/data/db`,
           `${this.depker.config.path("/mongo/config")}:/etc/mongo`,
         ],
+        Commands: [
+          "sh",
+          "-c",
+          `([ ! -f "/etc/mongo/mongod.conf" ] && touch /etc/mongo/mongod.conf) || docker-entrypoint.sh --auth --bind_ip_all --config /etc/mongo/mongod.conf`,
+        ],
+        Healthcheck: {
+          Period: "30s",
+          Retries: "5",
+          Timeout: "10s",
+          Interval: "30s",
+          Test: [
+            "mongosh",
+            "--quiet",
+            "--host=127.0.0.1",
+            `--username='${config.username}'`,
+            `--password='${config.password}'`,
+            `--eval='quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)'`,
+          ],
+        },
       },
     );
 
