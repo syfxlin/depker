@@ -341,11 +341,24 @@ export class PostgresPlugin implements DepkerPlugin {
         Labels: config.labels,
         Ports: config.publish ? ["5432:5432"] : [],
         Networks: [await this.depker.node.network.default()],
-        Volumes: [`${this.depker.config.path("/postgres")}:/var/lib/postgresql/data`],
         Envs: {
           ...config.envs,
           POSTGRES_USER: config.username,
           POSTGRES_PASSWORD: config.password,
+        },
+        Volumes: [
+          `${this.depker.config.path("/postgres")}:/var/lib/postgresql/data`,
+        ],
+        Healthcheck: {
+          Period: "30s",
+          Retries: "5",
+          Timeout: "10s",
+          Interval: "30s",
+          Test: [
+            "pg_isready",
+            "-U",
+            "postgres",
+          ],
         },
       },
     );
