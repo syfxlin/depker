@@ -152,7 +152,7 @@ export class MinioPlugin implements DepkerPlugin {
     const result = await this.depker.node.container.exec(MinioPlugin.NAME, [
       "sh",
       "-c",
-      [`mc alias set minio http://localhost '${config.username}' '${config.password}'`, ...[script].flat()].join(" && "),
+      [`mc alias set minio http://localhost:9000 '${config.username}' '${config.password}'`, ...[script].flat()].join(" && "),
     ]);
     return result.stdout;
   }
