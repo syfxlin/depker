@@ -380,7 +380,7 @@ export class MongoPlugin implements DepkerPlugin {
         Commands: [
           "sh",
           "-c",
-          `([ ! -f "/etc/mongo/mongod.conf" ] && touch /etc/mongo/mongod.conf) || mongod --auth --bind_ip_all --config /etc/mongo/mongod.conf`,
+          `([ ! -f "/etc/mongo/mongod.conf" ] && touch /etc/mongo/mongod.conf) || docker-entrypoint.sh --auth --bind_ip_all --config /etc/mongo/mongod.conf`,
         ],
         Healthcheck: {
           Period: "30s",
